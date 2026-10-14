@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.turbo/
+dist/
+.env
+.env.*
+!.env.example
+.vercel/
+*.log
+.DS_Store
+
+# Dokumen internal (PRD, task, prompt) — JANGAN masuk repo
+docs/
