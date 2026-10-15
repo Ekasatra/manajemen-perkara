@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./finance": "./src/finance/index.ts",
+    "./invoices": "./src/invoices/index.ts",
+    "./honor-tim": "./src/honor-tim/index.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
