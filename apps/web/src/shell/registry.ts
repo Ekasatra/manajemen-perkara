@@ -5,7 +5,11 @@
  * mendukung glob impor, dan impor eksplisit membuat modul yang hilang gagal saat build.
  */
 import type { ModuleConfig } from './nav';
+import { moduleConfig as invoices } from '@/modules/invoices/module.config';
+import { moduleConfig as honorTim } from '@/modules/honor-tim/module.config';
 
 export const MODULES: readonly ModuleConfig[] = [
   // contoh: import { moduleConfig as clients } from '@/modules/clients/module.config';  →  clients,
+  invoices,
+  honorTim,
 ];
