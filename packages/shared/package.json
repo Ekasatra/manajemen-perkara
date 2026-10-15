@@ -6,7 +6,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./common": "./src/common.ts",
-    "./errors": "./src/errors.ts"
+    "./errors": "./src/errors.ts",
+    "./notifications": "./src/notifications.ts",
+    "./dashboard": "./src/dashboard.ts",
+    "./reports": "./src/reports.ts",
+    "./portal": "./src/portal.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -21,5 +25,8 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.2",
     "vitest": "5.0.4"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
   }
 }
