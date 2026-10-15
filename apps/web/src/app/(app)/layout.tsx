@@ -2,6 +2,9 @@ import type { ReactNode } from 'react';
 import { AppShell } from '@/shell/app-shell';
 import type { NavItem } from '@/shell/app-shell';
 
+// Semua halaman di (app) bergantung sesi + DB: jangan di-prerender saat build.
+export const dynamic = 'force-dynamic';
+
 // A4 akan mengganti ini dengan pemuat otomatis module.config.ts yang sudah difilter per role.
 const NAV: NavItem[] = [
   { label: 'Beranda', href: '/' },
