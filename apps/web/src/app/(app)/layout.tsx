@@ -10,6 +10,8 @@ const NAV: NavItem[] = [
   { label: 'Pihak Lawan', href: '/opponents' },
   { label: 'Data Advokat', href: '/advocates' },
   { label: 'Pengguna', href: '/users' },
+  { label: 'Invoice', href: '/invoices' },
+  { label: 'Honor Tim', href: '/honor-tim' },
   { label: 'Laporan', href: '/reports' },
   { label: 'Pengaturan', href: '/settings' },
   { label: 'Audit Log', href: '/audit' },
