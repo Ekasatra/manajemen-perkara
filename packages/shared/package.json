@@ -7,6 +7,17 @@
     ".": "./src/index.ts",
     "./common": "./src/common.ts",
     "./errors": "./src/errors.ts",
+    "./auth": "./src/auth.ts",
+    "./users": "./src/users.ts",
+    "./clients": "./src/clients.ts",
+    "./opponents": "./src/opponents.ts",
+    "./advocates": "./src/advocates.ts",
+    "./settings": "./src/settings.ts",
+    "./audit": "./src/audit.ts",
+    "./notifications": "./src/notifications.ts",
+    "./dashboard": "./src/dashboard.ts",
+    "./reports": "./src/reports.ts",
+    "./portal": "./src/portal.ts",
     "./cases": "./src/cases.ts"
   },
   "scripts": {

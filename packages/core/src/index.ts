@@ -40,6 +40,37 @@ export type { DbExecutor } from './kernel/db-helpers';
 // Kernel — Activity log
 export { logActivity } from './kernel/activity';
 export type { ActivityLogInput } from './kernel/activity';
+
+// Settings Readers
+export { getSetting, getAllSettings } from './settings/read';
+
+// Users Readers
+export {
+  getUserNotificationProfile,
+  getMultipleUserNotificationProfiles,
+} from './users/read';
+export type { UserNotificationProfile } from './users/read';
+
+// Notifications (Agent G · G4)
+export {
+  notify,
+  notifyMany,
+  notifyGeneric,
+  renderEmailTemplate,
+  baseEmailLayout,
+  formatRupiah,
+  escapeHtml,
+  sendEmailViaResend,
+  setEmailTransport,
+} from './notifications';
+export type {
+  GenericNotifyInput,
+  EmailContent,
+  SendEmailPayload,
+  SendEmailResult,
+  EmailTransport,
+} from './notifications';
+
 // Cases (Modul D · D1–D7)
 export {
   // D7 — kontrak baca untuk modul lain (E, F, G)
@@ -92,3 +123,67 @@ export {
   deleteDocument,
   todayWib,
 } from './cases/service';
+
+// Surat Readers (Modul E)
+export {
+  getSuratSummaryForDashboard,
+  getSuratTrend6Bulan,
+  getApprovalMenungguSaya,
+  getSuratPersonalNotifications,
+  listSuratMasukForReport,
+  listSuratKeluarForReport,
+  getClientSuratMasukForPortal,
+} from './surat/read';
+
+// Finance Readers (Modul F)
+export {
+  listInvoicesForReport,
+  outstandingSummary,
+  getTenggat14HariInvoices,
+  listHonorariumForReport,
+  getClientInvoicesForPortal,
+} from './finance/read';
+export type { InvoiceReportFilter, InvoiceReportItem } from './finance/read';
+
+// Clients Readers (Modul C)
+export {
+  getClientByPortalToken,
+  getNewClientsCountThisMonth,
+  listClientsForReportOptions,
+} from './clients/read';
+
+// Audit Readers (Modul C)
+export {
+  getRecentActivitiesForDashboard,
+  isCronRemindersAlreadyRunToday,
+  recordCronRemindersRun,
+} from './audit/read';
+
+// Dashboard (Agent G · G1)
+export { getDashboardData } from './dashboard';
+export type { DashboardUser } from './dashboard';
+
+// Reports (Agent G · G2)
+export {
+  getCasesReport,
+  getSuratMasukReport,
+  getSuratKeluarReport,
+  getHonorariumReport,
+  getSchedulesReport,
+  getCaseProgress,
+  exportToCsv,
+  exportReportToPrintableHtml,
+} from './reports';
+
+// Portal Klien (Agent G · G3)
+export {
+  validateClientPortalAccess,
+  getPortalData,
+  getVerifiedClientDocument,
+} from './portal';
+
+// Cron Reminders (Agent G · G5)
+export { runDailyRemindersCron, getTodayWibDate } from './cron';
+export type { CronExecutionResult } from './cron';
+
+
