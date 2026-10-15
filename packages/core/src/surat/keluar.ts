@@ -3,7 +3,7 @@
  * `approval.ts` (murni); file ini hanya memuat data, memanggilnya, menyimpan.
  */
 import { and, count, desc, eq, ilike, inArray, isNotNull, ne, or, sql, type SQL } from 'drizzle-orm';
-import { caseTimeline, profiles, suratApprovalLogs, suratKeluar } from '@ekasatra/db';
+import { caseTimeline, cases, profiles, suratApprovalLogs, suratKeluar } from '@ekasatra/db';
 import { conflict, forbidden, notFound, validationError } from '@ekasatra/shared';
 import type { AuthContext } from '../kernel/auth';
 import type { DbExecutor } from '../kernel/db-helpers';
@@ -190,9 +190,25 @@ export async function getSuratKeluar(
     reviewerId: surat.reviewerId,
     signerId: surat.signerId,
   };
+  const ids = [surat.createdBy, surat.reviewerId, surat.signerId].filter((v): v is string => !!v);
+  const people = ids.length
+    ? await db
+        .select({ id: profiles.id, fullName: profiles.fullName })
+        .from(profiles)
+        .where(inArray(profiles.id, ids))
+    : [];
+  const [perkara] = surat.caseId
+    ? await db
+        .select({ id: cases.id, regNo: cases.regNo, title: cases.title })
+        .from(cases)
+        .where(eq(cases.id, surat.caseId))
+        .limit(1)
+    : [];
   return {
     surat,
     logs,
+    names: Object.fromEntries(people.map((p) => [p.id, p.fullName])),
+    perkara: perkara ?? null,
     actions: availableActions(ref, actorOf(user)),
     canEdit: canEditSurat(ref, actorOf(user)),
   };
