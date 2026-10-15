@@ -15,6 +15,12 @@ Skema database (Drizzle ORM + Postgres/Supabase), migrasi, dan seed. Pemilik: Ag
 | `pnpm --filter @ekasatra/db seed`         | Settings default + 1 Admin (butuh `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, opsional `SEED_ADMIN_NAME`, serta `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) |
 | `pnpm --filter @ekasatra/db verify:local` | Uji migrasi bersih dari nol di Postgres 17 (Docker) + perilaku + konkurensi `next_counter`. Tidak menyentuh remote                                                                      |
 
+## Status remote
+
+`ekasatra-staging` (`hxathxeeksnjletacjkj`) sudah menerima migrasi 0000–0002 lewat konektor Supabase (`apply_migration`), tercatat di `supabase_migrations`.
+**Jangan jalankan `db:migrate` ke project itu** — jurnal Drizzle tidak tahu migrasi tersebut dan akan mencoba membuat ulang tabel.
+Migrasi berikutnya: tambahkan file `00NN_*.sql` di `supabase/migrations/`, uji dengan `verify:local`, lalu terapkan dengan cara yang sama.
+
 ## Konvensi
 
 - **Uang:** `bigint` rupiah bulat (mode `number` di Drizzle).
