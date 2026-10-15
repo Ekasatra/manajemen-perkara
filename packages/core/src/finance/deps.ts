@@ -6,7 +6,7 @@
  * Keuangan hanya perlu info dasar, jadi tidak membawa aturan visibilitas perkara: otorisasi
  * data keuangan lewat `can()` (invoice = Admin saja; honor = milik sendiri).
  */
-import { eq, inArray } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { caseMembers, cases, clients, settings } from '@ekasatra/db';
 import type { DbExecutor } from '../kernel/db-helpers';
 
@@ -89,4 +89,29 @@ export async function getFinanceSettings(db: DbExecutor): Promise<FinanceSetting
       logoPath: str(map.get('logo_path')),
     },
   };
+}
+
+export interface Option {
+  id: string;
+  label: string;
+}
+
+/** Opsi untuk dropdown form (nama klien). Maks 1.000 baris; urut nama. */
+export async function listClientOptions(db: DbExecutor): Promise<Option[]> {
+  const rows = await db
+    .select({ id: clients.id, name: clients.name, code: clients.clientCode })
+    .from(clients)
+    .orderBy(clients.name)
+    .limit(1000);
+  return rows.map((r) => ({ id: r.id, label: `${r.code} · ${r.name}` }));
+}
+
+/** Opsi perkara + klien pemiliknya (untuk mengisi klien otomatis di form). */
+export async function listCaseOptions(db: DbExecutor): Promise<(Option & { clientId: string })[]> {
+  const rows = await db
+    .select({ id: cases.id, regNo: cases.regNo, title: cases.title, clientId: cases.clientId })
+    .from(cases)
+    .orderBy(desc(cases.createdAt))
+    .limit(1000);
+  return rows.map((r) => ({ id: r.id, label: `${r.regNo} · ${r.title}`, clientId: r.clientId }));
 }
