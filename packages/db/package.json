@@ -10,7 +10,11 @@
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "echo \"no tests yet\" && exit 0",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "seed": "node --env-file-if-exists=../../.env src/seed.ts",
+    "verify:local": "bash ../../supabase/local/verify.sh"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
