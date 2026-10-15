@@ -40,3 +40,55 @@ export type { DbExecutor } from './kernel/db-helpers';
 // Kernel — Activity log
 export { logActivity } from './kernel/activity';
 export type { ActivityLogInput } from './kernel/activity';
+// Cases (Modul D · D1–D7)
+export {
+  // D7 — kontrak baca untuk modul lain (E, F, G)
+  listVisibleCaseIds,
+  getCaseForUser,
+  getCaseTeamMembers,
+  // Baca dashboard (G1/G6)
+  getCaseSummaryForDashboard,
+  getUpcomingSchedulesForDashboard,
+  getTenggat14HariCases,
+  // Baca laporan (G2)
+  listCasesForReport,
+  listSchedulesForReport,
+  getCaseProgressForReport,
+  // Baca portal klien (G3)
+  getClientCasesForPortal,
+  getClientTimelineForPortal,
+  getClientSchedulesForPortal,
+  getClientDocumentsForPortal,
+  verifyClientDocumentOwnership,
+  // Baca cron (G5)
+  getHearingRemindersForDate,
+  getUpayaDeadlineReminders,
+} from './cases/read';
+// D3 — transisi status (fungsi murni)
+export { applyStatusChange, addDays } from './cases/status';
+export type { CaseStatusState, StatusChangeInput, StatusChangeResult } from './cases/status';
+// D1/D2/D4 — service
+export {
+  createCase,
+  listCases,
+  requireVisibleCase,
+  getCaseDetail,
+  updateCase,
+  deleteCase,
+  changeCaseStatus,
+  listMembers,
+  addMember,
+  removeMember,
+  listTimeline,
+  addTimelineEntry,
+  listSchedules,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  listDocuments,
+  documentStoragePath,
+  createDocumentRecord,
+  updateDocument,
+  deleteDocument,
+  todayWib,
+} from './cases/service';
