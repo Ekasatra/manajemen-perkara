@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatRupiah } from '@/lib/format';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 import { FormDialog } from '@/components/ui/form-dialog';
 
@@ -55,6 +55,48 @@ type MemberRow = {
   createdAt: string;
 };
 
+type SuratMasukItem = {
+  id: string;
+  noAgenda: string;
+  noSurat?: string | null;
+  sender: string;
+  subject: string;
+  tglSurat?: string | null;
+  tglTerima: string;
+  sifat: string;
+  status: string;
+};
+
+type SuratKeluarItem = {
+  id: string;
+  noSurat: string;
+  subject: string;
+  destination: string;
+  jenis: string;
+  tglSurat?: string | null;
+  status: string;
+};
+
+type InvoiceItem = {
+  id: string;
+  invoiceNo: string;
+  description?: string | null;
+  amount: number;
+  paidAmount: number;
+  outstanding: number;
+  status: string;
+  invoiceDate: string;
+  dueDate?: string | null;
+};
+
+type HonorariumItem = {
+  id: string;
+  userName: string;
+  draftAmount: number;
+  publishedAmount?: number | null;
+  status: string;
+};
+
 type Props = {
   caseId: string;
   caseRow: CaseRow;
@@ -64,11 +106,16 @@ type Props = {
   schedules: ScheduleRow[];
   documents: DocumentRow[];
   members: MemberRow[];
+  suratMasuk: SuratMasukItem[];
+  suratKeluar: SuratKeluarItem[];
+  invoices: InvoiceItem[];
+  honorarium: HonorariumItem[];
   canUpdate: boolean;
   canManageTeam: boolean;
+  canViewBiaya: boolean;
 };
 
-const TABS = ['Ringkasan', 'Timeline', 'Jadwal', 'Dokumen', 'Tim'] as const;
+const TABS = ['Ringkasan', 'Timeline', 'Jadwal', 'Dokumen', 'Surat', 'Biaya', 'Tim'] as const;
 type Tab = (typeof TABS)[number];
 
 export function CaseTabs(props: Props) {
@@ -97,6 +144,8 @@ export function CaseTabs(props: Props) {
       {tab === 'Timeline' && <TimelineTab {...props} />}
       {tab === 'Jadwal' && <JadwalTab {...props} />}
       {tab === 'Dokumen' && <DokumenTab {...props} />}
+      {tab === 'Surat' && <SuratTab {...props} />}
+      {tab === 'Biaya' && <BiayaTab {...props} />}
       {tab === 'Tim' && <TimTab {...props} />}
     </div>
   );
@@ -465,6 +514,151 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
           </div>
         </FormDialog>
       ) : null}
+    </div>
+  );
+}
+
+function SuratTab({ suratMasuk, suratKeluar }: Props) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-navy-700">Surat Masuk</h3>
+        {suratMasuk.length === 0 ? (
+          <p className="text-sm text-navy-400">Belum ada surat masuk untuk perkara ini.</p>
+        ) : (
+          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-navy-50 text-navy-600">
+                <tr>
+                  <th className="px-4 py-3 font-medium">No. Agenda</th>
+                  <th className="px-4 py-3 font-medium">Pengirim</th>
+                  <th className="px-4 py-3 font-medium">Perihal</th>
+                  <th className="px-4 py-3 font-medium">Tgl. Surat</th>
+                  <th className="px-4 py-3 font-medium">Sifat</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-navy-100">
+                {suratMasuk.map((s) => (
+                  <tr key={s.id}>
+                    <td className="px-4 py-3">{s.noAgenda}</td>
+                    <td className="px-4 py-3">{s.sender}</td>
+                    <td className="px-4 py-3">{s.subject}</td>
+                    <td className="px-4 py-3">{s.tglSurat ? formatDate(s.tglSurat) : '-'}</td>
+                    <td className="px-4 py-3">{s.sifat}</td>
+                    <td className="px-4 py-3">{s.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-navy-700">Surat Keluar</h3>
+        {suratKeluar.length === 0 ? (
+          <p className="text-sm text-navy-400">Belum ada surat keluar untuk perkara ini.</p>
+        ) : (
+          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-navy-50 text-navy-600">
+                <tr>
+                  <th className="px-4 py-3 font-medium">No. Surat</th>
+                  <th className="px-4 py-3 font-medium">Tujuan</th>
+                  <th className="px-4 py-3 font-medium">Perihal</th>
+                  <th className="px-4 py-3 font-medium">Jenis</th>
+                  <th className="px-4 py-3 font-medium">Tgl. Surat</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-navy-100">
+                {suratKeluar.map((s) => (
+                  <tr key={s.id}>
+                    <td className="px-4 py-3">{s.noSurat}</td>
+                    <td className="px-4 py-3">{s.destination}</td>
+                    <td className="px-4 py-3">{s.subject}</td>
+                    <td className="px-4 py-3">{s.jenis}</td>
+                    <td className="px-4 py-3">{s.tglSurat ? formatDate(s.tglSurat) : '-'}</td>
+                    <td className="px-4 py-3">{s.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BiayaTab({ invoices, honorarium, canViewBiaya }: Props) {
+  if (!canViewBiaya) {
+    return <p className="text-sm text-navy-400">Tab biaya hanya untuk Admin.</p>;
+  }
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-navy-700">Invoice</h3>
+        {invoices.length === 0 ? (
+          <p className="text-sm text-navy-400">Belum ada invoice untuk perkara ini.</p>
+        ) : (
+          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-navy-50 text-navy-600">
+                <tr>
+                  <th className="px-4 py-3 font-medium">No. Invoice</th>
+                  <th className="px-4 py-3 font-medium">Keterangan</th>
+                  <th className="px-4 py-3 font-medium">Jumlah</th>
+                  <th className="px-4 py-3 font-medium">Dibayar</th>
+                  <th className="px-4 py-3 font-medium">Sisa</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-navy-100">
+                {invoices.map((inv) => (
+                  <tr key={inv.id}>
+                    <td className="px-4 py-3">{inv.invoiceNo}</td>
+                    <td className="px-4 py-3">{inv.description ?? '-'}</td>
+                    <td className="px-4 py-3">{formatRupiah(inv.amount)}</td>
+                    <td className="px-4 py-3">{formatRupiah(inv.paidAmount)}</td>
+                    <td className="px-4 py-3">{formatRupiah(inv.outstanding)}</td>
+                    <td className="px-4 py-3">{inv.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-navy-700">Honor Tim</h3>
+        {honorarium.length === 0 ? (
+          <p className="text-sm text-navy-400">Belum ada honor untuk perkara ini.</p>
+        ) : (
+          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-navy-50 text-navy-600">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Anggota</th>
+                  <th className="px-4 py-3 font-medium">Draft</th>
+                  <th className="px-4 py-3 font-medium">Dipublikasi</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-navy-100">
+                {honorarium.map((h) => (
+                  <tr key={h.id}>
+                    <td className="px-4 py-3">{h.userName}</td>
+                    <td className="px-4 py-3">{formatRupiah(h.draftAmount)}</td>
+                    <td className="px-4 py-3">{h.publishedAmount != null ? formatRupiah(h.publishedAmount) : '-'}</td>
+                    <td className="px-4 py-3">{h.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

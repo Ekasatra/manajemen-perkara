@@ -1,12 +1,21 @@
 /**
  * Halaman detail Perkara (Agent D · D5).
- * Tab: Ringkasan, Timeline, Jadwal, Dokumen.
- * (Surat & biaya read-only ditangani modul E/F lewat rute mereka sendiri.)
+ * Tab: Ringkasan, Timeline, Jadwal, Dokumen, Surat, Biaya (Admin).
+ * Surat & biaya read-only — data dari fungsi baca modul E/F.
  */
 import { eq } from 'drizzle-orm';
 import { createDb, cases, caseTimeline, caseSchedules, caseDocuments, clients, opponents } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { requireUser, ensureCan, getCaseTeamMembers } from '@ekasatra/core';
+import {
+  requireUser,
+  ensureCan,
+  can,
+  getCaseTeamMembers,
+  listSuratMasukForReport,
+  listSuratKeluarForReport,
+  listInvoicesForReport,
+  listHonorariumForReport,
+} from '@ekasatra/core';
 import Link from 'next/link';
 import { notFound } from '@ekasatra/shared';
 import { buttonClass } from '@/components/ui/styles';
@@ -26,10 +35,6 @@ export default async function CaseDetailPage({
   const [caseRow] = await db.select().from(cases).where(eq(cases.id, id)).limit(1);
   if (!caseRow) throw notFound('Perkara tidak ditemukan');
 
-  // Pastikan visibilitas: bila non-Admin + scope_assigned_only, cek kepemilikan/keanggotaan.
-  // (getCaseTeamMembers sudah memerlukan perkara ada; kita juga cek via service di API,
-  // tapi halaman ini read-only — cukup pastikan data anak perkara konsisten.)
-
   const [clientRow, opponentRow, timeline, schedules, documents, members] = await Promise.all([
     db.select({ name: clients.name, clientCode: clients.clientCode }).from(clients).where(eq(clients.id, caseRow.clientId)).limit(1),
     caseRow.opponentId
@@ -45,8 +50,20 @@ export default async function CaseDetailPage({
   const clientCode = clientRow[0]?.clientCode ?? '-';
   const opponentName = opponentRow[0]?.name ?? null;
 
-  const canUpdate = ensureCanSafe(user, 'U', 'cases');
-  const canManageTeam = ensureCanSafe(user, 'C', 'users');
+  // Hak akses via can() dari kernel — tidak ada if role === di UI.
+  const canUpdate = can(user, 'U', 'cases');
+  const canManageTeam = can(user, 'C', 'users');
+  const canViewBiaya = can(user, 'R', 'invoices');
+
+  // Tab Surat: surat masuk & keluar untuk perkara ini (read-only).
+  const [suratMasuk, suratKeluar] = await Promise.all([
+    listSuratMasukForReport(db, { caseId: id }),
+    listSuratKeluarForReport(db, { caseId: id }),
+  ]);
+
+  // Tab Biaya: invoice & honorarium (Admin only, read-only).
+  const invoices = canViewBiaya ? await listInvoicesForReport(db, { caseId: id }) : [];
+  const honorarium = canViewBiaya ? await listHonorariumForReport(db, { caseId: id }) : [];
 
   return (
     <div>
@@ -72,20 +89,14 @@ export default async function CaseDetailPage({
         schedules={schedules}
         documents={documents}
         members={members}
+        suratMasuk={suratMasuk}
+        suratKeluar={suratKeluar}
+        invoices={invoices}
+        honorarium={honorarium}
         canUpdate={canUpdate}
         canManageTeam={canManageTeam}
+        canViewBiaya={canViewBiaya}
       />
     </div>
   );
-}
-
-/** Cek `can()` tanpa melempar — untuk mengontrol tampilan tombol UI. */
-function ensureCanSafe(user: { role: string }, action: 'C' | 'R' | 'U' | 'D', resource: string): boolean {
-  // Impor dinamis terlalu berat di server component; kita inline cek policy sederhana.
-  // Tombol disembunyikan berdasarkan role; otorisasi sebenarnya tetap di API route.
-  const role = user.role.toLowerCase();
-  if (role === 'admin') return true;
-  if (action === 'C' && resource === 'users') return false; // hanya Admin atur tim
-  if (action === 'U') return role === 'advokat' || role === 'paralegal';
-  return false;
 }
