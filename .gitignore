@@ -12,3 +12,4 @@ dist/
 
 # Dokumen internal (PRD, task, prompt) — JANGAN masuk repo
 docs/
+apps/web/AGENTS.md
