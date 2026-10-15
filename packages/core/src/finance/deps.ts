@@ -1,0 +1,92 @@
+/**
+ * Pembaca data modul lain yang dipakai keuangan (Agent F).
+ *
+ * ponytail: ini adaptor SEMENTARA. Kontraknya sengaja sempit supaya mudah diganti saat
+ * `getCaseForUser` (D7) dan fungsi baca settings (C6) masuk main — lihat REQ-F1/REQ-F2.
+ * Keuangan hanya perlu info dasar, jadi tidak membawa aturan visibilitas perkara: otorisasi
+ * data keuangan lewat `can()` (invoice = Admin saja; honor = milik sendiri).
+ */
+import { eq, inArray } from 'drizzle-orm';
+import { caseMembers, cases, clients, settings } from '@ekasatra/db';
+import type { DbExecutor } from '../kernel/db-helpers';
+
+export interface CaseInfo {
+  id: string;
+  regNo: string;
+  title: string;
+  clientId: string;
+}
+
+export async function getCaseInfo(db: DbExecutor, caseId: string): Promise<CaseInfo | null> {
+  const [row] = await db
+    .select({ id: cases.id, regNo: cases.regNo, title: cases.title, clientId: cases.clientId })
+    .from(cases)
+    .where(eq(cases.id, caseId))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function getCaseInfos(
+  db: DbExecutor,
+  ids: readonly string[],
+): Promise<Map<string, CaseInfo>> {
+  if (ids.length === 0) return new Map();
+  const rows = await db
+    .select({ id: cases.id, regNo: cases.regNo, title: cases.title, clientId: cases.clientId })
+    .from(cases)
+    .where(inArray(cases.id, [...ids]));
+  return new Map(rows.map((r) => [r.id, r]));
+}
+
+export async function getClientNames(
+  db: DbExecutor,
+  ids: readonly string[],
+): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map();
+  const rows = await db
+    .select({ id: clients.id, name: clients.name })
+    .from(clients)
+    .where(inArray(clients.id, [...ids]));
+  return new Map(rows.map((r) => [r.id, r.name]));
+}
+
+/** Anggota tim perkara (unik; satu user boleh punya beberapa peran). */
+export async function getCaseMemberIds(db: DbExecutor, caseId: string): Promise<string[]> {
+  const rows = await db
+    .select({ userId: caseMembers.userId })
+    .from(caseMembers)
+    .where(eq(caseMembers.caseId, caseId));
+  return [...new Set(rows.map((r) => r.userId))];
+}
+
+export interface FinanceSettings {
+  kasPersen: number;
+  kasViewers: string[];
+  office: { name: string; address: string; phone: string; email: string; logoPath: string };
+}
+
+const DEFAULT_KAS_PERSEN = 20;
+
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+/** Baca setting yang dipakai keuangan; nilai hilang/rusak jatuh ke default PRD. */
+export async function getFinanceSettings(db: DbExecutor): Promise<FinanceSettings> {
+  const rows = await db.select().from(settings);
+  const map = new Map(rows.map((r) => [r.key, r.value]));
+  const persen = Number(map.get('kas_kantor_persen'));
+  const viewers = map.get('kas_viewers');
+  return {
+    kasPersen:
+      Number.isFinite(persen) && persen >= 0 && persen <= 100 ? persen : DEFAULT_KAS_PERSEN,
+    kasViewers: Array.isArray(viewers)
+      ? viewers.filter((v): v is string => typeof v === 'string')
+      : [],
+    office: {
+      name: str(map.get('office_name')),
+      address: str(map.get('office_address')),
+      phone: str(map.get('office_phone')),
+      email: str(map.get('office_email')),
+      logoPath: str(map.get('logo_path')),
+    },
+  };
+}
