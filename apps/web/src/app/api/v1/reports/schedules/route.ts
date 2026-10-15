@@ -32,7 +32,7 @@ export async function GET(req: Request) {
       { key: 'notes', label: 'Catatan' },
       { key: 'status', label: 'Status' },
     ];
-    const csvContent = exportToCsv(headers, data as any);
+    const csvContent = exportToCsv(headers, data);
 
     return new Response(csvContent, {
       status: 200,

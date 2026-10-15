@@ -101,17 +101,20 @@ export async function getCaseProgress(
  */
 export function exportToCsv(
   headers: { key: string; label: string }[],
-  data: Record<string, unknown>[],
+  data: readonly object[],
 ): string {
   const escapeCsv = (val: unknown): string => {
     if (val === null || val === undefined) return '""';
-    const str = String(val).replace(/"/g, '""');
+    let str = String(val);
+    // Cegah formula injection di Excel (sel teks diawali = + - @ tab CR).
+    if (typeof val === 'string' && /^[=+\-@\t\r]/.test(str)) str = `'${str}`;
+    str = str.replace(/"/g, '""');
     return `"${str}"`;
   };
 
   const headerRow = headers.map((h) => escapeCsv(h.label)).join(',');
   const rows = data.map((item) =>
-    headers.map((h) => escapeCsv(item[h.key])).join(','),
+    headers.map((h) => escapeCsv((item as Record<string, unknown>)[h.key])).join(','),
   );
 
   // \uFEFF adalah BOM (Byte Order Mark) agar karakter UTF-8 terbaca sempurna di Microsoft Excel

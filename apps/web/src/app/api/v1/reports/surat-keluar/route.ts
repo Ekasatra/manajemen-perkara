@@ -35,7 +35,7 @@ export async function GET(req: Request) {
       { key: 'signerName', label: 'Penandatangan' },
       { key: 'caseTitle', label: 'Perkara' },
     ];
-    const csvContent = exportToCsv(headers, data as any);
+    const csvContent = exportToCsv(headers, data);
 
     return new Response(csvContent, {
       status: 200,

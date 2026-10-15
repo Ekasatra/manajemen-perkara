@@ -48,7 +48,7 @@ export async function listInvoicesForReport(
     conditions.push(lte(invoices.invoiceDate, filter.endDate));
   }
   if (filter?.status) {
-    conditions.push(eq(invoices.status, filter.status as any));
+    conditions.push(eq(invoices.status, filter.status as (typeof invoices.$inferSelect)['status']));
   }
   if (filter?.clientId) {
     conditions.push(eq(invoices.clientId, filter.clientId));
@@ -190,7 +190,7 @@ export async function listHonorariumForReport(
     conditions.push(lte(honorTim.createdAt, new Date(filter.endDate)));
   }
   if (filter?.status) {
-    conditions.push(eq(honorTim.status, filter.status as any));
+    conditions.push(eq(honorTim.status, filter.status as (typeof honorTim.status.enumValues)[number]));
   }
   if (filter?.caseId) {
     conditions.push(eq(honorTim.caseId, filter.caseId));

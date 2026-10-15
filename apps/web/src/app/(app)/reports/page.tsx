@@ -12,13 +12,10 @@ export default async function ReportsPage() {
     const supabase = await createSupabaseServerClient();
     const user = await requireUser(db, supabase);
     ensureCan(user, 'R', 'reports');
-
-    return <ReportsView />;
-  } catch (err: any) {
-    if (err?.code === 'UNAUTHORIZED') {
-      redirect('/login');
-    }
-    if (err?.code === 'FORBIDDEN') {
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === 'UNAUTHORIZED') redirect('/login');
+    if (code === 'FORBIDDEN') {
       return (
         <div className="flex h-96 flex-col items-center justify-center text-center">
           <h2 className="text-xl font-bold text-navy-800">Akses Ditolak</h2>
@@ -30,5 +27,5 @@ export default async function ReportsPage() {
     }
     throw err;
   }
+  return <ReportsView />;
 }
-

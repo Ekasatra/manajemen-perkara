@@ -247,7 +247,7 @@ export async function listSuratMasukForReport(
     conditions.push(lte(suratMasuk.tglTerima, filter.endDate));
   }
   if (filter?.status) {
-    conditions.push(eq(suratMasuk.status, filter.status as any));
+    conditions.push(eq(suratMasuk.status, filter.status as (typeof suratMasuk.status.enumValues)[number]));
   }
   if (filter?.sifat) {
     conditions.push(eq(suratMasuk.sifat, filter.sifat));
@@ -296,10 +296,10 @@ export async function listSuratKeluarForReport(
     conditions.push(lte(suratKeluar.tglSurat, filter.endDate));
   }
   if (filter?.status) {
-    conditions.push(eq(suratKeluar.status, filter.status as any));
+    conditions.push(eq(suratKeluar.status, filter.status as (typeof suratKeluar.status.enumValues)[number]));
   }
   if (filter?.jenis) {
-    conditions.push(eq(suratKeluar.jenis, filter.jenis as any));
+    conditions.push(eq(suratKeluar.jenis, filter.jenis as (typeof suratKeluar.jenis.enumValues)[number]));
   }
   if (filter?.caseId) {
     conditions.push(eq(suratKeluar.caseId, filter.caseId));

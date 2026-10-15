@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- mock Drizzle/transport */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/settings/read', () => ({ getSetting: vi.fn(async (_d, k, def) => settingsMock[k] ?? def) }));

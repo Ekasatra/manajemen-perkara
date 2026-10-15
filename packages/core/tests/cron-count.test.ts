@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- mock Drizzle/transport */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const notifyMock = vi.fn();

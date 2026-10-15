@@ -5,13 +5,19 @@ import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 
 export type ReportTab = 'cases' | 'surat-masuk' | 'surat-keluar' | 'honorarium' | 'schedules';
 
+/** Baris laporan beragam per tab; hanya nilai skalar yang dirender. */
+interface ReportRow {
+  id: string;
+  [field: string]: string | number | null | undefined;
+}
+
 export function ReportsView() {
   const [tab, setTab] = useState<ReportTab>('cases');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ReportRow[]>([]);
 
   const fetchReport = async () => {
     setLoading(true);
@@ -36,7 +42,7 @@ export function ReportsView() {
   };
 
   useEffect(() => {
-    setStatus('');
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- muat ulang saat ganti tab
     fetchReport();
   }, [tab]);
 
@@ -96,7 +102,10 @@ export function ReportsView() {
           ].map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id as ReportTab)}
+              onClick={() => {
+                setTab(t.id as ReportTab);
+                setStatus('');
+              }}
               className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
                 tab === t.id
                   ? 'border-navy-700 text-navy-800'
@@ -311,8 +320,8 @@ export function ReportsView() {
                           {h.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{h.publishedAt?.slice(0, 10) || '-'}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{h.paidAt?.slice(0, 10) || '-'}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500">{String(h.publishedAt ?? '').slice(0, 10) || '-'}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500">{String(h.paidAt ?? '').slice(0, 10) || '-'}</td>
                     </tr>
                   ))
                 )}

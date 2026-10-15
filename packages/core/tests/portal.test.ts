@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- mock Drizzle/transport */
 import { describe, expect, it, vi } from 'vitest';
 import {
   validateClientPortalAccess,
