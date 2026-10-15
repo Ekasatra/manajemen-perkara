@@ -8,7 +8,8 @@
     "./cases": "./src/cases/index.ts",
     "./finance": "./src/finance/index.ts",
     "./honor-tim": "./src/honor-tim/index.ts",
-    "./invoices": "./src/invoices/index.ts"
+    "./invoices": "./src/invoices/index.ts",
+    "./surat": "./src/surat/index.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
