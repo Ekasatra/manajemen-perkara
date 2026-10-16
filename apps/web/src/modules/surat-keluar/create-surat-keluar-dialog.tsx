@@ -45,7 +45,7 @@ export function CreateSuratKeluarDialog({
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={buttonClass.primary}>
-        Buat Surat Keluar
+        Unggah Surat
       </button>
       <FormDialog
         open={open}

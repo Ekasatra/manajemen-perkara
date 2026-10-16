@@ -114,6 +114,8 @@ export interface ListSuratKeluarQuery {
   status?: SuratKeluarStatus | null;
   jenis?: 'Perkara' | 'Instansi' | null;
   caseId?: string | null;
+  /** true → hanya yang sedang menunggu tindakan user (review atau tanda tangan). */
+  waiting?: boolean;
   page: { pageSize: number; offset: number };
 }
 
@@ -146,6 +148,11 @@ export async function listSuratKeluar(
   if (query.status) conds.push(eq(suratKeluar.status, query.status));
   if (query.jenis) conds.push(eq(suratKeluar.jenis, query.jenis));
   if (query.caseId) conds.push(eq(suratKeluar.caseId, query.caseId));
+  if (query.waiting) {
+    conds.push(
+      sql`((${suratKeluar.status} = 'Review' and ${suratKeluar.reviewerId} = ${user.userId}) or (${suratKeluar.status} = 'Siap_TTD' and ${suratKeluar.signerId} = ${user.userId}))`,
+    );
+  }
   if (query.q) {
     const like = `%${query.q}%`;
     conds.push(

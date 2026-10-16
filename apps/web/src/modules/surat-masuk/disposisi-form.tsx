@@ -51,34 +51,51 @@ export function DisposisiForm({
       }}
     >
       <div>
-        <label htmlFor="ds-to" className={labelClass}>Disposisi kepada</label>
+        <label htmlFor="ds-to" className={labelClass}>
+          Diteruskan kepada
+        </label>
         <select id="ds-to" name="assignedTo" defaultValue={assignedTo ?? ''} className={inputClass}>
-          <option value="">Pilih penerima disposisi</option>
+          <option value="">— Pilih —</option>
           {staff.map((s) => (
-            <option key={s.id} value={s.id}>{s.label}</option>
+            <option key={s.id} value={s.id}>
+              {s.label}
+            </option>
           ))}
         </select>
       </div>
       <div>
-        <label htmlFor="ds-note" className={labelClass}>Catatan</label>
-        <textarea id="ds-note" name="disposisiNote" rows={2} defaultValue={note ?? ''} className={inputClass} />
+        <label htmlFor="ds-note" className={labelClass}>
+          Instruksi
+        </label>
+        <textarea
+          id="ds-note"
+          name="disposisiNote"
+          rows={3}
+          placeholder="mis. Mohon ditindaklanjuti & disiapkan jawaban"
+          defaultValue={note ?? ''}
+          className={inputClass}
+        />
       </div>
       <div className="flex gap-2">
         <button type="submit" disabled={busy} className={buttonClass.primary}>
-          Simpan disposisi
+          Simpan Disposisi
         </button>
         {status !== 'Selesai' ? (
           <button
             type="button"
             disabled={busy}
             onClick={() => void patch({ status: 'Selesai' })}
-            className={buttonClass.secondary}
+            className={`${buttonClass.primary} bg-success-fg! text-on-danger!`}
           >
-            Tandai selesai
+            Tandai Selesai
           </button>
         ) : null}
       </div>
-      {error ? <p role="alert" className="text-sm text-danger-fg">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-sm text-danger-fg">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

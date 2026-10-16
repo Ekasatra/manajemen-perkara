@@ -2,7 +2,7 @@
  * Service surat masuk (Agent E · E1) — PRD §5.5.
  * Disposisi: mengisi `assigned_to` pada surat Belum → otomatis Didisposisi + email.
  */
-import { and, count, desc, eq, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, inArray, isNull, lte, or, type SQL } from 'drizzle-orm';
 import { suratMasuk } from '@ekasatra/db';
 import { notFound, validationError } from '@ekasatra/shared';
 import type { AuthContext } from '../kernel/auth';
@@ -188,6 +188,10 @@ export interface ListSuratMasukQuery {
   caseId?: string | null;
   /** true → hanya yang didisposisikan kepada user. */
   mine?: boolean;
+  sifat?: string | null;
+  /** Rentang tanggal terima (YYYY-MM-DD), batas dalam. */
+  from?: string | null;
+  to?: string | null;
   page: { pageSize: number; offset: number };
 }
 
@@ -215,6 +219,9 @@ export async function listSuratMasuk(
   if (query.status) conds.push(eq(suratMasuk.status, query.status));
   if (query.caseId) conds.push(eq(suratMasuk.caseId, query.caseId));
   if (query.mine) conds.push(eq(suratMasuk.assignedTo, user.userId));
+  if (query.sifat) conds.push(eq(suratMasuk.sifat, query.sifat));
+  if (query.from) conds.push(gte(suratMasuk.tglTerima, query.from));
+  if (query.to) conds.push(lte(suratMasuk.tglTerima, query.to));
   if (query.q) {
     const like = `%${query.q}%`;
     conds.push(
