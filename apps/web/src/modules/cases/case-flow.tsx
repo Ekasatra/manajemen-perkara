@@ -69,16 +69,22 @@ export function CaseFlow({
             <li
               key={s}
               aria-current={state === 'current' ? 'step' : undefined}
-              className="flex items-start gap-3 md:flex-col md:gap-2"
+              className={`relative flex items-start gap-3 md:flex-col md:items-center md:gap-2 md:text-center ${
+                i > 0
+                  ? `md:before:absolute md:before:-left-1/2 md:before:right-1/2 md:before:top-3 md:before:h-0.5 ${
+                      state === 'pending' ? 'md:before:bg-navy-200' : 'md:before:bg-navy-700'
+                    }`
+                  : ''
+              }`}
             >
               <span
                 aria-hidden="true"
-                className={`flex size-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums ${
+                className={`relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold tabular-nums ${
                   state === 'done'
-                    ? 'border-gold-500 bg-gold-500 text-on-primary'
+                    ? 'border-navy-700 bg-navy-700 text-surface'
                     : state === 'current'
-                      ? 'border-gold-500 text-gold-700'
-                      : 'border-navy-300 text-navy-400'
+                      ? 'border-gold-500 bg-gold-500 text-white ring-4 ring-gold-500/20'
+                      : 'border-navy-200 bg-surface text-navy-400'
                 }`}
               >
                 {i + 1}

@@ -27,7 +27,7 @@ import {
   updateSuratMasuk,
   type NotifyInput,
   type SuratDeps,
-  tempCaseLookup,
+  caseLookup,
 } from '../../src/surat';
 
 const url = process.env.TEST_DATABASE_URL;
@@ -55,7 +55,7 @@ const other = ctx(ids.other, 'advokat', 'Advokat B');
 
 const sent: NotifyInput[] = [];
 const deps: SuratDeps = {
-  cases: tempCaseLookup,
+  cases: caseLookup,
   notifier: { notify: async (n) => void sent.push(n) },
 };
 

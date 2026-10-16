@@ -53,7 +53,7 @@ export function CreateUserDialog() {
           <label htmlFor="cu-email" className={labelClass}>
             Email
           </label>
-          <input id="cu-email" name="email" type="email" required className={inputClass} />
+          <input id="cu-email" name="email" type="email" autoComplete="off" required className={inputClass} />
         </div>
         <div>
           <label htmlFor="cu-role" className={labelClass}>
@@ -73,6 +73,7 @@ export function CreateUserDialog() {
             id="cu-pass"
             name="password"
             type="password"
+            autoComplete="new-password"
             required
             minLength={8}
             className={inputClass}

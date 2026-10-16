@@ -3,7 +3,7 @@
  * Tab: Ringkasan, Timeline, Jadwal, Dokumen, Surat, Biaya (Admin).
  * Surat & biaya read-only — data dari fungsi baca modul E/F.
  */
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import {
   createDb,
   cases,
@@ -12,6 +12,7 @@ import {
   caseDocuments,
   clients,
   opponents,
+  profiles,
 } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import {
@@ -107,6 +108,15 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
       : null,
   ]);
 
+  // Pilihan anggota tim: hanya untuk yang boleh mengatur tim (Admin).
+  const staffOptions = canManageTeam
+    ? await db
+        .select({ id: profiles.id, name: profiles.fullName, role: profiles.role })
+        .from(profiles)
+        .where(and(eq(profiles.isActive, true)))
+        .orderBy(asc(profiles.fullName))
+    : [];
+
   // Tab Surat: surat masuk & keluar untuk perkara ini (read-only).
   const [suratMasuk, suratKeluar] = await Promise.all([
     listSuratMasukForReport(db, { caseId: id }),
@@ -172,6 +182,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         canUpdate={canUpdate}
         canManageTeam={canManageTeam}
         canViewBiaya={canViewBiaya}
+        staffOptions={staffOptions}
       />
     </div>
   );

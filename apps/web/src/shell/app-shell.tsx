@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { Bell, Calendar, CircleUser, LogOut, Menu, X } from 'lucide-react';
 import { APP_NAME, Brand } from '@/components/ui/brand';
+import { avatarColor } from '@/lib/avatar';
 import { NAV_ICONS } from './nav-icons';
 import type { NavIconName } from './nav-icons';
 import { ThemeToggle } from './theme-toggle';
@@ -14,8 +15,15 @@ import { ToastProvider } from './toast';
 /**
  * Satu entri sidebar. Daftar entri dirakit di layout lalu dikelompokkan berdasarkan `group`
  * (entri berurutan dengan group sama membentuk satu kelompok; tanpa group = di atas).
+ * `badge: 'approvals'` menampilkan jumlah surat yang menunggu persetujuan pengguna.
  */
-export type NavItem = { label: string; href: string; icon?: NavIconName; group?: string };
+export type NavItem = {
+  label: string;
+  href: string;
+  icon?: NavIconName;
+  group?: string;
+  badge?: 'approvals';
+};
 
 /** Identitas pengguna yang sedang masuk, dibaca dari sesi di server (bukan karangan antarmuka). */
 export type Viewer = { name: string; email: string; roleLabel: string };
@@ -45,6 +53,36 @@ function toSections(nav: NavItem[]): NavSection[] {
 }
 
 const LOGOUT_PATH = '/api/v1/auth/logout';
+const NOTIF_PATH = '/api/v1/notifications?ringkas=1';
+const TODAY_FORMAT = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Asia/Jakarta',
+});
+
+/** Jumlah pemberitahuan dan surat menunggu persetujuan; dimuat setelah halaman tampil agar tidak menahan render. */
+function useShellCounts() {
+  const [counts, setCounts] = useState({ notif: 0, approvals: 0 });
+  useEffect(() => {
+    let cancelled = false;
+    fetch(NOTIF_PATH)
+      .then((r) => r.json())
+      .then((body) => {
+        if (cancelled || !body?.ok) return;
+        setCounts({
+          notif: Array.isArray(body.data?.notifications) ? body.data.notifications.length : 0,
+          approvals: Number(body.data?.approvalCount ?? 0),
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return counts;
+}
 
 export function AppShell({
   nav,
@@ -58,7 +96,7 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const counts = useShellCounts();
 
   useEffect(() => {
     if (!open) return;
@@ -77,8 +115,22 @@ export function AppShell({
   const current = nav
     .filter((item) => isActive(pathname, item.href))
     .sort((a, b) => b.href.length - a.href.length)[0];
-  // Label disembunyikan hanya pada sidebar desktop yang dilipat; drawer mobile selalu penuh.
-  const hideLabel = collapsed ? 'md:sr-only' : '';
+  const notifLabel = counts.notif > 9 ? '9+' : String(counts.notif);
+
+  const bell = (
+    <Link
+      href="/#pemberitahuan"
+      aria-label={counts.notif ? `Pemberitahuan, ${counts.notif} baru` : 'Pemberitahuan'}
+      className="relative inline-flex size-10 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800 md:size-9"
+    >
+      <Bell aria-hidden="true" size={18} />
+      {counts.notif ? (
+        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold-500 px-1 text-[10px] font-bold text-white">
+          {notifLabel}
+        </span>
+      ) : null}
+    </Link>
+  );
 
   return (
     <ToastProvider>
@@ -89,52 +141,37 @@ export function AppShell({
         Lewati ke konten
       </a>
 
-      <header className="flex items-center gap-3 border-b border-navy-200 bg-surface px-4 py-2 md:hidden print:hidden">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls="sidebar"
-          onClick={() => setOpen(true)}
-          className="inline-flex min-h-11 items-center gap-2 rounded-control border border-navy-300 px-3 text-sm font-medium text-navy-700"
-        >
-          <Menu aria-hidden="true" size={18} />
-          Menu
-        </button>
-        <Brand variant="compact" className="text-navy-700" />
-        <ThemeToggle className="ml-auto" />
-      </header>
-
       {open ? (
         <div
           aria-hidden="true"
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-20 bg-navy-900/50 md:hidden"
+          className="fixed inset-0 z-30 bg-navy-950/40 lg:hidden"
         />
       ) : null}
 
       <aside
         id="sidebar"
-        className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-chrome-line bg-chrome text-chrome-fg transition-transform md:translate-x-0 print:hidden ${
-          collapsed ? 'md:w-16' : ''
-        } ${open ? 'translate-x-0' : 'max-md:invisible max-md:-translate-x-full'}`}
+        className={`sidebar-surface inset-y-0 left-0 z-40 flex w-[268px] flex-col text-white transition-transform duration-200 lg:translate-x-0 print:hidden ${
+          open ? 'translate-x-0' : 'max-lg:invisible max-lg:-translate-x-full'
+        }`}
       >
-        <div className="flex items-center justify-between px-4 py-5">
-          <Brand className={`text-gold-300 ${collapsed ? 'md:sr-only' : ''}`} />
+        <div className="relative z-10 flex items-center justify-between border-b border-white/10 px-5 pb-5 pt-6">
+          <Brand light />
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="inline-flex min-h-11 items-center gap-1 rounded-control px-2 text-sm text-chrome-fg hover:text-white focus-visible:outline-gold-300 md:hidden"
+            aria-label="Tutup menu"
+            className="inline-flex size-10 items-center justify-center rounded-control text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-gold-300 lg:hidden"
           >
             <X aria-hidden="true" size={18} />
-            Tutup
           </button>
         </div>
 
-        <nav aria-label="Menu utama" className="flex-1 overflow-y-auto px-3 pb-4">
+        <nav aria-label="Menu utama" className="relative z-10 flex-1 overflow-y-auto px-3 py-4">
           {sections.map((section, i) => (
-            <div key={section.group ?? `top-${i}`} className={i > 0 ? 'mt-4' : ''}>
+            <div key={section.group ?? `top-${i}`} className={i > 0 ? 'mt-5' : ''}>
               {section.group ? (
-                <p className={`px-3 pb-1 text-xs font-semibold text-chrome-fg ${hideLabel}`}>
+                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45">
                   {section.group}
                 </p>
               ) : null}
@@ -142,20 +179,26 @@ export function AppShell({
                 {section.items.map((item) => {
                   const active = isActive(pathname, item.href);
                   const Icon = item.icon ? NAV_ICONS[item.icon] : null;
+                  const badge = item.badge === 'approvals' ? counts.approvals : 0;
                   return (
                     <li key={item.href}>
                       <Link
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
                         onClick={() => setOpen(false)}
-                        className={`flex min-h-11 items-center gap-3 rounded-r-control border-l-2 px-3 py-2 text-sm focus-visible:outline-gold-300 md:min-h-9 ${
+                        className={`flex min-h-11 items-center gap-3 rounded-control px-3 py-2.5 text-sm transition focus-visible:outline-gold-300 ${
                           active
-                            ? 'border-gold-500 bg-chrome-active font-medium text-gold-300'
-                            : 'border-transparent text-chrome-fg hover:bg-chrome-hover hover:text-white'
+                            ? 'bg-linear-to-r from-gold-500/90 to-gold-600/80 text-white shadow-lg'
+                            : 'text-white/75 hover:bg-white/10 hover:text-white'
                         }`}
                       >
                         {Icon ? <Icon aria-hidden="true" size={18} className="shrink-0" /> : null}
-                        <span className={hideLabel}>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
+                        {badge ? (
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-[11px] font-bold text-white">
+                            {badge}
+                          </span>
+                        ) : null}
                       </Link>
                     </li>
                   );
@@ -165,66 +208,68 @@ export function AppShell({
           ))}
         </nav>
 
-        <div className="flex flex-col gap-0.5 border-t border-chrome-line px-3 py-3">
-          <button
-            type="button"
-            onClick={logout}
-            className="flex min-h-11 items-center gap-3 rounded-control px-3 py-2 text-sm text-chrome-fg hover:bg-chrome-hover hover:text-white focus-visible:outline-gold-300 md:min-h-9"
-          >
-            <LogOut aria-hidden="true" size={18} className="shrink-0" />
-            <span className={hideLabel}>Keluar</span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={collapsed}
-            onClick={() => setCollapsed((v) => !v)}
-            className="hidden min-h-9 items-center gap-3 rounded-control px-3 py-2 text-sm text-chrome-fg hover:bg-chrome-hover hover:text-white focus-visible:outline-gold-300 md:flex"
-          >
-            {collapsed ? (
-              <PanelLeftOpen aria-hidden="true" size={18} className="shrink-0" />
-            ) : (
-              <PanelLeftClose aria-hidden="true" size={18} className="shrink-0" />
-            )}
-            <span className={hideLabel}>Ciutkan menu</span>
-          </button>
-        </div>
+        {viewer ? (
+          <div className="relative z-10 border-t border-white/10 p-3">
+            <div className="flex items-center gap-3 rounded-control bg-white/10 p-3 backdrop-blur">
+              <span
+                aria-hidden="true"
+                className={`flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ring-2 ring-white ${avatarColor(viewer.name)}`}
+              >
+                {initials(viewer.name)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{viewer.name}</p>
+                <p className="text-[11px] text-gold-300">{viewer.roleLabel}</p>
+              </div>
+              <button
+                type="button"
+                onClick={logout}
+                title="Keluar"
+                aria-label="Keluar"
+                className="inline-flex size-9 items-center justify-center rounded-control text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-gold-300"
+              >
+                <LogOut aria-hidden="true" size={18} />
+              </button>
+            </div>
+          </div>
+        ) : null}
       </aside>
 
-      <div className={`print:ml-0 ${collapsed ? 'md:ml-16' : 'md:ml-64'}`}>
-        <div className="sticky top-0 z-10 hidden h-14 items-center justify-between gap-4 border-b border-navy-200 bg-navy-50 px-6 md:flex print:hidden">
-          <p className="min-w-0 truncate text-sm text-navy-400">
-            {current?.group && current.group !== current.label ? (
-              <>
-                {current.group}
-                <span aria-hidden="true"> / </span>
-              </>
-            ) : null}
-            <span className="font-medium text-navy-800">{current?.label ?? APP_NAME}</span>
-          </p>
-          <div className="flex shrink-0 items-center gap-3">
+      <div className="min-w-0 lg:pl-[268px] print:pl-0">
+        <header className="sticky top-0 z-20 print:hidden">
+          <div className="card-surface mx-3 mt-3 flex items-center gap-3 px-3 py-2.5 sm:mx-6 sm:px-4">
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls="sidebar"
+              aria-label="Buka menu"
+              onClick={() => setOpen(true)}
+              className="inline-flex size-10 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100 lg:hidden"
+            >
+              <Menu aria-hidden="true" size={18} />
+            </button>
+            <p className="min-w-0 flex-1 truncate text-xs text-navy-400">
+              <span className="font-semibold text-navy-800">{APP_NAME.toUpperCase()}</span>
+              <span aria-hidden="true"> / </span>
+              {current?.label ?? ''}
+            </p>
+            <span className="hidden items-center gap-2 rounded-control bg-navy-50 px-2 py-1 text-xs text-navy-500 md:flex">
+              <Calendar aria-hidden="true" size={15} />
+              {TODAY_FORMAT.format(new Date())}
+            </span>
             <ThemeToggle />
-            {viewer ? (
-              <>
-                {viewer.roleLabel ? (
-                  <span className="rounded-control border border-gold-500 px-2 py-0.5 text-xs font-medium text-gold-700">
-                    {viewer.roleLabel}
-                  </span>
-                ) : null}
-                <div className="text-right leading-tight">
-                  <p className="text-sm font-medium text-navy-800">{viewer.name}</p>
-                  <p className="text-xs text-navy-400">{viewer.email}</p>
-                </div>
-                <span
-                  aria-hidden="true"
-                  className="flex size-9 items-center justify-center rounded-full border border-navy-200 bg-navy-100 text-sm font-semibold text-navy-700"
-                >
-                  {initials(viewer.name)}
-                </span>
-              </>
-            ) : null}
+            {bell}
+            <Link
+              href="/profil"
+              aria-label="Profil Saya"
+              title="Profil Saya"
+              className="inline-flex size-10 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800 md:size-9"
+            >
+              <CircleUser aria-hidden="true" size={18} />
+            </Link>
           </div>
-        </div>
-        <main id="konten" className="min-h-screen p-4 md:p-6 print:m-0 print:p-0">
+        </header>
+        <main id="konten" className="min-h-screen p-3 pb-16 sm:p-6 sm:pb-16 print:m-0 print:p-0">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

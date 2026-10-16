@@ -3,6 +3,7 @@ import { can, requireUser } from '@ekasatra/core';
 import type { PolicyUser, Resource } from '@ekasatra/core';
 import { createDb } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { ROLE_LABEL } from '@/lib/role-label';
 import { AppShell } from '@/shell/app-shell';
 import type { NavItem, Viewer } from '@/shell/app-shell';
 
@@ -14,60 +15,88 @@ type NavEntry = NavItem & { resource?: Resource };
 
 // Kelompok menu memakai istilah yang sama dengan modul di PRD. Urutan array = urutan tampil.
 const NAV: NavEntry[] = [
-  { label: 'Beranda', href: '/', icon: 'home' },
-  { label: 'Perkara', href: '/cases', icon: 'cases', group: 'Perkara', resource: 'cases' },
+  { label: 'Dashboard', href: '/', icon: 'home', group: 'Utama' },
   {
     label: 'Surat Masuk',
     href: '/surat-masuk',
     icon: 'suratMasuk',
-    group: 'Surat',
+    group: 'Korespondensi',
     resource: 'surat_masuk',
   },
   {
     label: 'Surat Keluar',
     href: '/surat-keluar',
     icon: 'suratKeluar',
-    group: 'Surat',
+    group: 'Korespondensi',
     resource: 'surat_keluar',
+    badge: 'approvals',
   },
   {
     label: 'Template Surat',
     href: '/templates',
     icon: 'templates',
-    group: 'Surat',
+    group: 'Korespondensi',
     resource: 'templates',
   },
+  { label: 'Perkara', href: '/cases', icon: 'cases', group: 'Perkara', resource: 'cases' },
   {
-    label: 'Invoice',
+    label: 'Jadwal Sidang',
+    href: '/jadwal',
+    icon: 'schedule',
+    group: 'Perkara',
+    resource: 'schedules',
+  },
+  { label: 'Klien', href: '/clients', icon: 'clients', group: 'Perkara', resource: 'clients' },
+  {
+    label: 'Pihak Lawan',
+    href: '/opponents',
+    icon: 'opponents',
+    group: 'Perkara',
+    resource: 'opponents',
+  },
+  {
+    label: 'Dokumen & Drive',
+    href: '/dokumen',
+    icon: 'documents',
+    group: 'Perkara',
+    resource: 'case_documents',
+  },
+  {
+    label: 'Biaya Perkara',
     href: '/invoices',
     icon: 'invoices',
-    group: 'Keuangan',
+    group: 'Perkara',
     resource: 'invoices',
   },
   {
     label: 'Honor Tim',
     href: '/honor-tim',
     icon: 'honorTim',
-    group: 'Keuangan',
+    group: 'Perkara',
     resource: 'honor_tim',
-  },
-  { label: 'Laporan', href: '/reports', icon: 'reports', group: 'Keuangan', resource: 'reports' },
-  { label: 'Klien', href: '/clients', icon: 'clients', group: 'Master Data', resource: 'clients' },
-  {
-    label: 'Pihak Lawan',
-    href: '/opponents',
-    icon: 'opponents',
-    group: 'Master Data',
-    resource: 'opponents',
   },
   {
     label: 'Data Advokat',
     href: '/advocates',
     icon: 'advocates',
-    group: 'Master Data',
+    group: 'Tim',
     resource: 'advocates',
   },
-  { label: 'Pengguna', href: '/users', icon: 'users', group: 'Sistem', resource: 'users' },
+  {
+    label: 'Laporan & Export',
+    href: '/reports',
+    icon: 'reports',
+    group: 'Analitik',
+    resource: 'reports',
+  },
+  { label: 'Audit Log', href: '/audit', icon: 'audit', group: 'Analitik', resource: 'audit_log' },
+  {
+    label: 'Manajemen User',
+    href: '/users',
+    icon: 'users',
+    group: 'Sistem',
+    resource: 'users',
+  },
   {
     label: 'Pengaturan',
     href: '/settings',
@@ -75,15 +104,9 @@ const NAV: NavEntry[] = [
     group: 'Sistem',
     resource: 'settings',
   },
-  { label: 'Audit Log', href: '/audit', icon: 'audit', group: 'Sistem', resource: 'audit_log' },
+  { label: 'Profil Saya', href: '/profil', icon: 'profile', group: 'Sistem' },
 ];
 
-const ROLE_LABEL: Record<string, string> = {
-  superadmin: 'Super Admin',
-  admin: 'Admin',
-  advokat: 'Advokat',
-  paralegal: 'Paralegal',
-};
 
 /** Sesi tidak valid tidak dilempar dari sini: tiap halaman sudah mengarahkan ke /login sendiri. */
 async function loadViewer() {

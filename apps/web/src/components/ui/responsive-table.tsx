@@ -47,22 +47,22 @@ export function ResponsiveTable<T>({
       <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm tabular-nums">
           <caption className="sr-only">{caption}</caption>
-          <thead className="border-b border-navy-200 bg-navy-50 text-navy-600">
+          <thead className="border-b border-navy-100 bg-navy-50/50 text-navy-400">
             <tr>
               {columns.map((c) => (
                 <th
                   key={c.key}
                   scope="col"
-                  className={`whitespace-nowrap px-4 py-3 text-xs font-semibold ${c.align === 'right' ? 'text-right' : ''}`}
+                  className={`whitespace-nowrap px-4 py-3 text-[11px] font-semibold uppercase tracking-wider ${c.align === 'right' ? 'text-right' : ''}`}
                 >
                   {c.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-navy-100">
+          <tbody className="divide-y divide-navy-50">
             {rows.map((row) => (
-              <tr key={rowKey(row)} className="hover:bg-navy-50">
+              <tr key={rowKey(row)} className="transition hover:bg-gold-50/40">
                 {columns.map((c) => (
                   <td
                     key={c.key}

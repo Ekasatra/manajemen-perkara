@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { APP_NAME, Brand } from '@/components/ui/brand';
+import { APP_NAME } from '@/components/ui/brand';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 
 export function SetupForm() {
@@ -40,14 +40,9 @@ export function SetupForm() {
   }
 
   return (
-    <div className="rounded-card border border-navy-200 bg-surface p-8">
-      <Brand variant="compact" className="text-navy-400" />
-      <h1 className="mt-2 text-title font-semibold text-navy-700">Setup Admin</h1>
-      <div aria-hidden="true" className="mt-3">
-        <div className="h-px w-full bg-gold-500" />
-        <div className="mt-0.5 h-px w-16 bg-gold-500" />
-      </div>
-      <p className="mt-3 text-sm text-navy-400">
+    <div className="card-surface p-7 sm:p-8">
+      <h1 className="font-display text-2xl font-semibold text-navy-800">Buat Akun Admin</h1>
+      <p className="mt-1 text-sm text-navy-400">
         Buat akun Admin pertama untuk mulai menggunakan {APP_NAME}.
       </p>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">

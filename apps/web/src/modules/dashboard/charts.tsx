@@ -1,58 +1,68 @@
 /**
- * Grafik batang dari div + token. Semua warna dari token; tiap segmen punya label teks
- * dan angka di legenda, jadi makna tidak hanya lewat warna (R-25).
+ * Grafik gaya GAS tanpa pustaka: donat (perkara per status) dan batang berkelompok (surat 6 bulan).
+ * Warna dari token sehingga ikut berganti di tema gelap; tiap data punya label teks/angka (R-25).
  */
+const SLICE_STROKE = [
+  'stroke-navy-700',
+  'stroke-gold-500',
+  'stroke-navy-500',
+  'stroke-gold-300',
+  'stroke-navy-300',
+  'stroke-navy-200',
+] as const;
+const SLICE_FILL = [
+  'bg-navy-700',
+  'bg-gold-500',
+  'bg-navy-500',
+  'bg-gold-300',
+  'bg-navy-300',
+  'bg-navy-200',
+] as const;
 
-/** Warna segmen per status perkara. Status tak dikenal memakai FALLBACK. */
-const STATUS_FILL: Record<string, string> = {
-  Aktif: 'bg-navy-700',
-  Selesai: 'bg-success-fg',
-  Tutup: 'bg-navy-300',
-  Banding: 'bg-gold-500',
-  Kasasi: 'bg-gold-700',
-  PK: 'bg-navy-400',
-};
-const STATUS_FILL_FALLBACK = 'bg-navy-200';
+const R = 40;
+const CIRC = 2 * Math.PI * R;
 
-export function CasesStatusChart({ byStatus }: { byStatus: { status: string; count: number }[] }) {
-  const total = byStatus.reduce((sum, item) => sum + item.count, 0);
-
+export function StatusDonut({ byStatus }: { byStatus: { status: string; count: number }[] }) {
+  const items = byStatus.filter((s) => s.count > 0);
+  const total = items.reduce((n, s) => n + s.count, 0);
   if (total === 0) {
     return (
-      <p className="flex h-32 items-center justify-center text-sm text-navy-400">
+      <p className="flex h-60 items-center justify-center text-sm text-navy-400">
         Belum ada perkara tercatat.
       </p>
     );
   }
-
+  // Awal tiap irisan = jumlah panjang irisan sebelumnya (dihitung murni, tanpa mengubah variabel saat render).
+  const lens = items.map((s) => (s.count / total) * CIRC);
+  const starts = lens.map((_, i) => lens.slice(0, i).reduce((n, v) => n + v, 0));
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex h-3 w-full gap-px overflow-hidden rounded-control bg-navy-100">
-        {byStatus.map((item) =>
-          item.count === 0 ? null : (
-            <div
-              key={item.status}
-              style={{ width: `${(item.count / total) * 100}%` }}
-              className={`h-full ${STATUS_FILL[item.status] ?? STATUS_FILL_FALLBACK}`}
+    <div className="flex h-60 items-center gap-6">
+      <svg viewBox="0 0 100 100" role="img" aria-label={`Perkara per status, total ${total}`} className="h-full max-h-56 shrink-0">
+        <g transform="rotate(-90 50 50)">
+          {items.map((s, i) => (
+            <circle
+              key={s.status}
+              cx="50"
+              cy="50"
+              r={R}
+              fill="none"
+              strokeWidth="14"
+              strokeDasharray={`${lens[i]} ${CIRC - (lens[i] ?? 0)}`}
+              strokeDashoffset={-(starts[i] ?? 0)}
+              className={SLICE_STROKE[i % SLICE_STROKE.length]}
             />
-          ),
-        )}
-      </div>
-
-      <ul className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-        {byStatus.map((item) => (
-          <li key={item.status} className="flex items-center gap-2 text-sm">
-            <span
-              aria-hidden="true"
-              className={`size-3 shrink-0 rounded-control ${STATUS_FILL[item.status] ?? STATUS_FILL_FALLBACK}`}
-            />
-            <span className="text-navy-700">{item.status}</span>
-            <span className="ml-auto font-medium tabular-nums text-navy-800">
-              {item.count}{' '}
-              <span className="font-normal text-navy-400">
-                ({Math.round((item.count / total) * 100)}%)
-              </span>
-            </span>
+          ))}
+        </g>
+        <text x="50" y="52" textAnchor="middle" className="fill-navy-800 text-[14px] font-bold">
+          {total}
+        </text>
+      </svg>
+      <ul className="min-w-0 flex-1 space-y-2 text-xs">
+        {items.map((s, i) => (
+          <li key={s.status} className="flex items-center gap-2">
+            <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-sm ${SLICE_FILL[i % SLICE_FILL.length]}`} />
+            <span className="text-navy-700">{s.status}</span>
+            <span className="ml-auto font-semibold tabular-nums text-navy-800">{s.count}</span>
           </li>
         ))}
       </ul>
@@ -60,45 +70,54 @@ export function CasesStatusChart({ byStatus }: { byStatus: { status: string; cou
   );
 }
 
-export function SuratTrendChart({
-  trend6Bulan,
+/** Field `month` berisi label seperti "Okt 2026"; grafik hanya menampilkan nama bulannya. */
+function monthLabel(m: string): string {
+  return m.split(' ')[0] ?? m;
+}
+
+export function MailBars({
+  trend,
 }: {
-  trend6Bulan: { month: string; suratMasuk: number; suratKeluar: number }[];
+  trend: { month: string; suratMasuk: number; suratKeluar: number }[];
 }) {
-  const maxVal = Math.max(1, ...trend6Bulan.map((t) => Math.max(t.suratMasuk, t.suratKeluar)));
-
+  const max = Math.max(4, ...trend.flatMap((t) => [t.suratMasuk, t.suratKeluar]));
+  const ticks = [max, Math.round((max * 2) / 3), Math.round(max / 3), 0];
   return (
-    <div className="flex flex-col gap-3">
-      <ul className="flex items-center justify-end gap-4 text-xs text-navy-700">
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="size-3 rounded-control bg-navy-700" />
-          Surat masuk
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="size-3 rounded-control bg-gold-500" />
-          Surat keluar
-        </li>
-      </ul>
-
-      <div className="flex gap-3 border-b border-navy-200 pb-2">
-        {trend6Bulan.map((item) => (
-          <div key={item.month} className="flex flex-1 flex-col items-center gap-1">
-            <div className="flex h-36 w-full items-end justify-center gap-1">
-              <div
-                style={{ height: `${(item.suratMasuk / maxVal) * 100}%` }}
-                className="min-h-px w-full max-w-4 rounded-t-control bg-navy-700"
-              />
-              <div
-                style={{ height: `${(item.suratKeluar / maxVal) * 100}%` }}
-                className="min-h-px w-full max-w-4 rounded-t-control bg-gold-500"
-              />
-            </div>
-            <span className="text-xs font-medium text-navy-700">{item.month}</span>
-            <span className="text-xs tabular-nums text-navy-400">
-              {item.suratMasuk} / {item.suratKeluar}
-            </span>
-          </div>
-        ))}
+    <div>
+      <div className="mb-2 flex justify-center gap-4 text-[11px] text-navy-600">
+        <span className="flex items-center gap-1.5"><span aria-hidden="true" className="size-2.5 rounded-sm bg-navy-700" />Masuk</span>
+        <span className="flex items-center gap-1.5"><span aria-hidden="true" className="size-2.5 rounded-sm bg-gold-500" />Keluar</span>
+      </div>
+      <div className="flex h-52 gap-2">
+        <div className="flex flex-col justify-between pb-6 text-right text-[11px] tabular-nums text-navy-400">
+          {ticks.map((t, i) => (
+            <span key={i}>{t}</span>
+          ))}
+        </div>
+        <ul className="flex flex-1 items-end justify-between gap-2 border-l border-navy-100 pl-2">
+          {trend.map((t) => (
+            <li key={t.month} className="flex h-full flex-1 flex-col items-center justify-end">
+              <div className="flex h-[calc(100%-1.5rem)] w-full items-end justify-center gap-1">
+                <div
+                  title={`Masuk ${t.suratMasuk}`}
+                  style={{ height: `${(t.suratMasuk / max) * 100}%` }}
+                  className="w-1/2 max-w-5 rounded-t-md bg-navy-700"
+                />
+                <div
+                  title={`Keluar ${t.suratKeluar}`}
+                  style={{ height: `${(t.suratKeluar / max) * 100}%` }}
+                  className="w-1/2 max-w-5 rounded-t-md bg-gold-500"
+                />
+              </div>
+              <span className="mt-1.5 text-[11px] text-navy-400">
+                {monthLabel(t.month)}
+                <span className="sr-only">
+                  : masuk {t.suratMasuk}, keluar {t.suratKeluar}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

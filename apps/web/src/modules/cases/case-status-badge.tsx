@@ -2,14 +2,14 @@ import type { CaseStatus } from '@ekasatra/shared/cases';
 import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
 
-/** Upaya hukum lanjutan (Banding, Kasasi, PK) berarti perkara masih menunggu: nada peringatan. */
+/** Warna status mengikuti aplikasi GAS: Aktif hijau, Putus amber, Banding oranye, Kasasi merah, PK fuchsia. */
 const TONE: Record<CaseStatus, BadgeTone> = {
-  Aktif: 'info',
+  Aktif: 'success',
   Putus: 'warning',
-  Banding: 'warning',
-  Kasasi: 'warning',
-  PK: 'warning',
-  Selesai: 'success',
+  Banding: 'orange',
+  Kasasi: 'danger',
+  PK: 'fuchsia',
+  Selesai: 'neutral',
 };
 
 export function CaseStatusBadge({ status }: { status: string }) {

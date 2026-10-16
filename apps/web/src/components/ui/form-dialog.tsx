@@ -61,9 +61,9 @@ export function FormDialog({
       ref={ref}
       onClose={onClose}
       aria-labelledby={titleId}
-      className="m-auto w-full rounded-card bg-surface p-0 text-navy-800 shadow-float backdrop:bg-navy-900/50 sm:max-w-lg"
+      className="m-auto w-full rounded-card bg-surface p-0 text-navy-800 shadow-float backdrop:bg-navy-950/45 backdrop:backdrop-blur-sm sm:max-w-2xl max-h-[92vh] overflow-y-auto"
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-6">
         <div>
           <h2 id={titleId} className="text-base">
             {title}
@@ -79,11 +79,15 @@ export function FormDialog({
           </p>
         ) : null}
 
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="mt-1 flex flex-col-reverse gap-3 border-t border-navy-100 pt-5 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className={buttonClass.secondary}>
             Batal
           </button>
-          <button type="submit" disabled={pending} className={destructive ? buttonClass.danger : buttonClass.primary}>
+          <button
+            type="submit"
+            disabled={pending}
+            className={destructive ? buttonClass.danger : buttonClass.primary}
+          >
             {pending ? 'Menyimpan…' : submitLabel}
           </button>
         </div>

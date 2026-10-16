@@ -2,113 +2,340 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus } from 'lucide-react';
 import { FormDialog } from '@/components/ui/form-dialog';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { useToast } from '@/shell/toast';
+import { CASE_TYPES, INITIAL_TIMELINE_TYPES } from './constants';
 
 type ClientOption = { id: string; name: string; clientCode: string };
+type OpponentOption = { id: string; name: string };
+type StaffOption = { id: string; fullName: string; role: string };
 
-export function CreateCaseDialog() {
+async function call(url: string, method: string, body: unknown) {
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error?.message ?? 'Permintaan gagal');
+  return data.data;
+}
+
+/** Daftar centang untuk pilihan ganda: lebih jelas dan lebih mudah disentuh daripada select multiple. */
+function CheckList({
+  legend,
+  hint,
+  name,
+  options,
+}: {
+  legend: string;
+  hint: string;
+  name: string;
+  options: StaffOption[];
+}) {
+  return (
+    <fieldset>
+      <legend className={labelClass}>
+        {legend} <span className="font-normal text-navy-400">({hint})</span>
+      </legend>
+      <ul className="max-h-40 space-y-1 overflow-y-auto rounded-control border border-navy-200 bg-surface/80 p-2">
+        {options.length === 0 ? (
+          <li className="px-2 py-1.5 text-sm text-navy-400">Belum ada pilihan</li>
+        ) : (
+          options.map((o) => (
+            <li key={o.id}>
+              <label className="flex min-h-9 cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 text-sm text-navy-800 hover:bg-gold-50/50">
+                <input
+                  type="checkbox"
+                  name={name}
+                  value={o.id}
+                  className="size-4 accent-gold-500"
+                />
+                {o.fullName}
+              </label>
+            </li>
+          ))
+        )}
+      </ul>
+    </fieldset>
+  );
+}
+
+function todayIso(): string {
+  return new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+/**
+ * Registrasi perkara gaya GAS: data perkara, tim (hanya yang berhak mengatur tim), dan tahap awal
+ * timeline. Pembuatan, penugasan tim, dan timeline awal dikirim berurutan; bila langkah lanjutan
+ * gagal, perkara tetap tersimpan dan sisanya bisa diisi dari halaman detail.
+ */
+export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: boolean }) {
   const router = useRouter();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [clients, setClients] = useState<ClientOption[]>([]);
+  const [opponents, setOpponents] = useState<OpponentOption[]>([]);
+  const [staff, setStaff] = useState<StaffOption[]>([]);
 
   useEffect(() => {
     if (!open) return;
-    fetch('/api/v1/clients?pageSize=100')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.ok) setClients(data.data.rows);
-      })
-      .catch(() => {});
-  }, [open]);
+    const get = (url: string) =>
+      fetch(url)
+        .then((r) => r.json())
+        .catch(() => ({ ok: false }));
+    get('/api/v1/clients?pageSize=100').then((d) => d.ok && setClients(d.data.rows));
+    get('/api/v1/opponents?pageSize=100').then((d) => d.ok && setOpponents(d.data.rows));
+    if (canAssignTeam) get('/api/v1/users?pageSize=100').then((d) => d.ok && setStaff(d.data.rows));
+  }, [open, canAssignTeam]);
 
-  async function handleSubmit(formData: FormData) {
-    const title = String(formData.get('title') ?? '');
-    const clientId = String(formData.get('clientId') ?? '');
-    const court = String(formData.get('court') ?? '');
-    const caseNumber = String(formData.get('caseNumber') ?? '');
-    const caseType = String(formData.get('caseType') ?? '');
-    const description = String(formData.get('description') ?? '');
+  async function handleSubmit(fd: FormData) {
+    const str = (k: string) => String(fd.get(k) ?? '').trim();
+    if (!str('clientId')) throw new Error('Klien wajib dipilih');
 
-    if (!clientId) throw new Error('Klien wajib dipilih');
-
-    const res = await fetch('/api/v1/cases', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title,
-        clientId,
-        court: court || undefined,
-        caseNumber: caseNumber || undefined,
-        caseType: caseType || undefined,
-        description: description || undefined,
-      }),
+    const created = await call('/api/v1/cases', 'POST', {
+      title: str('title'),
+      clientId: str('clientId'),
+      opponentId: str('opponentId') || null,
+      caseNumber: str('caseNumber') || undefined,
+      court: str('court') || undefined,
+      caseType: str('caseType') || undefined,
+      description: str('description') || undefined,
+      startDate: str('startDate') || undefined,
     });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error?.message ?? 'Gagal membuat perkara');
+    const caseId: string = created.id;
+
+    const warnings: string[] = [];
+    if (canAssignTeam) {
+      const members = [
+        ...fd.getAll('advokat').map((u) => ({ userId: String(u), peran: 'Advokat' })),
+        ...fd.getAll('paralegal').map((u) => ({ userId: String(u), peran: 'Paralegal' })),
+        ...(str('manager') ? [{ userId: str('manager'), peran: 'Manager' }] : []),
+      ];
+      for (const m of members) {
+        try {
+          await call(`/api/v1/cases/${caseId}/members`, 'POST', m);
+        } catch {
+          warnings.push('tim');
+          break;
+        }
+      }
+    }
+    if (str('tlDesc')) {
+      try {
+        await call(`/api/v1/cases/${caseId}/timeline`, 'POST', {
+          eventType: str('tlType') || 'Catatan',
+          eventDate: str('tlDate') || undefined,
+          title: str('tlDesc'),
+        });
+      } catch {
+        warnings.push('timeline');
+      }
+    }
+
     setOpen(false);
+    toast.show(
+      warnings.length
+        ? `Perkara dibuat, tetapi ${warnings.join(' dan ')} belum tersimpan. Lengkapi dari halaman detail.`
+        : `Perkara teregistrasi: ${created.regNo}`,
+      warnings.length ? 'info' : 'success',
+    );
+    router.push(`/cases/${caseId}`);
     router.refresh();
   }
+
+  const byRole = (r: string) => staff.filter((s) => s.role === r);
+  const advocateChoices = staff.filter(
+    (s) => s.role === 'Advokat' || s.role === 'Admin' || s.role === 'SuperAdmin',
+  );
 
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={buttonClass.primary}>
-        Tambah Perkara
+        <Plus aria-hidden="true" size={15} /> Registrasi Perkara
       </button>
       <FormDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Tambah Perkara"
+        title="Registrasi Perkara Baru"
         description="Nomor REG/{tahun}/ dibuat otomatis. Advokat pembuat otomatis menjadi anggota tim."
-        submitLabel="Buat"
+        submitLabel="Registrasi"
         onSubmit={handleSubmit}
       >
         <div>
           <label htmlFor="cc-title" className={labelClass}>
-            Judul
+            Pokok Perkara / Judul
           </label>
-          <input id="cc-title" name="title" type="text" required className={inputClass} />
+          <input
+            id="cc-title"
+            name="title"
+            required
+            placeholder="mis. Gugatan Wanprestasi PT A vs PT B"
+            className={inputClass}
+          />
         </div>
-        <div>
-          <label htmlFor="cc-client" className={labelClass}>
-            Klien
-          </label>
-          <select id="cc-client" name="clientId" required className={inputClass}>
-            <option value="">Pilih klien</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.clientCode} · {c.name}
-              </option>
-            ))}
-          </select>
-          {clients.length === 0 ? (
-            <p className="mt-1 text-xs text-navy-400">Belum ada klien. Minta Admin menambahkan klien terlebih dahulu.</p>
-          ) : null}
+        <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="cc-casenumber" className={labelClass}>
+              Nomor Perkara
+            </label>
+            <input
+              id="cc-casenumber"
+              name="caseNumber"
+              placeholder="Nomor register pengadilan bila sudah terbit"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="cc-casetype" className={labelClass}>
+              Jenis Perkara
+            </label>
+            <select id="cc-casetype" name="caseType" defaultValue="" className={inputClass}>
+              <option value="">Pilih jenis</option>
+              {CASE_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="cc-client" className={labelClass}>
+              Klien
+            </label>
+            <select id="cc-client" name="clientId" required defaultValue="" className={inputClass}>
+              <option value="">Pilih klien</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.clientCode} · {c.name}
+                </option>
+              ))}
+            </select>
+            {clients.length === 0 ? (
+              <p className="mt-1 text-xs text-navy-400">
+                Belum ada klien. Tambahkan dulu di menu Klien.
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <label htmlFor="cc-opp" className={labelClass}>
+              Pihak Lawan
+            </label>
+            <select id="cc-opp" name="opponentId" defaultValue="" className={inputClass}>
+              <option value="">Tanpa pihak lawan</option>
+              {opponents.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="cc-court" className={labelClass}>
+              Pengadilan / Forum
+            </label>
+            <input
+              id="cc-court"
+              name="court"
+              placeholder="Pengadilan Negeri Jakarta Selatan"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="cc-start" className={labelClass}>
+              Tanggal Daftar
+            </label>
+            <input
+              id="cc-start"
+              name="startDate"
+              type="date"
+              defaultValue={todayIso()}
+              className={inputClass}
+            />
+          </div>
         </div>
-        <div>
-          <label htmlFor="cc-casenumber" className={labelClass}>
-            No. Perkara (pengadilan)
-          </label>
-          <input id="cc-casenumber" name="caseNumber" type="text" className={inputClass} />
-        </div>
-        <div>
-          <label htmlFor="cc-court" className={labelClass}>
-            Pengadilan
-          </label>
-          <input id="cc-court" name="court" type="text" className={inputClass} />
-        </div>
-        <div>
-          <label htmlFor="cc-casetype" className={labelClass}>
-            Jenis Perkara
-          </label>
-          <input id="cc-casetype" name="caseType" type="text" className={inputClass} />
-        </div>
+
+        {canAssignTeam ? (
+          <fieldset className="rounded-control border border-navy-100 p-4">
+            <legend className="px-2 text-sm font-bold text-navy-800">Tim perkara</legend>
+            <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+              <CheckList
+                legend="Advokat"
+                hint="boleh lebih dari satu"
+                name="advokat"
+                options={advocateChoices}
+              />
+              <CheckList
+                legend="Paralegal"
+                hint="boleh lebih dari satu"
+                name="paralegal"
+                options={byRole('Paralegal')}
+              />
+              <div className="sm:col-span-2">
+                <label htmlFor="cc-mgr" className={labelClass}>
+                  Manajer Kasus (satu orang)
+                </label>
+                <select id="cc-mgr" name="manager" defaultValue="" className={inputClass}>
+                  <option value="">Belum ditentukan</option>
+                  {staff
+                    .filter((s) => s.role === 'Advokat' || s.role === 'Admin')
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.fullName}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+          </fieldset>
+        ) : (
+          <p className="rounded-control bg-navy-50 p-3 text-xs text-navy-600">
+            Anggota tim lain diatur oleh Admin dari halaman detail perkara.
+          </p>
+        )}
+
         <div>
           <label htmlFor="cc-desc" className={labelClass}>
-            Keterangan
+            Catatan
           </label>
           <textarea id="cc-desc" name="description" rows={2} className={inputClass} />
         </div>
+
+        <fieldset className="rounded-control bg-navy-50/60 p-3">
+          <legend className="px-1 text-sm font-bold text-navy-800">
+            Tahap Awal Timeline (opsional)
+          </legend>
+          <div className="grid gap-x-4 gap-y-5 sm:grid-cols-3">
+            <div>
+              <label htmlFor="cc-tltype" className={labelClass}>
+                Tahap
+              </label>
+              <select id="cc-tltype" name="tlType" defaultValue="Catatan" className={inputClass}>
+                {INITIAL_TIMELINE_TYPES.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="cc-tldate" className={labelClass}>
+                Tanggal
+              </label>
+              <input
+                id="cc-tldate"
+                name="tlDate"
+                type="date"
+                defaultValue={todayIso()}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="cc-tldesc" className={labelClass}>
+                Keterangan
+              </label>
+              <input id="cc-tldesc" name="tlDesc" className={inputClass} />
+            </div>
+          </div>
+        </fieldset>
       </FormDialog>
     </>
   );

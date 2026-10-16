@@ -1,6 +1,6 @@
 /** Detail Surat Keluar + riwayat approval + aksi sesuai hak (Agent E · E5). */
 import { getSuratKeluar } from '@ekasatra/core/surat';
-import { Badge } from '@/components/ui/badge';
+import { JenisBadge, SuratKeluarStatusBadge } from '@/modules/surat/surat-badges';
 import { FactList } from '@/components/ui/fact-list';
 import { FileHeader } from '@/components/ui/file-header';
 import { formatDate, formatDateTime } from '@/lib/format';
@@ -23,7 +23,7 @@ export default async function SuratKeluarDetailPage({
     ['Tanggal surat', formatDate(surat.tglSurat)],
     ['Kepada', surat.kepada],
     ['Perihal', surat.perihal],
-    ['Jenis', surat.jenis],
+    ['Jenis', <JenisBadge key="jenis" value={surat.jenis} />],
     ['Perkara', perkara ? `${perkara.regNo} · ${perkara.title}` : '-'],
     ['Pembuat', nameOf(surat.createdBy)],
     ['Reviewer', nameOf(surat.reviewerId)],
@@ -43,7 +43,7 @@ export default async function SuratKeluarDetailPage({
       <FileHeader
         back={{ href: '/surat-keluar', label: 'Surat Keluar' }}
         reference="Nomor surat"
-        status={<Badge tone="info">{surat.status.replace('_', ' ')}</Badge>}
+        status={<SuratKeluarStatusBadge value={surat.status} />}
         title={surat.noSurat}
         actions={
           <>
@@ -63,16 +63,20 @@ export default async function SuratKeluarDetailPage({
 
       <FactList rows={rows} />
 
-      <section aria-labelledby="riwayat">
-        <h2 id="riwayat" className="mb-2 text-xl text-navy-800">
-          Riwayat approval
+      <section aria-labelledby="riwayat" className="card-surface p-5">
+        <h2 id="riwayat" className="mb-4 text-sm font-bold text-navy-800">
+          Riwayat Persetujuan
         </h2>
         {logs.length === 0 ? (
           <p className="text-sm text-navy-400">Belum ada langkah approval.</p>
         ) : (
-          <ol className="space-y-2">
+          <ol className="relative space-y-4 border-l-2 border-gold-300 pl-6">
             {logs.map((l) => (
-              <li key={l.id} className="rounded-card border border-navy-200 bg-surface p-3 text-sm">
+              <li key={l.id} className="relative text-sm">
+                <span
+                  aria-hidden="true"
+                  className="absolute -left-[33px] top-0.5 size-4 rounded-full border-[3px] border-gold-500 bg-surface"
+                />
                 <p className="font-medium text-navy-800">
                   {l.action}, {l.actorName ?? 'Pengguna dihapus'}
                 </p>

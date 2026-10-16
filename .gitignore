@@ -13,3 +13,7 @@ dist/
 # Dokumen internal (PRD, task, prompt) — JANGAN masuk repo
 docs/
 apps/web/AGENTS.md
+
+# Playwright E2E
+test-results/
+playwright-report/

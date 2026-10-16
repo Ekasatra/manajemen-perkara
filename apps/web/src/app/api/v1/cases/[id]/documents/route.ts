@@ -2,7 +2,7 @@
  * GET  /api/v1/cases/[id]/documents — daftar dokumen (Agent D · D4)
  * POST /api/v1/cases/[id]/documents — unggah dokumen (maks 25 MB, Storage bucket `case-documents`)
  *
- * PRD §5.4: unggah file maks 25 MB, flag `shared_with_client`.
+ * PRD §5.4: unggah file maks 25 MB, flag `shared_with_client`. Tipe berkas sama dengan surat.
  */
 import { randomUUID } from 'crypto';
 import { createDb, createSupabaseServiceClient } from '@ekasatra/db';
@@ -15,8 +15,10 @@ import {
   listDocuments,
   createDocumentRecord,
   documentStoragePath,
+  requireVisibleCase,
 } from '@ekasatra/core';
-import { MAX_DOCUMENT_BYTES, badRequest } from '@ekasatra/shared';
+import { validateUpload } from '@ekasatra/core/surat';
+import { badRequest } from '@ekasatra/shared';
 
 const BUCKET = 'case-documents';
 
@@ -54,13 +56,12 @@ export async function POST(
 
     if (!title) throw badRequest('Judul dokumen wajib diisi');
     if (!(file instanceof File)) throw badRequest('File dokumen wajib diunggah');
-    if (file.size > MAX_DOCUMENT_BYTES) {
-      throw badRequest(`Ukuran file melebihi 25 MB (diterima ${Math.round(file.size / 1024 / 1024)} MB)`);
-    }
-    if (file.size === 0) throw badRequest('File kosong');
+    // Cek akses sebelum menyentuh Storage, supaya tak ada berkas yatim dari perkara orang lain.
+    await requireVisibleCase(db, user, id);
+    // Tipe, ukuran (25 MB), dan nama aman (tanpa `/` atau `..` di path Storage).
+    const fileName = validateUpload(file);
 
     const docId = randomUUID();
-    const fileName = file.name || `dokumen-${docId}`;
     const path = documentStoragePath(id, docId, fileName);
 
     // Unggah ke Storage pakai service role (bypass RLS).

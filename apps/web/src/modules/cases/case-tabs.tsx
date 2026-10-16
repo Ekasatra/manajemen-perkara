@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FactList } from '@/components/ui/fact-list';
 import { FormDialog } from '@/components/ui/form-dialog';
@@ -120,19 +122,29 @@ type Props = {
   canUpdate: boolean;
   canManageTeam: boolean;
   canViewBiaya: boolean;
+  staffOptions: { id: string; name: string; role: string }[];
 };
 
-const TABS = ['Ringkasan', 'Timeline', 'Jadwal', 'Dokumen', 'Surat', 'Biaya', 'Tim'] as const;
+const TABS = ['Profil', 'Timeline', 'Jadwal', 'Dokumen', 'Biaya', 'Tim', 'Surat'] as const;
 type Tab = (typeof TABS)[number];
 
 const tabId = (t: Tab) => `case-tab-${t}`;
 const PANEL_ID = 'case-tab-panel';
 
+const TAB_COUNT: Partial<Record<Tab, (p: Props) => number>> = {
+  Timeline: (p) => p.timeline.length,
+  Jadwal: (p) => p.schedules.length,
+  Dokumen: (p) => p.documents.length,
+  Biaya: (p) => p.invoices.length,
+  Tim: (p) => p.members.length,
+  Surat: (p) => p.suratMasuk.length + p.suratKeluar.length,
+};
+
 const dateOrDash = (v: string | null | undefined) => (v ? formatDate(v) : '-');
 
 /** Kotak tabel/daftar bergaris, dipakai semua tab agar seragam. */
 function Box({ children }: { children: ReactNode }) {
-  return <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">{children}</div>;
+  return <div className="overflow-hidden card-surface">{children}</div>;
 }
 
 function Muted({ children }: { children: string }) {
@@ -143,11 +155,7 @@ function Muted({ children }: { children: string }) {
 function TabAction({ onClick, children }: { onClick: () => void; children: string }) {
   return (
     <div className="flex sm:justify-end">
-      <button
-        type="button"
-        onClick={onClick}
-        className={`${buttonClass.primary} w-full sm:w-auto`}
-      >
+      <button type="button" onClick={onClick} className={`${buttonClass.primary} w-full sm:w-auto`}>
         {children}
       </button>
     </div>
@@ -155,37 +163,45 @@ function TabAction({ onClick, children }: { onClick: () => void; children: strin
 }
 
 export function CaseTabs(props: Props) {
-  const [tab, setTab] = useState<Tab>('Ringkasan');
+  const [tab, setTab] = useState<Tab>('Profil');
 
   return (
     <div>
       <div
         role="tablist"
         aria-label="Bagian perkara"
-        className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-navy-200 px-4 md:mx-0 md:px-0"
+        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
       >
-        {TABS.map((t) => (
-          <button
-            key={t}
-            id={tabId(t)}
-            type="button"
-            role="tab"
-            aria-selected={tab === t}
-            aria-controls={PANEL_ID}
-            onClick={() => setTab(t)}
-            className={`-mb-px min-h-11 shrink-0 border-b-2 px-4 text-sm font-medium transition-colors md:min-h-9 ${
-              tab === t
-                ? 'border-navy-700 text-navy-800'
-                : 'border-transparent text-navy-400 hover:text-navy-700'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+        {TABS.filter((t) => t !== 'Biaya' || props.canViewBiaya).map((t) => {
+          const count = TAB_COUNT[t]?.(props);
+          return (
+            <button
+              key={t}
+              id={tabId(t)}
+              type="button"
+              role="tab"
+              aria-selected={tab === t}
+              aria-controls={PANEL_ID}
+              onClick={() => setTab(t)}
+              className={`flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 text-sm font-medium transition md:min-h-9 ${
+                tab === t
+                  ? 'bg-surface text-navy-800 shadow-soft'
+                  : 'text-navy-500 hover:bg-surface/70 hover:text-navy-800'
+              }`}
+            >
+              {t}
+              {count ? (
+                <span className="rounded-full bg-navy-100 px-1.5 text-[11px] font-semibold text-navy-600">
+                  {count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
       <div role="tabpanel" id={PANEL_ID} aria-labelledby={tabId(tab)}>
-        {tab === 'Ringkasan' && <RingkasanTab {...props} />}
+        {tab === 'Profil' && <RingkasanTab {...props} />}
         {tab === 'Timeline' && <TimelineTab {...props} />}
         {tab === 'Jadwal' && <JadwalTab {...props} />}
         {tab === 'Dokumen' && <DokumenTab {...props} />}
@@ -197,81 +213,15 @@ export function CaseTabs(props: Props) {
   );
 }
 
-function RingkasanTab({ caseRow, canUpdate }: Props) {
-  const statuses = ['Aktif', 'Putus', 'Banding', 'Kasasi', 'PK', 'Selesai'];
+function RingkasanTab({ caseRow }: Props) {
   return (
-    <div className="space-y-5">
-      <FactList
-        rows={[
-          ['Tanggal putus', dateOrDash(caseRow.putusDate)],
-          ['Tanggal selesai', dateOrDash(caseRow.closedDate)],
-          ['Keterangan', caseRow.description ?? '-'],
-        ]}
-      />
-
-      {canUpdate ? (
-        <StatusChanger caseId={caseRow.id} currentStatus={caseRow.status} statuses={statuses} />
-      ) : null}
-
-      <a
-        href={`/api/v1/cases/${caseRow.id}/export`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`${buttonClass.secondary} w-full sm:w-auto`}
-      >
-        Ekspor progres (PDF)
-      </a>
-    </div>
-  );
-}
-
-function StatusChanger({
-  caseId,
-  currentStatus,
-  statuses,
-}: {
-  caseId: string;
-  currentStatus: string;
-  statuses: string[];
-}) {
-  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newStatus = e.target.value;
-    if (newStatus === currentStatus) return;
-    const res = await fetch(`/api/v1/cases/${caseId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      alert(data.error?.message ?? 'Gagal mengubah status');
-      e.target.value = currentStatus;
-    } else {
-      window.location.reload();
-    }
-  }
-
-  return (
-    <div className="max-w-sm">
-      <label htmlFor="status-select" className={labelClass}>
-        Ubah status
-      </label>
-      <select
-        id="status-select"
-        defaultValue={currentStatus}
-        onChange={handleChange}
-        className={inputClass}
-      >
-        {statuses.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-      </select>
-      <p className="mt-1 text-xs text-navy-400">
-        Perubahan status otomatis memperbarui tanggal putus, batas upaya hukum, dan entri timeline.
-      </p>
-    </div>
+    <FactList
+      rows={[
+        ['Tanggal putus', dateOrDash(caseRow.putusDate)],
+        ['Tanggal selesai', dateOrDash(caseRow.closedDate)],
+        ['Keterangan', caseRow.description ?? '-'],
+      ]}
+    />
   );
 }
 
@@ -316,7 +266,9 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
                     <p className="font-medium text-navy-800">{t.title}</p>
                     <Badge tone="neutral">{t.eventType}</Badge>
                   </div>
-                  {t.description ? <p className="mt-1 text-sm text-navy-600">{t.description}</p> : null}
+                  {t.description ? (
+                    <p className="mt-1 text-sm text-navy-600">{t.description}</p>
+                  ) : null}
                 </div>
               </li>
             ))}
@@ -332,11 +284,15 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
           onSubmit={handleSubmit}
         >
           <div>
-            <label htmlFor="tl-title" className={labelClass}>Judul</label>
+            <label htmlFor="tl-title" className={labelClass}>
+              Judul
+            </label>
             <input id="tl-title" name="title" type="text" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="tl-type" className={labelClass}>Tipe</label>
+            <label htmlFor="tl-type" className={labelClass}>
+              Tipe
+            </label>
             <select id="tl-type" name="eventType" className={inputClass} defaultValue="Catatan">
               <option value="Catatan">Catatan</option>
               <option value="Putusan">Putusan</option>
@@ -349,11 +305,15 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
             </select>
           </div>
           <div>
-            <label htmlFor="tl-date" className={labelClass}>Tanggal</label>
+            <label htmlFor="tl-date" className={labelClass}>
+              Tanggal
+            </label>
             <input id="tl-date" name="eventDate" type="date" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="tl-desc" className={labelClass}>Keterangan</label>
+            <label htmlFor="tl-desc" className={labelClass}>
+              Keterangan
+            </label>
             <textarea id="tl-desc" name="description" rows={2} className={inputClass} />
           </div>
         </FormDialog>
@@ -362,16 +322,53 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
   );
 }
 
-const SCHEDULE_COLUMNS: Column<ScheduleRow>[] = [
-  { key: 'date', header: 'Tanggal', cell: (s) => formatDate(s.scheduleDate) },
-  { key: 'time', header: 'Jam', cell: (s) => s.scheduleTime ?? '-' },
-  { key: 'kind', header: 'Jenis', cell: (s) => s.kind },
-  { key: 'location', header: 'Lokasi', cell: (s) => s.location ?? '-' },
-  { key: 'status', header: 'Status', cell: (s) => <Badge tone="warning">{s.status}</Badge> },
-];
+const SCHEDULE_TONE: Record<string, 'info' | 'success' | 'warning'> = {
+  Terjadwal: 'info',
+  Selesai: 'success',
+  Ditunda: 'warning',
+};
 
 function JadwalTab({ caseId, schedules, canUpdate }: Props) {
   const [open, setOpen] = useState(false);
+
+  async function markDone(id: string) {
+    const res = await fetch(`/api/v1/cases/${caseId}/schedules/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Selesai' }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error?.message ?? 'Gagal memperbarui jadwal');
+    window.location.reload();
+  }
+
+  const columns: Column<ScheduleRow>[] = [
+    { key: 'date', header: 'Tanggal', cell: (s) => formatDate(s.scheduleDate) },
+    { key: 'time', header: 'Jam', cell: (s) => s.scheduleTime?.slice(0, 5) ?? '-' },
+    { key: 'kind', header: 'Jenis', cell: (s) => s.kind },
+    { key: 'location', header: 'Lokasi', cell: (s) => s.location ?? '-' },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (s) => <Badge tone={SCHEDULE_TONE[s.status] ?? 'neutral'}>{s.status}</Badge>,
+    },
+    {
+      key: 'action',
+      header: 'Aksi',
+      cell: (s) =>
+        canUpdate && s.status === 'Terjadwal' ? (
+          <button
+            type="button"
+            onClick={() => markDone(s.id).catch((e) => alert(e.message))}
+            className="font-medium text-navy-700 underline"
+          >
+            Tandai selesai
+          </button>
+        ) : (
+          '-'
+        ),
+    },
+  ];
 
   async function handleSubmit(formData: FormData) {
     const scheduleDate = String(formData.get('scheduleDate') ?? '');
@@ -406,7 +403,7 @@ function JadwalTab({ caseId, schedules, canUpdate }: Props) {
         <Box>
           <ResponsiveTable
             caption="Jadwal perkara"
-            columns={SCHEDULE_COLUMNS}
+            columns={columns}
             rows={schedules}
             rowKey={(s) => s.id}
           />
@@ -421,23 +418,39 @@ function JadwalTab({ caseId, schedules, canUpdate }: Props) {
           onSubmit={handleSubmit}
         >
           <div>
-            <label htmlFor="sc-date" className={labelClass}>Tanggal</label>
+            <label htmlFor="sc-date" className={labelClass}>
+              Tanggal
+            </label>
             <input id="sc-date" name="scheduleDate" type="date" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="sc-time" className={labelClass}>Jam</label>
+            <label htmlFor="sc-time" className={labelClass}>
+              Jam
+            </label>
             <input id="sc-time" name="scheduleTime" type="time" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="sc-kind" className={labelClass}>Jenis</label>
-            <input id="sc-kind" name="kind" type="text" defaultValue="Sidang" className={inputClass} />
+            <label htmlFor="sc-kind" className={labelClass}>
+              Jenis
+            </label>
+            <input
+              id="sc-kind"
+              name="kind"
+              type="text"
+              defaultValue="Sidang"
+              className={inputClass}
+            />
           </div>
           <div>
-            <label htmlFor="sc-loc" className={labelClass}>Lokasi</label>
+            <label htmlFor="sc-loc" className={labelClass}>
+              Lokasi
+            </label>
             <input id="sc-loc" name="location" type="text" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="sc-notes" className={labelClass}>Catatan</label>
+            <label htmlFor="sc-notes" className={labelClass}>
+              Catatan
+            </label>
             <textarea id="sc-notes" name="notes" rows={2} className={inputClass} />
           </div>
         </FormDialog>
@@ -508,12 +521,23 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
           onSubmit={handleSubmit}
         >
           <div>
-            <label htmlFor="dc-title" className={labelClass}>Judul</label>
+            <label htmlFor="dc-title" className={labelClass}>
+              Judul
+            </label>
             <input id="dc-title" name="title" type="text" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="dc-file" className={labelClass}>File</label>
-            <input id="dc-file" name="file" type="file" required className={inputClass} />
+            <label htmlFor="dc-file" className={labelClass}>
+              File (PDF, Word, Excel, JPG, PNG; maks 25 MB)
+            </label>
+            <input
+              id="dc-file"
+              name="file"
+              type="file"
+              required
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              className={inputClass}
+            />
           </div>
           <div>
             <label className="flex min-h-11 items-center gap-2 text-sm text-navy-800">
@@ -647,30 +671,122 @@ function BiayaTab({ invoices, honorarium, canViewBiaya }: Props) {
   );
 }
 
-const MEMBER_COLUMNS: Column<MemberRow>[] = [
-  { key: 'name', header: 'Nama', cell: (m) => m.fullName },
-  { key: 'role', header: 'Peran', cell: (m) => m.peran },
-  { key: 'joined', header: 'Bergabung', cell: (m) => formatDate(m.createdAt) },
-];
+function TimTab({ caseId, members, canManageTeam, staffOptions }: Props) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
 
-function TimTab({ members, canManageTeam }: Props) {
+  async function add(fd: FormData) {
+    const res = await fetch(`/api/v1/cases/${caseId}/members`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: String(fd.get('userId')), peran: String(fd.get('peran')) }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error?.message ?? 'Gagal menambah anggota');
+    setOpen(false);
+    router.refresh();
+  }
+
+  async function remove(m: MemberRow) {
+    const res = await fetch(
+      `/api/v1/cases/${caseId}/members/${m.userId}?peran=${encodeURIComponent(m.peran)}`,
+      { method: 'DELETE' },
+    );
+    const data = await res.json();
+    if (!data.ok) {
+      alert(data.error?.message ?? 'Gagal menghapus anggota');
+      return;
+    }
+    router.refresh();
+  }
+
+  const columns: Column<MemberRow>[] = [
+    {
+      key: 'name',
+      header: 'Anggota Tim',
+      cell: (m) => (
+        <span className="flex items-center gap-2">
+          <Avatar name={m.fullName} /> {m.fullName}
+        </span>
+      ),
+    },
+    { key: 'role', header: 'Peran', cell: (m) => <Badge tone="neutral">{m.peran}</Badge> },
+    { key: 'joined', header: 'Bergabung', cell: (m) => formatDate(m.createdAt) },
+    ...(canManageTeam
+      ? [
+          {
+            key: 'action',
+            header: 'Aksi',
+            cell: (m: MemberRow) => (
+              <button
+                type="button"
+                onClick={() => remove(m)}
+                className="font-medium text-danger-fg underline"
+                aria-label={`Keluarkan ${m.fullName} dari tim`}
+              >
+                Keluarkan
+              </button>
+            ),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="space-y-4">
+      {canManageTeam ? <TabAction onClick={() => setOpen(true)}>Tambah anggota</TabAction> : null}
       {members.length === 0 ? (
         <Muted>Belum ada anggota tim.</Muted>
       ) : (
         <Box>
           <ResponsiveTable
             caption="Anggota tim perkara"
-            columns={MEMBER_COLUMNS}
+            columns={columns}
             rows={members}
             rowKey={(m) => `${m.userId}-${m.peran}`}
           />
         </Box>
       )}
       {!canManageTeam ? (
-        <p className="text-xs text-navy-400">Hanya Admin yang dapat mengelola anggota tim perkara.</p>
-      ) : null}
+        <p className="text-xs text-navy-400">
+          Hanya Admin yang dapat mengelola anggota tim perkara.
+        </p>
+      ) : (
+        <FormDialog
+          open={open}
+          onClose={() => setOpen(false)}
+          title="Tambah anggota tim"
+          description="Advokat dan Paralegal boleh lebih dari satu; Manajer Kasus hanya satu orang."
+          submitLabel="Tambah"
+          onSubmit={add}
+        >
+          <div>
+            <label htmlFor="tm-user" className={labelClass}>
+              Anggota
+            </label>
+            <select id="tm-user" name="userId" required defaultValue="" className={inputClass}>
+              <option value="" disabled>
+                Pilih anggota
+              </option>
+              {staffOptions.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.role})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="tm-peran" className={labelClass}>
+              Peran
+            </label>
+            <select id="tm-peran" name="peran" defaultValue="Advokat" className={inputClass}>
+              <option value="Advokat">Advokat</option>
+              <option value="Paralegal">Paralegal</option>
+              <option value="Manager">Manajer Kasus</option>
+            </select>
+          </div>
+        </FormDialog>
+      )}
     </div>
   );
 }

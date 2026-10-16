@@ -7,7 +7,7 @@ export type Fact = { label: string; value: ReactNode };
 
 /**
  * Kepala berkas untuk halaman detail: rujukan (nomor), judul serif, status, dan fakta penentu
- * dalam satu blok. Motif garis ganda emas sama dengan PageHeader (satu bahasa visual).
+ * dalam satu blok. Gaya mengikuti PageHeader (judul serif besar, tanpa garis hias).
  */
 export function FileHeader({
   back,
@@ -40,18 +40,13 @@ export function FileHeader({
               {status}
             </div>
           ) : null}
-          <h1 className="text-title font-semibold text-navy-700">{title}</h1>
+          <h1 className="font-display text-2xl font-semibold text-navy-800">{title}</h1>
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
 
-      <div aria-hidden="true" className="mt-4">
-        <div className="h-px w-full bg-gold-500" />
-        <div className="mt-0.5 h-px w-16 bg-gold-500" />
-      </div>
-
       {facts && facts.length > 0 ? (
-        <dl className="mt-4 grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="card-surface mt-4 grid p-5 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
           {facts.map((f) => (
             <div key={f.label} className="min-w-0">
               <dt className="text-xs text-navy-400">{f.label}</dt>

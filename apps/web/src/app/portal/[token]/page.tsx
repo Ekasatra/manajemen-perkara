@@ -5,7 +5,7 @@ import { getPortalData } from '@ekasatra/core';
 import { PORTAL_GENERIC_ERROR_MESSAGE } from '@ekasatra/shared';
 import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
-import { FIRM_NAME } from '@/components/ui/brand';
+import { Brand, FIRM_NAME } from '@/components/ui/brand';
 import { buttonClass } from '@/components/ui/styles';
 import { formatDate, formatRupiah } from '@/lib/format';
 import { CaseStatusBadge } from '@/modules/cases/case-status-badge';
@@ -21,8 +21,8 @@ const INVOICE_TONE: Record<string, BadgeTone> = {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section aria-label={title}>
-      <h2 className="mb-3 text-xl text-navy-800">{title}</h2>
-      <div className="rounded-card border border-navy-200 bg-surface px-5">{children}</div>
+      <h2 className="mb-3 text-sm font-bold text-navy-800">{title}</h2>
+      <div className="card-surface px-5">{children}</div>
     </section>
   );
 }
@@ -31,11 +31,7 @@ function Empty({ children }: { children: string }) {
   return <p className="py-6 text-center text-sm text-navy-400">{children}</p>;
 }
 
-export default async function ClientPortalPage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
+export default async function ClientPortalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const db = createDb();
 
@@ -46,7 +42,7 @@ export default async function ClientPortalPage({
     // Token salah atau dinonaktifkan: pesan generik yang sama agar token tidak dapat ditebak.
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-navy-50 px-4 py-12 text-center">
-        <div className="w-full max-w-md rounded-card border border-navy-200 bg-surface p-8">
+        <div className="w-full max-w-md card-surface p-8">
           <LockKeyhole aria-hidden="true" size={28} className="mx-auto text-navy-300" />
           <h1 className="mt-4 text-xl font-semibold text-navy-800">Akses portal tidak tersedia</h1>
           <p className="mt-2 text-sm text-navy-400">{PORTAL_GENERIC_ERROR_MESSAGE}</p>
@@ -59,33 +55,22 @@ export default async function ClientPortalPage({
   const { client, cases, timeline, schedules, documents, suratMasuk, invoices } = portalData;
 
   return (
-    <div className="min-h-screen bg-navy-50 pb-16">
-      <header className="border-b border-chrome-line bg-chrome text-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
-          <div>
-            <p className="text-sm text-gold-300">Portal Klien</p>
-            <p className="font-display text-2xl font-semibold">{FIRM_NAME}</p>
-          </div>
-          <div className="text-sm sm:text-right">
-            <p className="text-chrome-fg">Klien</p>
-            <p className="font-medium">{client.name}</p>
-          </div>
+    <div className="min-h-screen pb-16">
+      <header className="login-hero text-white">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
+          <Brand light />
         </div>
-        <div aria-hidden="true" className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="h-px w-full bg-gold-500" />
-          <div className="mt-0.5 h-px w-16 bg-gold-500" />
+        <div className="mx-auto max-w-5xl px-4 pb-8 pt-2 sm:px-6">
+          <p className="text-xs uppercase tracking-[0.3em] text-gold-300">Dashboard Klien</p>
+          <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">{client.name}</h1>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-white/60 sm:text-sm">
+            <LockKeyhole aria-hidden="true" size={14} />
+            Kode klien {client.clientCode} · Informasi bersifat rahasia dan hanya-baca
+          </p>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl space-y-8 px-4 pt-8 sm:px-6">
-        <div>
-          <h1 className="text-title font-semibold text-navy-700">{client.name}</h1>
-          <p className="mt-1 text-sm text-navy-400">
-            Kode klien {client.clientCode}
-            {client.email ? `, ${client.email}` : ''}
-          </p>
-        </div>
-
         <Section title="Perkara Anda">
           {cases.length === 0 ? (
             <Empty>Belum ada perkara yang terdaftar.</Empty>
@@ -138,7 +123,9 @@ export default async function ClientPortalPage({
                     <p className="font-medium text-navy-800">
                       {s.kind}, {s.caseTitle}
                     </p>
-                    <p className="text-sm text-navy-400">{s.location || 'Lokasi belum ditentukan'}</p>
+                    <p className="text-sm text-navy-400">
+                      {s.location || 'Lokasi belum ditentukan'}
+                    </p>
                   </div>
                   <div className="flex items-center gap-3 sm:text-right">
                     <p className="text-sm font-medium tabular-nums text-navy-800">
@@ -243,7 +230,9 @@ export default async function ClientPortalPage({
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium tabular-nums text-navy-800">{inv.invoiceNo}</span>
+                      <span className="font-medium tabular-nums text-navy-800">
+                        {inv.invoiceNo}
+                      </span>
                       <Badge tone={INVOICE_TONE[inv.status] ?? 'neutral'}>{inv.status}</Badge>
                     </div>
                     {inv.description ? (
@@ -254,7 +243,9 @@ export default async function ClientPortalPage({
                     </p>
                   </div>
                   <div className="sm:text-right">
-                    <p className="font-medium tabular-nums text-navy-800">{formatRupiah(inv.amount)}</p>
+                    <p className="font-medium tabular-nums text-navy-800">
+                      {formatRupiah(inv.amount)}
+                    </p>
                     {inv.paidAmount > 0 && inv.paidAmount < inv.amount ? (
                       <p className="text-sm tabular-nums text-success-fg">
                         Terbayar {formatRupiah(inv.paidAmount)}
