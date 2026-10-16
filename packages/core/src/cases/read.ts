@@ -11,7 +11,7 @@
  * - non-Admin + `scope_assigned_only=true` → hanya perkara yang (a) dibuat olehnya
  *   atau (b) ia menjadi anggota tim.
  */
-import { and, desc, eq, gte, inArray, lte, notInArray, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, inArray, lte, notInArray, or, sql } from 'drizzle-orm';
 import {
   cases,
   caseMembers,
@@ -19,6 +19,7 @@ import {
   caseSchedules,
   caseDocuments,
   clients,
+  opponents,
   profiles,
 } from '@ekasatra/db';
 import type { DbExecutor } from '../kernel/db-helpers';
@@ -373,6 +374,140 @@ export async function listDocumentCatalog(
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(caseDocuments.createdAt))
     .limit(opts.limit ?? 200);
+}
+
+export type CaseListItem = {
+  id: string;
+  regNo: string;
+  title: string;
+  status: string;
+  caseType: string | null;
+  court: string | null;
+  clientName: string | null;
+  opponentName: string | null;
+  startDate: string | null;
+  upayaDeadline: string | null;
+  team: { userId: string; name: string; peran: string }[];
+  next: { date: string; time: string | null; kind: string } | null;
+};
+
+/**
+ * Daftar perkara untuk halaman Perkara: klien, pihak lawan, tim, dan agenda terdekat.
+ * Cakupan baris sama dengan `listCases` (`listVisibleCaseIds`), termasuk total hitungan.
+ * Filter: status, jenis perkara, anggota tim (`memberId`), dan pencarian judul/no. reg/pengadilan/klien.
+ */
+export async function listCasesDetailed(
+  db: DbExecutor,
+  user: { userId: string; role: string },
+  opts: {
+    page: number;
+    pageSize: number;
+    offset: number;
+    q?: string;
+    status?: string;
+    caseType?: string;
+    memberId?: string;
+    today: string;
+  },
+): Promise<{ rows: CaseListItem[]; total: number }> {
+  const visibleIds = await listVisibleCaseIds(db, user.userId, user.role);
+  if (visibleIds !== 'all' && visibleIds.length === 0) return { rows: [], total: 0 };
+
+  const conditions = [];
+  if (visibleIds !== 'all') conditions.push(inArray(cases.id, visibleIds));
+  if (opts.status) conditions.push(sql`${cases.status}::text = ${opts.status}`);
+  if (opts.caseType) conditions.push(eq(cases.caseType, opts.caseType));
+  if (opts.memberId) {
+    conditions.push(
+      inArray(
+        cases.id,
+        db
+          .select({ id: caseMembers.caseId })
+          .from(caseMembers)
+          .where(eq(caseMembers.userId, opts.memberId)),
+      ),
+    );
+  }
+  if (opts.q) {
+    const like = `%${opts.q}%`;
+    conditions.push(
+      or(
+        ilike(cases.title, like),
+        ilike(cases.regNo, like),
+        ilike(cases.court, like),
+        ilike(clients.name, like),
+      )!,
+    );
+  }
+  const where = conditions.length ? and(...conditions) : undefined;
+
+  const [base, countRows] = await Promise.all([
+    db
+      .select({
+        id: cases.id,
+        regNo: cases.regNo,
+        title: cases.title,
+        status: cases.status,
+        caseType: cases.caseType,
+        court: cases.court,
+        clientName: clients.name,
+        opponentName: opponents.name,
+        startDate: cases.startDate,
+        upayaDeadline: cases.upayaDeadline,
+      })
+      .from(cases)
+      .leftJoin(clients, eq(cases.clientId, clients.id))
+      .leftJoin(opponents, eq(cases.opponentId, opponents.id))
+      .where(where)
+      .orderBy(desc(cases.createdAt))
+      .limit(opts.pageSize)
+      .offset(opts.offset),
+    db.select({ value: count() }).from(cases).leftJoin(clients, eq(cases.clientId, clients.id)).where(where),
+  ]);
+
+  const ids = base.map((r) => r.id);
+  const [members, schedules] = ids.length
+    ? await Promise.all([
+        db
+          .select({
+            caseId: caseMembers.caseId,
+            userId: caseMembers.userId,
+            peran: caseMembers.peran,
+            name: profiles.fullName,
+          })
+          .from(caseMembers)
+          .innerJoin(profiles, eq(caseMembers.userId, profiles.id))
+          .where(inArray(caseMembers.caseId, ids)),
+        db
+          .select({
+            caseId: caseSchedules.caseId,
+            date: caseSchedules.scheduleDate,
+            time: caseSchedules.scheduleTime,
+            kind: caseSchedules.kind,
+          })
+          .from(caseSchedules)
+          .where(
+            and(
+              inArray(caseSchedules.caseId, ids),
+              eq(caseSchedules.status, 'Terjadwal'),
+              gte(caseSchedules.scheduleDate, opts.today),
+            ),
+          )
+          .orderBy(caseSchedules.scheduleDate, caseSchedules.scheduleTime),
+      ])
+    : [[], []];
+
+  const rows: CaseListItem[] = base.map((r) => {
+    const sched = schedules.find((x) => x.caseId === r.id);
+    return {
+      ...r,
+      team: members
+        .filter((m) => m.caseId === r.id)
+        .map((m) => ({ userId: m.userId, name: m.name, peran: m.peran })),
+      next: sched ? { date: sched.date, time: sched.time, kind: sched.kind } : null,
+    };
+  });
+  return { rows, total: countRows[0]?.value ?? 0 };
 }
 
 /**

@@ -61,7 +61,7 @@ export function FormDialog({
       ref={ref}
       onClose={onClose}
       aria-labelledby={titleId}
-      className="m-auto w-full rounded-card bg-surface p-0 text-navy-800 shadow-float backdrop:bg-navy-950/45 backdrop:backdrop-blur-sm sm:max-w-lg"
+      className="m-auto w-full rounded-card bg-surface p-0 text-navy-800 shadow-float backdrop:bg-navy-950/45 backdrop:backdrop-blur-sm sm:max-w-2xl max-h-[92vh] overflow-y-auto"
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-5">
         <div>

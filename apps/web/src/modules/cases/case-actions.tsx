@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { CASE_STATUS } from '@ekasatra/shared';
+import { CASE_TYPES } from './constants';
 
 export type PartyOption = { id: string; label: string };
 
@@ -17,6 +19,7 @@ export type CaseActionRow = {
   caseType: string | null;
   description: string | null;
   startDate: string | null;
+  status: string;
 };
 
 /**
@@ -37,7 +40,7 @@ export function CaseActions({
   canDelete: boolean;
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<'edit' | 'delete' | null>(null);
+  const [mode, setMode] = useState<'edit' | 'delete' | 'status' | null>(null);
 
   async function call(method: 'PATCH' | 'DELETE', body?: unknown) {
     const res = await fetch(`/api/v1/cases/${row.id}`, {
@@ -49,6 +52,20 @@ export function CaseActions({
     if (!data.ok) throw new Error(data.error?.message ?? 'Gagal memproses perkara');
     setMode(null);
     if (method === 'DELETE') router.push('/cases');
+    router.refresh();
+  }
+
+  async function changeStatus(formData: FormData) {
+    const status = String(formData.get('status') ?? '');
+    if (status === row.status) throw new Error('Status sama dengan status saat ini');
+    const res = await fetch(`/api/v1/cases/${row.id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error?.message ?? 'Gagal mengubah status');
+    setMode(null);
     router.refresh();
   }
 
@@ -70,10 +87,23 @@ export function CaseActions({
   return (
     <>
       {canEdit ? (
-        <button type="button" onClick={() => setMode('edit')} className={buttonClass.secondary}>
-          Ubah perkara
+        <button type="button" onClick={() => setMode('status')} className={buttonClass.gold}>
+          Ubah Status
         </button>
       ) : null}
+      {canEdit ? (
+        <button type="button" onClick={() => setMode('edit')} className={buttonClass.secondary}>
+          Edit
+        </button>
+      ) : null}
+      <a
+        href={`/api/v1/cases/${row.id}/export`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={buttonClass.secondary}
+      >
+        Laporan Progress
+      </a>
       {canDelete ? (
         <button
           type="button"
@@ -82,6 +112,28 @@ export function CaseActions({
         >
           Hapus
         </button>
+      ) : null}
+
+      {canEdit && mode === 'status' ? (
+        <FormDialog
+          open
+          onClose={() => setMode(null)}
+          title="Ubah Status Perkara"
+          description="Aktif → Putus → Banding → Kasasi → PK → Selesai. Tanggal putus, batas upaya hukum, dan entri timeline diperbarui otomatis."
+          submitLabel="Simpan Status"
+          onSubmit={changeStatus}
+        >
+          <div>
+            <label htmlFor="st-status" className={labelClass}>
+              Status Baru
+            </label>
+            <select id="st-status" name="status" defaultValue={row.status} className={inputClass}>
+              {CASE_STATUS.map((st) => (
+                <option key={st}>{st}</option>
+              ))}
+            </select>
+          </div>
+        </FormDialog>
       ) : null}
 
       {canEdit && mode === 'edit' ? (
@@ -164,12 +216,20 @@ export function CaseActions({
             <label htmlFor="ec-type" className={labelClass}>
               Jenis perkara
             </label>
-            <input
+            <select
               id="ec-type"
               name="caseType"
               defaultValue={row.caseType ?? ''}
               className={inputClass}
-            />
+            >
+              <option value="">Pilih jenis</option>
+              {row.caseType && !(CASE_TYPES as readonly string[]).includes(row.caseType) ? (
+                <option>{row.caseType}</option>
+              ) : null}
+              {CASE_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="ec-start" className={labelClass}>
