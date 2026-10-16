@@ -9,6 +9,7 @@ import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
 import { formatDate } from '@/lib/format';
+import { CaseStatusBadge } from '@/modules/cases/case-status-badge';
 import { CreateCaseDialog } from '@/modules/cases/create-case-dialog';
 
 type CaseRow = {
@@ -44,7 +45,7 @@ export default async function CasesPage({
       header: 'Judul',
       cell: (r) => <a href={`/cases/${r.id}`} className="text-navy-700 hover:underline">{r.title}</a>,
     },
-    { key: 'status', header: 'Status', cell: (r) => r.status },
+    { key: 'status', header: 'Status', cell: (r) => <CaseStatusBadge status={r.status} /> },
     { key: 'startDate', header: 'Mulai', cell: (r) => (r.startDate ? formatDate(r.startDate) : '-') },
     {
       key: 'upayaDeadline',

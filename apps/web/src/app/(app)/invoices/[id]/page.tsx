@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation';
 import { ensureCan, isAppError } from '@ekasatra/core';
 import { uuidParam } from '@ekasatra/core/finance';
 import { getInvoice } from '@ekasatra/core/invoices';
+import { FactList } from '@/components/ui/fact-list';
+import { FileHeader } from '@/components/ui/file-header';
 import { formatDate, formatRupiah } from '@/lib/format';
 import { InvoiceActions } from '@/modules/invoices/invoice-actions';
 import { pageContext } from '@/modules/invoices/route-ctx';
@@ -37,18 +39,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold text-navy-700">{invoice.invoiceNo}</h1>
-        <StatusBadge status={invoice.status} />
+      <FileHeader
+        back={{ href: '/invoices', label: 'Invoice' }}
+        reference="Nomor invoice"
+        status={<StatusBadge status={invoice.status} />}
+        title={invoice.invoiceNo}
+      />
+      <div className="mb-6">
+        <FactList rows={rows} />
       </div>
-      <dl className="mb-6 grid max-w-2xl grid-cols-[10rem_1fr] gap-x-4 gap-y-2 text-sm">
-        {rows.map(([k, v]) => (
-          <div key={k} className="contents">
-            <dt className="text-navy-500">{k}</dt>
-            <dd className="text-navy-800">{v}</dd>
-          </div>
-        ))}
-      </dl>
       <InvoiceActions
         id={invoice.id}
         invoiceNo={invoice.invoiceNo}

@@ -4,6 +4,8 @@ import type { DashboardData } from '@ekasatra/shared';
 import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { FigureStrip } from '@/components/ui/figure-strip';
+import type { FigureItem } from '@/components/ui/figure-strip';
 import { PageHeader } from '@/components/ui/page-header';
 import { formatDate, formatDateTime, formatRupiah } from '@/lib/format';
 import { CasesStatusChart, SuratTrendChart } from './charts';
@@ -25,20 +27,28 @@ function Empty({ children }: { children: string }) {
   return <p className="py-6 text-center text-sm text-navy-400">{children}</p>;
 }
 
-function Figure({ label, value, note }: { label: string; value: string | number; note?: string }) {
-  return (
-    <div className="px-5 py-4">
-      <dt className="text-sm text-navy-400">{label}</dt>
-      <dd className="mt-1 font-display text-figure font-semibold tabular-nums text-navy-700">
-        {value}
-      </dd>
-      {note ? <p className="mt-0.5 text-xs text-navy-400">{note}</p> : null}
-    </div>
-  );
-}
-
 export function DashboardView({ data }: { data: DashboardData }) {
   const { cases, sidang7Hari, tenggat14Hari, surat, piutang } = data;
+
+  const figures: FigureItem[] = [
+    {
+      label: 'Perkara aktif',
+      value: cases.activeCount,
+      note: `${cases.completedCount} perkara selesai`,
+    },
+    {
+      label: 'Surat masuk belum selesai',
+      value: surat.masukBelumSelesai,
+      note: `Hari ini: ${surat.masukHariIni} masuk, ${surat.keluarHariIni} keluar`,
+    },
+    piutang.authorized
+      ? {
+          label: 'Piutang belum lunas',
+          value: formatRupiah(piutang.totalOutstanding),
+          note: `${piutang.invoiceCount ?? 0} invoice`,
+        }
+      : { label: 'Klien baru bulan ini', value: data.klienBaruBulanIni },
+  ];
 
   return (
     <div>
@@ -113,32 +123,9 @@ export function DashboardView({ data }: { data: DashboardData }) {
       </div>
 
       {/* Ringkasan pendukung: satu strip, bukan deretan kartu statistik. */}
-      <section
-        aria-label="Ringkasan"
-        className="mt-6 overflow-hidden rounded-card border border-navy-200 bg-white"
-      >
-        <dl className="grid divide-navy-100 sm:grid-cols-3 sm:divide-x max-sm:divide-y">
-          <Figure
-            label="Perkara aktif"
-            value={cases.activeCount}
-            note={`${cases.completedCount} perkara selesai`}
-          />
-          <Figure
-            label="Surat masuk belum selesai"
-            value={surat.masukBelumSelesai}
-            note={`Hari ini: ${surat.masukHariIni} masuk, ${surat.keluarHariIni} keluar`}
-          />
-          {piutang.authorized ? (
-            <Figure
-              label="Piutang belum lunas"
-              value={formatRupiah(piutang.totalOutstanding)}
-              note={`${piutang.invoiceCount ?? 0} invoice`}
-            />
-          ) : (
-            <Figure label="Klien baru bulan ini" value={data.klienBaruBulanIni} />
-          )}
-        </dl>
-      </section>
+      <div className="mt-6">
+        <FigureStrip label="Ringkasan" items={figures} />
+      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card

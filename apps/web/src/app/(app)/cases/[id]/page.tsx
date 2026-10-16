@@ -16,9 +16,10 @@ import {
   listInvoicesForReport,
   listHonorariumForReport,
 } from '@ekasatra/core';
-import Link from 'next/link';
 import { notFound } from '@ekasatra/shared';
-import { buttonClass } from '@/components/ui/styles';
+import { FileHeader } from '@/components/ui/file-header';
+import { formatDate } from '@/lib/format';
+import { CaseStatusBadge } from '@/modules/cases/case-status-badge';
 import { CaseTabs } from '@/modules/cases/case-tabs';
 
 export default async function CaseDetailPage({
@@ -67,18 +68,21 @@ export default async function CaseDetailPage({
 
   return (
     <div>
-      <div className="mb-4">
-        <Link href="/cases" className={`text-sm ${buttonClass.secondary}`}>
-          ← Kembali
-        </Link>
-      </div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-navy-700">{caseRow.title}</h1>
-        <p className="mt-1 text-sm text-navy-400">
-          {caseRow.regNo} · {caseRow.status} · Klien: {clientName} ({clientCode})
-          {opponentName ? ` · Lawan: ${opponentName}` : ''}
-        </p>
-      </div>
+      <FileHeader
+        back={{ href: '/cases', label: 'Perkara' }}
+        reference={caseRow.regNo}
+        status={<CaseStatusBadge status={caseRow.status} />}
+        title={caseRow.title}
+        facts={[
+          { label: 'Nomor perkara', value: caseRow.caseNumber ?? '-' },
+          { label: 'Pengadilan', value: caseRow.court ?? '-' },
+          { label: 'Klien', value: `${clientName} (${clientCode})` },
+          { label: 'Pihak lawan', value: opponentName ?? '-' },
+          { label: 'Jenis perkara', value: caseRow.caseType ?? '-' },
+          { label: 'Tanggal mulai', value: formatDate(caseRow.startDate) },
+          { label: 'Batas upaya hukum', value: formatDate(caseRow.upayaDeadline) },
+        ]}
+      />
 
       <CaseTabs
         caseId={id}
