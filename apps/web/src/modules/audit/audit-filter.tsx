@@ -24,7 +24,7 @@ export function AuditFilter({ initialParams }: { initialParams: SearchParams }) 
     typeof initialParams[key] === 'string' ? String(initialParams[key]) : '';
 
   return (
-    <form onSubmit={applyFilter} className="flex flex-wrap items-end gap-3 rounded-card border border-navy-200 bg-white p-4">
+    <form onSubmit={applyFilter} className="grid gap-3 rounded-card border border-navy-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
       <div>
         <label htmlFor="f-module" className={labelClass}>Modul</label>
         <select id="f-module" name="module" defaultValue={getVal('module')} className={inputClass}>

@@ -94,7 +94,7 @@ export function CreateInvoiceDialog({
             className={inputClass}
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label htmlFor="inv-date" className={labelClass}>
               Tanggal invoice

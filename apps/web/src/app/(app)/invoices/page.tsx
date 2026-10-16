@@ -65,7 +65,7 @@ export default async function InvoicesPage({
         actions={<CreateInvoiceDialog clients={clients} cases={cases} />}
       />
 
-      <form method="get" className="mb-4 flex flex-wrap items-end gap-3">
+      <form method="get" className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
         <div>
           <label htmlFor="f-status" className={labelClass}>
             Status

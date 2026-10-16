@@ -75,7 +75,7 @@ export function FormDialog({
           </p>
         ) : null}
 
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className={buttonClass.secondary}>
             Batal
           </button>

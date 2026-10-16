@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 import { formatDate, formatRupiah } from '@/lib/format';
 import { EmptyState, LoadingState } from '@/shell/states';
@@ -17,13 +18,14 @@ interface ReportRow {
 }
 
 type Column = { header: string; cell: (r: ReportRow) => ReactNode; align?: 'right' };
+type TabDef = { id: ReportTab; label: string; empty: string; columns: Column[] };
 
 const dateOrDash = (v: ReportRow[string]) => (v ? formatDate(String(v)) : '-');
 const textOrDash = (v: ReportRow[string]) => (v === null || v === undefined || v === '' ? '-' : v);
 const rupiahOrDash = (v: ReportRow[string]) => (typeof v === 'number' ? formatRupiah(v) : '-');
 
 /** Definisi kolom per tab: kolom penentu (nomor) di depan, tanggal dan nominal dari formatter bersama. */
-const TABS: { id: ReportTab; label: string; empty: string; columns: Column[] }[] = [
+const TABS: TabDef[] = [
   {
     id: 'cases',
     label: 'Perkara',
@@ -253,38 +255,12 @@ export function ReportsView() {
         ) : data.length === 0 ? (
           <EmptyState title={active.empty} hint="Ubah rentang tanggal atau status, lalu terapkan lagi." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm tabular-nums">
-              <caption className="sr-only">Laporan {active.label}</caption>
-              <thead className="border-b border-navy-200 bg-navy-50 text-navy-600">
-                <tr>
-                  {active.columns.map((c) => (
-                    <th
-                      key={c.header}
-                      scope="col"
-                      className={`whitespace-nowrap px-4 py-3 text-xs font-semibold ${c.align === 'right' ? 'text-right' : ''}`}
-                    >
-                      {c.header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy-100">
-                {data.map((row) => (
-                  <tr key={row.id} className="hover:bg-navy-50">
-                    {active.columns.map((c) => (
-                      <td
-                        key={c.header}
-                        className={`px-4 py-3 ${c.align === 'right' ? 'text-right' : ''}`}
-                      >
-                        {c.cell(row)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+            caption={`Laporan ${active.label}`}
+            columns={active.columns.map((c) => ({ ...c, key: c.header }))}
+            rows={data}
+            rowKey={(r) => r.id}
+          />
         )}
       </div>
     </div>

@@ -98,81 +98,68 @@ export function HonorEditor({
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <caption className="sr-only">Honor per anggota tim</caption>
-          <thead className="border-b border-navy-200 text-navy-600">
-            <tr>
-              <th scope="col" className="py-2 pr-3 font-medium">
-                Anggota
-              </th>
-              <th scope="col" className="py-2 pr-3 font-medium">
-                Draft (Rp)
-              </th>
-              <th scope="col" className="py-2 pr-3 text-right font-medium">
-                Terdistribusi
-              </th>
-              <th scope="col" className="py-2 pr-3 font-medium">
-                Status
-              </th>
-              <th scope="col" className="py-2 font-medium">
-                <span className="sr-only">Aksi</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m) => (
-              <tr key={m.userId} className="border-b border-navy-100">
-                <td className="py-2 pr-3">
-                  {m.fullName}
-                  {!m.isMember && (
-                    <span className="ml-2 text-xs text-warning-fg">(bukan anggota tim lagi)</span>
-                  )}
-                </td>
-                <td className="py-2 pr-3">
-                  <label className="sr-only" htmlFor={`h-${m.userId}`}>
-                    Draft honor {m.fullName}
-                  </label>
-                  <input
-                    id={`h-${m.userId}`}
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    step={1}
-                    className={`${inputClass} max-w-40`}
-                    value={values[m.userId] ?? ''}
-                    disabled={!m.isMember || m.status === 'Dibayar'}
-                    onChange={(e) => setValues((v) => ({ ...v, [m.userId]: e.target.value }))}
-                  />
-                </td>
-                <td className="py-2 pr-3 text-right">
-                  {m.publishedAmount === null ? '-' : rp(m.publishedAmount)}
-                </td>
-                <td className="py-2 pr-3">{m.publishedAmount === null ? 'Belum' : m.status}</td>
-                <td className="py-2">
-                  {m.publishedAmount !== null && (
-                    <button
-                      type="button"
-                      className={buttonClass.secondary}
-                      disabled={busy}
-                      onClick={() =>
-                        run(m.status === 'Dibayar' ? 'Status dibatalkan' : 'Ditandai Dibayar', () =>
-                          callApi(
-                            `${base}/members/${m.userId}/paid`,
-                            m.status === 'Dibayar' ? 'DELETE' : 'POST',
-                          ),
-                        )
-                      }
-                    >
-                      {m.status === 'Dibayar' ? 'Batalkan Dibayar' : 'Tandai Dibayar'}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ul aria-label="Honor per anggota tim" className="divide-y divide-navy-100 rounded-card border border-navy-200 bg-white">
+        {members.map((m) => (
+          <li
+            key={m.userId}
+            className="grid gap-3 p-4 md:grid-cols-[1fr_10rem_8rem_6rem_auto] md:items-center"
+          >
+            <div className="font-medium text-navy-800">
+              {m.fullName}
+              {!m.isMember && (
+                <span className="ml-2 text-xs font-normal text-warning-fg">
+                  (bukan anggota tim lagi)
+                </span>
+              )}
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-navy-400" htmlFor={`h-${m.userId}`}>
+                Draft honor {m.fullName}
+              </label>
+              <input
+                id={`h-${m.userId}`}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                className={inputClass}
+                value={values[m.userId] ?? ''}
+                disabled={!m.isMember || m.status === 'Dibayar'}
+                onChange={(e) => setValues((v) => ({ ...v, [m.userId]: e.target.value }))}
+              />
+            </div>
+            <div className="text-sm md:text-right">
+              <span className="text-xs text-navy-400 md:hidden">Terdistribusi: </span>
+              <span className="tabular-nums">
+                {m.publishedAmount === null ? '-' : rp(m.publishedAmount)}
+              </span>
+            </div>
+            <div className="text-sm">
+              <span className="text-xs text-navy-400 md:hidden">Status: </span>
+              {m.publishedAmount === null ? 'Belum' : m.status}
+            </div>
+            <div>
+              {m.publishedAmount !== null && (
+                <button
+                  type="button"
+                  className={`${buttonClass.secondary} w-full md:w-auto`}
+                  disabled={busy}
+                  onClick={() =>
+                    run(m.status === 'Dibayar' ? 'Status dibatalkan' : 'Ditandai Dibayar', () =>
+                      callApi(
+                        `${base}/members/${m.userId}/paid`,
+                        m.status === 'Dibayar' ? 'DELETE' : 'POST',
+                      ),
+                    )
+                  }
+                >
+                  {m.status === 'Dibayar' ? 'Batalkan Dibayar' : 'Tandai Dibayar'}
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
 
       <p
         className={`mt-4 text-sm ${over ? 'font-medium text-danger-fg' : 'text-navy-700'}`}
@@ -182,7 +169,7 @@ export function HonorEditor({
         {over ? `, melebihi ${rp(total - fund)}` : `, sisa ${rp(fund - total)}`}
       </p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <button type="button" className={buttonClass.secondary} disabled={busy} onClick={save}>
           Simpan Draft
         </button>
