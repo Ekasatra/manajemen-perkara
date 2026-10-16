@@ -24,14 +24,30 @@ export function createSupabaseServiceClient(
   });
 }
 
-/**
- * Klien Drizzle langsung ke Postgres (bypass RLS — hanya dipakai di server).
- * `prepare: false` agar kompatibel dengan pooler Supabase mode transaction.
- */
-export function createDb(databaseUrl: string = process.env.DATABASE_URL ?? '') {
-  if (!databaseUrl) throw new Error('DATABASE_URL wajib diset di environment');
-  const client = postgres(databaseUrl, { prepare: false });
+function buildDb(databaseUrl: string) {
+  // idle_timeout: koneksi menganggur ditutup (default postgres.js: tidak pernah).
+  const client = postgres(databaseUrl, { prepare: false, idle_timeout: 20 });
   return drizzle(client, { schema });
 }
 
-export type Db = ReturnType<typeof createDb>;
+export type Db = ReturnType<typeof buildDb>;
+
+// Satu klien per URL per proses. Dulu setiap request membuat pool baru (TCP+TLS+auth ke
+// Singapura) dan tidak pernah menutupnya. globalThis agar bertahan melewati HMR di dev.
+const g = globalThis as { __ekasatraDb?: Map<string, Db> };
+
+/**
+ * Klien Drizzle langsung ke Postgres (bypass RLS — hanya dipakai di server).
+ * `prepare: false` agar kompatibel dengan pooler Supabase mode transaction.
+ * Dipanggil berulang aman: URL yang sama memakai ulang klien yang sama.
+ */
+export function createDb(databaseUrl: string = process.env.DATABASE_URL ?? ''): Db {
+  if (!databaseUrl) throw new Error('DATABASE_URL wajib diset di environment');
+  const cache = (g.__ekasatraDb ??= new Map());
+  let db = cache.get(databaseUrl);
+  if (!db) {
+    db = buildDb(databaseUrl);
+    cache.set(databaseUrl, db);
+  }
+  return db;
+}
