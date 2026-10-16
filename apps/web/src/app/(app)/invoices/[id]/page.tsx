@@ -2,7 +2,7 @@
  * Detail invoice + pembayaran (Agent F · F1–F2). Status dihitung dari paid_amount.
  */
 import { notFound } from 'next/navigation';
-import { ensureCan, isAppError } from '@ekasatra/core';
+import { can, ensureCan, isAppError } from '@ekasatra/core';
 import { uuidParam } from '@ekasatra/core/finance';
 import { getInvoice } from '@ekasatra/core/invoices';
 import { FactList } from '@/components/ui/fact-list';
@@ -55,6 +55,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         paidAmount={invoice.paidAmount}
         dueDate={invoice.dueDate}
         description={invoice.description}
+        canDelete={can(user, 'D', 'invoices')}
       />
     </div>
   );

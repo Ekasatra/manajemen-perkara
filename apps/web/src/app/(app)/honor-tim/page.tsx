@@ -71,7 +71,7 @@ export default async function HonorTimPage({
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Honor Tim"
         description="Distribusi honor per perkara dan honor yang sudah Anda terima."
@@ -86,7 +86,7 @@ export default async function HonorTimPage({
 
       {managed && (
         <section aria-labelledby="h-kelola">
-          <h2 id="h-kelola" className="mb-3 text-xl text-navy-800">
+          <h2 id="h-kelola" className="mb-3 text-base text-navy-800">
             Kelola honor per perkara
           </h2>
           <DataTable<HonorCaseListItem>
@@ -108,7 +108,7 @@ export default async function HonorTimPage({
       )}
 
       <section aria-labelledby="h-saya">
-        <h2 id="h-saya" className="mb-3 text-xl text-navy-800">
+        <h2 id="h-saya" className="mb-3 text-base text-navy-800">
           Honor saya
         </h2>
         <DataTable<MyHonorItem>

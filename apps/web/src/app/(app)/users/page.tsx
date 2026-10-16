@@ -5,13 +5,14 @@
 import { count, desc } from 'drizzle-orm';
 import { createDb, profiles } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { requireUser, ensureCan } from '@ekasatra/core';
+import { requireUser, ensureCan, can } from '@ekasatra/core';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
 import { formatDate } from '@/lib/format';
 import { CreateUserDialog } from '@/modules/users/create-user-dialog';
+import { UserActions } from '@/modules/users/user-actions';
 
 type UserRow = {
   id: string;
@@ -23,11 +24,7 @@ type UserRow = {
   createdAt: Date;
 };
 
-export default async function UsersPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
+export default async function UsersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const db = createDb();
   const supabase = await createSupabaseServerClient();
   const user = await requireUser(db, supabase);
@@ -59,7 +56,11 @@ export default async function UsersPage({
   const columns: Column<UserRow>[] = [
     { key: 'fullName', header: 'Nama', cell: (r) => r.fullName },
     { key: 'email', header: 'Email', cell: (r) => r.email },
-    { key: 'role', header: 'Role', cell: (r) => r.role },
+    {
+      key: 'role',
+      header: 'Role',
+      cell: (r) => (r.role === 'SuperAdmin' ? 'Super Admin' : r.role),
+    },
     {
       key: 'isActive',
       header: 'Status',
@@ -74,6 +75,18 @@ export default async function UsersPage({
       key: 'createdAt',
       header: 'Dibuat',
       cell: (r) => formatDate(r.createdAt),
+    },
+    {
+      key: 'aksi',
+      header: 'Aksi',
+      cell: (r) => {
+        const isSuper = r.role === 'SuperAdmin';
+        const canEdit = can(user, 'U', 'users') && (!isSuper || user.role === 'superadmin');
+        const canDelete = can(user, 'D', 'users') && !isSuper && r.id !== user.userId;
+        return canEdit || canDelete ? (
+          <UserActions row={r} canEdit={canEdit} canDelete={canDelete} />
+        ) : null;
+      },
     },
   ];
 

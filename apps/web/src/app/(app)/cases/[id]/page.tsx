@@ -3,7 +3,7 @@
  * Tab: Ringkasan, Timeline, Jadwal, Dokumen, Surat, Biaya (Admin).
  * Surat & biaya read-only — data dari fungsi baca modul E/F.
  */
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import {
   createDb,
   cases,
@@ -31,6 +31,7 @@ import { formatDate } from '@/lib/format';
 import { CaseStatusBadge } from '@/modules/cases/case-status-badge';
 import { CaseFlow } from '@/modules/cases/case-flow';
 import { CaseTabs } from '@/modules/cases/case-tabs';
+import { CaseActions } from '@/modules/cases/case-actions';
 import { todayWib } from '@/modules/dashboard/metrics';
 
 export default async function CaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -86,6 +87,25 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const canUpdate = can(user, 'U', 'cases');
   const canManageTeam = can(user, 'C', 'users');
   const canViewBiaya = can(user, 'R', 'invoices');
+  const canDelete = can(user, 'D', 'cases');
+
+  // Pilihan klien/lawan untuk form ubah: hanya bila user berhak membaca masterannya.
+  const [clientOptions, opponentOptions] = await Promise.all([
+    canUpdate && can(user, 'R', 'clients')
+      ? db
+          .select({ id: clients.id, name: clients.name, code: clients.clientCode })
+          .from(clients)
+          .orderBy(asc(clients.name))
+          .then((rs) => rs.map((r) => ({ id: r.id, label: `${r.code} · ${r.name}` })))
+      : null,
+    canUpdate && can(user, 'R', 'opponents')
+      ? db
+          .select({ id: opponents.id, name: opponents.name })
+          .from(opponents)
+          .orderBy(asc(opponents.name))
+          .then((rs) => rs.map((r) => ({ id: r.id, label: r.name })))
+      : null,
+  ]);
 
   // Tab Surat: surat masuk & keluar untuk perkara ini (read-only).
   const [suratMasuk, suratKeluar] = await Promise.all([
@@ -104,6 +124,17 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
         reference={caseRow.regNo}
         status={<CaseStatusBadge status={caseRow.status} />}
         title={caseRow.title}
+        actions={
+          canUpdate || canDelete ? (
+            <CaseActions
+              row={caseRow}
+              clientOptions={clientOptions}
+              opponentOptions={opponentOptions}
+              canEdit={canUpdate}
+              canDelete={canDelete}
+            />
+          ) : undefined
+        }
         facts={[
           { label: 'Nomor perkara', value: caseRow.caseNumber ?? '-' },
           { label: 'Pengadilan', value: caseRow.court ?? '-' },

@@ -14,7 +14,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="mb-6">
+    <header className="mb-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-title font-semibold text-navy-700">{title}</h1>
@@ -22,7 +22,7 @@ export function PageHeader({
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>
-      <div aria-hidden="true" className="mt-4">
+      <div aria-hidden="true" className="mt-3">
         <div className="h-px w-full bg-gold-500" />
         <div className="mt-0.5 h-px w-16 bg-gold-500" />
       </div>

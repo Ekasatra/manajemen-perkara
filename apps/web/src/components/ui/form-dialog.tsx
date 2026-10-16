@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { buttonClass } from './styles';
 
@@ -10,6 +10,8 @@ type Props = {
   title: string;
   description?: string;
   submitLabel?: string;
+  /** Tombol kirim berwarna bahaya, untuk konfirmasi hapus. */
+  destructive?: boolean;
   /** Lempar Error (mis. pesan dari respons `{ok:false}`) untuk menampilkannya di dialog. */
   onSubmit: (data: FormData) => void | Promise<void>;
   children: ReactNode;
@@ -25,10 +27,12 @@ export function FormDialog({
   title,
   description,
   submitLabel = 'Simpan',
+  destructive = false,
   onSubmit,
   children,
 }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,12 +60,12 @@ export function FormDialog({
     <dialog
       ref={ref}
       onClose={onClose}
-      aria-labelledby="form-dialog-title"
+      aria-labelledby={titleId}
       className="m-auto w-full rounded-card bg-surface p-0 text-navy-800 shadow-float backdrop:bg-navy-900/50 sm:max-w-lg"
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-5">
         <div>
-          <h2 id="form-dialog-title" className="text-xl">
+          <h2 id={titleId} className="text-base">
             {title}
           </h2>
           {description ? <p className="mt-1 text-sm text-navy-400">{description}</p> : null}
@@ -79,7 +83,7 @@ export function FormDialog({
           <button type="button" onClick={onClose} className={buttonClass.secondary}>
             Batal
           </button>
-          <button type="submit" disabled={pending} className={buttonClass.primary}>
+          <button type="submit" disabled={pending} className={destructive ? buttonClass.danger : buttonClass.primary}>
             {pending ? 'Menyimpan…' : submitLabel}
           </button>
         </div>

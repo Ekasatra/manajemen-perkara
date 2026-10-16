@@ -159,8 +159,8 @@ export function DashboardView({
         />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-7">
+      <div className="mt-6 grid gap-4 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-7">
           <section>
             <SectionTitle aside={`${sidang7Hari.length} agenda`}>
               Agenda sidang 7 hari ke depan
@@ -193,7 +193,7 @@ export function DashboardView({
                       </div>
                       <Link
                         href={`/cases/${s.caseId}`}
-                        className="mt-2 block font-display text-xl font-semibold text-navy-700 hover:underline"
+                        className="mt-2 block font-display text-lg font-semibold text-navy-700 hover:underline"
                       >
                         {s.caseTitle}
                       </Link>
@@ -245,7 +245,7 @@ export function DashboardView({
           </section>
         </div>
 
-        <div className="space-y-6 lg:col-span-5">
+        <div className="space-y-4 lg:col-span-5">
           <Card
             title="Beban sidang 7 hari ke depan"
             action={
@@ -283,7 +283,7 @@ export function DashboardView({
         </div>
       </div>
 
-      <section className="mt-8">
+      <section className="mt-6">
         <SectionTitle>Perkara terbaru</SectionTitle>
         <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">
           {recentCases.length === 0 ? (
@@ -304,7 +304,7 @@ export function DashboardView({
         </div>
       </section>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <Card
           title="Surat menunggu persetujuan Anda"
           action={

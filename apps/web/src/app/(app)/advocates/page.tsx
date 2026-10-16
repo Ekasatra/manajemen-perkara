@@ -12,12 +12,16 @@ import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
 import { formatDate } from '@/lib/format';
 import { CreateAdvocateDialog } from '@/modules/advocates/create-advocate-dialog';
+import { AdvocateActions } from '@/modules/advocates/advocate-actions';
 
 type AdvocateRow = {
   id: string;
   userId: string | null;
   fullName: string;
   phone: string;
+  address: string;
+  bankName: string | null;
+  bankAccount: string;
   licenseNumber: string | null;
   education: unknown;
   createdAt: Date;
@@ -45,6 +49,9 @@ export default async function AdvocatesPage({
       userId: advocates.userId,
       fullName: advocates.fullName,
       phone: advocates.phone,
+      address: advocates.address,
+      bankName: advocates.bankName,
+      bankAccount: advocates.bankAccount,
       licenseNumber: advocates.licenseNumber,
       education: advocates.education,
       createdAt: advocates.createdAt,
@@ -61,12 +68,25 @@ export default async function AdvocatesPage({
   ]);
 
   const total = countRows[0]?.value ?? 0;
+  const canEdit = can(user, 'U', 'advocates');
+  const canDelete = can(user, 'D', 'advocates');
 
   const columns: Column<AdvocateRow>[] = [
     { key: 'fullName', header: 'Nama', cell: (r) => r.fullName },
     { key: 'phone', header: 'Telepon', cell: (r) => r.phone },
     { key: 'licenseNumber', header: 'Lisensi', cell: (r) => r.licenseNumber ?? '-' },
     { key: 'createdAt', header: 'Dibuat', cell: (r) => formatDate(r.createdAt) },
+    ...(canEdit || canDelete
+      ? [
+          {
+            key: 'aksi',
+            header: 'Aksi',
+            cell: (r: AdvocateRow) => (
+              <AdvocateActions row={r} canEdit={canEdit} canDelete={canDelete} />
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -88,9 +108,7 @@ export default async function AdvocatesPage({
         searchParams={params}
         empty={{
           title: 'Belum ada data advokat',
-          hint: isAdmin
-            ? 'Tambahkan data advokat untuk staf.'
-            : 'Lengkapi data advokat Anda.',
+          hint: isAdmin ? 'Tambahkan data advokat untuk staf.' : 'Lengkapi data advokat Anda.',
           action: <CreateAdvocateDialog />,
         }}
       />

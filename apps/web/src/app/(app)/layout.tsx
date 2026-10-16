@@ -79,6 +79,7 @@ const NAV: NavEntry[] = [
 ];
 
 const ROLE_LABEL: Record<string, string> = {
+  superadmin: 'Super Admin',
   admin: 'Admin',
   advokat: 'Advokat',
   paralegal: 'Paralegal',

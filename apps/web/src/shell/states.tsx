@@ -36,7 +36,7 @@ export function EmptyState({
           {icon}
         </span>
       ) : null}
-      <p className="text-xl font-semibold text-navy-800">{title}</p>
+      <p className="text-base font-semibold text-navy-800">{title}</p>
       {hint ? <p className="max-w-md text-sm text-navy-400">{hint}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
@@ -54,7 +54,7 @@ export function ErrorState({
 }) {
   return (
     <div role="alert" className="flex flex-col items-center gap-2 p-10 text-center">
-      <p className="text-xl font-semibold text-navy-800">{title}</p>
+      <p className="text-base font-semibold text-navy-800">{title}</p>
       <p className="max-w-md text-sm text-navy-400">{message}</p>
       {action ? <div className="mt-2">{action}</div> : null}
     </div>

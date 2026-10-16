@@ -57,11 +57,15 @@ export async function PATCH(
     }
 
     const [existing] = await db
-      .select({ id: profiles.id })
+      .select({ id: profiles.id, role: profiles.role })
       .from(profiles)
       .where(eq(profiles.id, id))
       .limit(1);
     if (!existing) throw notFound('User tidak ditemukan');
+    // Akun Superadmin hanya boleh diubah oleh Superadmin sendiri.
+    if (existing.role === 'SuperAdmin' && user.role !== 'superadmin') {
+      throw forbidden('Akun Superadmin tidak dapat diubah');
+    }
 
     const [updated] = await db
       .update(profiles)
@@ -100,11 +104,12 @@ export async function DELETE(
     }
 
     const [target] = await db
-      .select({ fullName: profiles.fullName, email: profiles.email })
+      .select({ fullName: profiles.fullName, email: profiles.email, role: profiles.role })
       .from(profiles)
       .where(eq(profiles.id, id))
       .limit(1);
     if (!target) throw notFound('User tidak ditemukan');
+    if (target.role === 'SuperAdmin') throw forbidden('Akun Superadmin tidak dapat dihapus');
 
     // Hapus dari Supabase Auth → cascade hapus profil.
     const supabaseService = createSupabaseServiceClient();

@@ -1,6 +1,6 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
 
-export const userRole = pgEnum('user_role', ['Admin', 'Advokat', 'Paralegal']);
+export const userRole = pgEnum('user_role', ['SuperAdmin', 'Admin', 'Advokat', 'Paralegal']);
 
 export const caseStatus = pgEnum('case_status', [
   'Aktif',
