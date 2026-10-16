@@ -6,6 +6,7 @@ import { count, desc, eq, and, gte, lte, type SQL } from 'drizzle-orm';
 import { createDb, activityLogs } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan } from '@ekasatra/core';
+import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
@@ -85,7 +86,10 @@ export default async function AuditPage({
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-semibold text-navy-700">Audit Log</h1>
+      <PageHeader
+        title="Audit Log"
+        description="Catatan perubahan data oleh pengguna. Hanya Admin yang dapat melihatnya."
+      />
       <AuditFilter initialParams={params} />
       <div className="mt-4">
         <DataTable<AuditRow>

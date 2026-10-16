@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { can } from '@ekasatra/core';
 import { listCaseOptions, listStaffOptions, listSuratMasuk } from '@ekasatra/core/surat';
+import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { formatDate } from '@/lib/format';
 import { parsePageQuery, type SearchParams } from '@/lib/pagination';
@@ -55,10 +56,11 @@ export default async function SuratMasukPage({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy-700">Surat Masuk</h1>
-        {create}
-      </div>
+      <PageHeader
+        title="Surat Masuk"
+        description="Register surat masuk, nomor agenda, dan disposisinya."
+        actions={create}
+      />
       <FilterForm q={str('q')} status={status} statuses={STATUS} />
       <DataTable<Row>
         caption="Daftar surat masuk"

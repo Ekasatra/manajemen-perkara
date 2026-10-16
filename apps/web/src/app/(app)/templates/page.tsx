@@ -2,6 +2,7 @@
 import { can } from '@ekasatra/core';
 import { listTemplates } from '@ekasatra/core/surat';
 import { EmptyState } from '@/shell/states';
+import { PageHeader } from '@/components/ui/page-header';
 import { formatDate } from '@/lib/format';
 import { pageCtx } from '@/modules/surat/page-ctx';
 import { DownloadLink } from '@/modules/surat/download-link';
@@ -15,11 +16,12 @@ export default async function TemplatesPage() {
   ) : null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy-700">Template</h1>
-        {upload}
-      </div>
+    <div>
+      <PageHeader
+        title="Template Surat"
+        description="Template surat per kategori yang dapat diunduh seluruh staf."
+        actions={upload}
+      />
       {groups.length === 0 ? (
         <EmptyState
           title="Belum ada template"
@@ -28,11 +30,11 @@ export default async function TemplatesPage() {
         />
       ) : (
         groups.map((g) => (
-          <section key={g.category} aria-labelledby={`cat-${g.category}`}>
-            <h2 id={`cat-${g.category}`} className="mb-2 font-display text-xl font-semibold text-navy-800">
+          <section key={g.category} aria-labelledby={`cat-${g.category}`} className="mb-6">
+            <h2 id={`cat-${g.category}`} className="mb-2 text-xl text-navy-800">
               {g.category}
             </h2>
-            <ul className="divide-y divide-navy-200 rounded-md border border-navy-200 bg-white">
+            <ul className="divide-y divide-navy-100 rounded-card border border-navy-200 bg-white">
               {g.items.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
                   <div>

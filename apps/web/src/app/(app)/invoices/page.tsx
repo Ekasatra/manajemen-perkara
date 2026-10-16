@@ -7,6 +7,7 @@ import { listCaseOptions, listClientOptions } from '@ekasatra/core/finance';
 import { listInvoices, type InvoiceListItem } from '@ekasatra/core/invoices';
 import { INVOICE_STATUSES, listInvoicesQuerySchema } from '@ekasatra/shared/invoices';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { PageHeader } from '@/components/ui/page-header';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 import { formatDate, formatRupiah } from '@/lib/format';
 import type { SearchParams } from '@/lib/pagination';
@@ -58,10 +59,11 @@ export default async function InvoicesPage({
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-navy-700">Biaya Perkara</h1>
-        <CreateInvoiceDialog clients={clients} cases={cases} />
-      </div>
+      <PageHeader
+        title="Invoice"
+        description="Biaya perkara: tagihan, pembayaran, dan jatuh tempo."
+        actions={<CreateInvoiceDialog clients={clients} cases={cases} />}
+      />
 
       <form method="get" className="mb-4 flex flex-wrap items-end gap-3">
         <div>

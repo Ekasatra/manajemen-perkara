@@ -12,6 +12,7 @@ import {
   type MyHonorItem,
 } from '@ekasatra/core/honor-tim';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { PageHeader } from '@/components/ui/page-header';
 import { buttonClass } from '@/components/ui/styles';
 import { formatDate, formatRupiah } from '@/lib/format';
 import { parsePageQuery, type SearchParams } from '@/lib/pagination';
@@ -71,18 +72,21 @@ export default async function HonorTimPage({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-navy-700">Honor &amp; Kas</h1>
-        {kasVisible && (
-          <Link href="/honor-tim/kas" className={buttonClass.secondary}>
-            Kas Kantor
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title="Honor Tim"
+        description="Distribusi honor per perkara dan honor yang sudah Anda terima."
+        actions={
+          kasVisible ? (
+            <Link href="/honor-tim/kas" className={buttonClass.secondary}>
+              Kas Kantor
+            </Link>
+          ) : null
+        }
+      />
 
       {managed && (
         <section aria-labelledby="h-kelola">
-          <h2 id="h-kelola" className="mb-3 text-lg font-semibold text-navy-700">
+          <h2 id="h-kelola" className="mb-3 text-xl text-navy-800">
             Kelola honor per perkara
           </h2>
           <DataTable<HonorCaseListItem>
@@ -104,7 +108,7 @@ export default async function HonorTimPage({
       )}
 
       <section aria-labelledby="h-saya">
-        <h2 id="h-saya" className="mb-3 text-lg font-semibold text-navy-700">
+        <h2 id="h-saya" className="mb-3 text-xl text-navy-800">
           Honor saya
         </h2>
         <DataTable<MyHonorItem>

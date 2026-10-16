@@ -4,6 +4,7 @@
 import { createDb } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan, listCases } from '@ekasatra/core';
+import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
@@ -55,10 +56,11 @@ export default async function CasesPage({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy-700">Perkara</h1>
-        <CreateCaseDialog />
-      </div>
+      <PageHeader
+        title="Perkara"
+        description="Register perkara: nomor registrasi, status, dan batas upaya hukum."
+        actions={<CreateCaseDialog />}
+      />
       <DataTable<CaseRow>
         caption="Daftar perkara"
         columns={columns}
