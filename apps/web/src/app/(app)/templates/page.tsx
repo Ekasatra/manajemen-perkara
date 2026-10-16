@@ -31,7 +31,7 @@ export default async function TemplatesPage() {
       ) : (
         groups.map((g) => (
           <section key={g.category} aria-labelledby={`cat-${g.category}`} className="mb-6">
-            <h2 id={`cat-${g.category}`} className="mb-2 text-xl text-navy-800">
+            <h2 id={`cat-${g.category}`} className="mb-2 text-base text-navy-800">
               {g.category}
             </h2>
             <ul className="divide-y divide-navy-100 rounded-card border border-navy-200 bg-surface">

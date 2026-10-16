@@ -31,7 +31,7 @@ export default async function SuratMasukDetailPage({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <FileHeader
         back={{ href: '/surat-masuk', label: 'Surat Masuk' }}
         reference="No. agenda"
@@ -48,7 +48,7 @@ export default async function SuratMasukDetailPage({
 
       {can(user, 'U', 'surat_masuk') ? (
         <section aria-labelledby="disposisi" className="max-w-md">
-          <h2 id="disposisi" className="mb-2 text-xl text-navy-800">
+          <h2 id="disposisi" className="mb-2 text-base text-navy-800">
             Disposisi
           </h2>
           <DisposisiForm

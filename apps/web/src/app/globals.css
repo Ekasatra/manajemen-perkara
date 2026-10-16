@@ -36,9 +36,9 @@
   --radius-card: 0.625rem;
 
   /* Ukuran judul halaman dan angka kunci; ukuran lain memakai skala Tailwind (xs, sm, base, xl). */
-  --text-title: 2rem;
+  --text-title: 1.5rem;
   --text-title--line-height: 1.2;
-  --text-figure: 2.25rem;
+  --text-figure: 1.75rem;
   --text-figure--line-height: 1.1;
 
   /* Bayangan hanya untuk elemen yang melayang (dialog, dropdown, toast). */
@@ -105,6 +105,13 @@
     --color-on-primary: #0b0f17;
     --color-on-danger: #0b0f17;
     --shadow-float: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* Desktop sedikit lebih rapat: skala rem (teks, jarak, kontrol) ikut mengecil 6%. */
+@media (min-width: 768px) {
+  html {
+    font-size: 15px;
   }
 }
 

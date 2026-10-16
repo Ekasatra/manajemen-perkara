@@ -4,7 +4,7 @@
  * layar sentuh (R-03), lebih rapat di md ke atas.
  */
 const base =
-  'inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 md:min-h-9';
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 md:min-h-8';
 
 export const buttonClass = {
   primary: `${base} bg-primary text-on-primary hover:bg-primary-hover`,
@@ -16,4 +16,4 @@ export const buttonClass = {
 export const labelClass = 'mb-1 block text-sm font-medium text-navy-800';
 
 export const inputClass =
-  'block min-h-11 w-full rounded-control border border-navy-300 bg-surface px-3 py-2 text-sm text-navy-800 placeholder:text-navy-400 md:min-h-9';
+  'block min-h-11 w-full rounded-control border border-navy-300 bg-surface px-3 py-2 text-sm text-navy-800 placeholder:text-navy-400 md:min-h-8';

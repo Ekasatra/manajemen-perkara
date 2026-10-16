@@ -191,7 +191,7 @@ export function AppShell({
       </aside>
 
       <div className={`print:ml-0 ${collapsed ? 'md:ml-16' : 'md:ml-64'}`}>
-        <div className="sticky top-0 z-10 hidden h-16 items-center justify-between gap-4 border-b border-navy-200 bg-navy-50 px-8 md:flex print:hidden">
+        <div className="sticky top-0 z-10 hidden h-14 items-center justify-between gap-4 border-b border-navy-200 bg-navy-50 px-6 md:flex print:hidden">
           <p className="min-w-0 truncate text-sm text-navy-400">
             {current?.group && current.group !== current.label ? (
               <>
@@ -224,7 +224,7 @@ export function AppShell({
             ) : null}
           </div>
         </div>
-        <main id="konten" className="min-h-screen p-4 md:p-8 print:m-0 print:p-0">
+        <main id="konten" className="min-h-screen p-4 md:p-6 print:m-0 print:p-0">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

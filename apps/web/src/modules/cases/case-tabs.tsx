@@ -200,7 +200,7 @@ export function CaseTabs(props: Props) {
 function RingkasanTab({ caseRow, canUpdate }: Props) {
   const statuses = ['Aktif', 'Putus', 'Banding', 'Kasasi', 'PK', 'Selesai'];
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <FactList
         rows={[
           ['Tanggal putus', dateOrDash(caseRow.putusDate)],
@@ -547,7 +547,7 @@ const SURAT_KELUAR_COLUMNS: Column<SuratKeluarItem>[] = [
 
 function SuratTab({ suratMasuk, suratKeluar }: Props) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <section aria-label="Surat masuk">
         <h3 className="mb-3 text-base text-navy-800">Surat masuk</h3>
         {suratMasuk.length === 0 ? (
@@ -612,7 +612,7 @@ function BiayaTab({ invoices, honorarium, canViewBiaya }: Props) {
     return <Muted>Tab biaya hanya untuk Admin.</Muted>;
   }
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <section aria-label="Invoice">
         <h3 className="mb-3 text-base text-navy-800">Invoice</h3>
         {invoices.length === 0 ? (
