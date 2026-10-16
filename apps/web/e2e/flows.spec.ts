@@ -52,9 +52,9 @@ test.beforeAll(async ({ browser }) => {
 
 test('login 3 role: menu mengikuti hak akses', async () => {
   const nav = (s: Session) => s.page.getByRole('navigation').first();
-  await expect(nav(admin).getByRole('link', { name: /Invoice/ })).toBeVisible();
+  await expect(nav(admin).getByRole('link', { name: /Biaya Perkara/ })).toBeVisible();
   await expect(nav(advokat).getByRole('link', { name: /Perkara/ }).first()).toBeVisible();
-  await expect(nav(advokat).getByRole('link', { name: /Invoice/ })).toHaveCount(0);
+  await expect(nav(advokat).getByRole('link', { name: /Biaya Perkara/ })).toHaveCount(0);
   await expect(nav(paralegal).getByRole('link', { name: /Audit/ })).toHaveCount(0);
   // API menolak di luar matriks, bukan hanya menyembunyikan menu.
   const res = await paralegal.api.get('/api/v1/invoices');
