@@ -124,11 +124,6 @@ export default async function AdvocatesPage({
     <div>
       <PageHeader
         title={isAdmin ? 'Data Advokat' : 'Data Diri Saya'}
-        description={
-          isAdmin
-            ? 'Data profesi, pendidikan, dan rekening advokat kantor.'
-            : 'Data profesi, pendidikan, dan rekening untuk keperluan kantor.'
-        }
         actions={<CreateAdvocateDialog />}
       />
       <DataTable<AdvocateRow>

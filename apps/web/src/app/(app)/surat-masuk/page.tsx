@@ -134,7 +134,6 @@ export default async function SuratMasukPage({
     <div>
       <PageHeader
         title="Surat Masuk"
-        description="Pencatatan, disposisi internal, dan arsip lampiran surat masuk."
         actions={create}
       />
       <div className="card-surface mb-4">

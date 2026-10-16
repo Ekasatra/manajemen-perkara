@@ -140,7 +140,7 @@ export default async function InvoicesPage({
     <div>
       <PageHeader
         title="Biaya Perkara"
-        description="Tagihan biaya perkara ke klien, status pembayaran, dan jatuh tempo. Menjadi dasar perhitungan kas kantor & honor tim."
+        description="Tagihan, pembayaran, dan jatuh tempo."
         actions={<CreateInvoiceDialog clients={clients} cases={cases} />}
       />
 

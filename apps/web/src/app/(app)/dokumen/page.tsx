@@ -32,7 +32,6 @@ export default async function DocumentsPage({
     <div>
       <PageHeader
         title="Dokumen & Drive"
-        description="Arsip dokumen perkara, tersimpan aman per perkara."
       />
       <DocumentCatalog
         docs={docs.map((d) => ({ ...d, createdAt: d.createdAt.toISOString() }))}

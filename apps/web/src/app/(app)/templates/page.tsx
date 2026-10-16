@@ -58,7 +58,7 @@ export default async function TemplatesPage({
     <div>
       <PageHeader
         title="Template Surat"
-        description="Unduh template, isi nomor dan isi surat, lalu unggah di menu Surat Keluar."
+        description="Unduh template, lalu unggah suratnya di Surat Keluar."
         actions={upload}
       />
 

@@ -123,6 +123,13 @@
   }
 }
 
+/* Desktop sedikit lebih rapat: skala rem (teks, jarak, kontrol) mengecil 6% agar tampilan bersih dan tidak terasa besar. */
+@media (min-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+}
+
 /* Latar gaya GAS: semburat emas kanan-atas dan navy kiri-bawah di atas gradien lembut, tetap saat scroll. */
 body {
   font-family: var(--font-sans);

@@ -42,7 +42,7 @@ export default function LoginPage() {
   const iconClass = 'pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-300';
   return (
     <div className="card-surface p-7 sm:p-8">
-      <h1 className="font-display text-3xl font-semibold text-navy-800">Masuk</h1>
+      <h1 className="font-display text-2xl font-semibold text-navy-800">Masuk</h1>
       <p className="mb-6 mt-1 text-sm text-navy-400">
         Gunakan email &amp; password akun kantor Anda.
       </p>

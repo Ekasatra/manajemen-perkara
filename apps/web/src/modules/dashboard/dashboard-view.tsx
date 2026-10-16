@@ -42,7 +42,11 @@ const NOTIF_ICON = {
   reject: Undo2,
   sidang: Gavel,
 } as const;
-const TENGGAT_LABEL = { upaya_hukum: 'Upaya Hukum', sidang: 'Sidang', invoice: 'Jatuh Tempo' } as const;
+const TENGGAT_LABEL = {
+  upaya_hukum: 'Upaya Hukum',
+  sidang: 'Sidang',
+  invoice: 'Jatuh Tempo',
+} as const;
 
 export type DashboardViewer = {
   name: string;
@@ -55,7 +59,11 @@ export type DashboardViewer = {
 
 function greeting(now: Date): string {
   const hour = Number(
-    new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Asia/Jakarta' }).format(now),
+    new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Jakarta',
+    }).format(now),
   );
   if (hour < 11) return 'Selamat pagi';
   if (hour < 15) return 'Selamat siang';
@@ -83,11 +91,21 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-function SectionTitle({ icon, children, action }: { icon: ReactNode; children: string; action?: ReactNode }) {
+function SectionTitle({
+  icon,
+  children,
+  action,
+}: {
+  icon: ReactNode;
+  children: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="mb-4 flex items-center justify-between gap-3">
       <h2 className="flex items-center gap-2 text-sm font-bold text-navy-800">
-        <span aria-hidden="true" className="text-gold-500">{icon}</span>
+        <span aria-hidden="true" className="text-gold-500">
+          {icon}
+        </span>
         {children}
       </h2>
       {action}
@@ -98,7 +116,9 @@ function SectionTitle({ icon, children, action }: { icon: ReactNode; children: s
 function Empty({ icon, children }: { icon: ReactNode; children: string }) {
   return (
     <div className="flex flex-col items-center gap-2 py-8 text-sm text-navy-400">
-      <span aria-hidden="true" className="text-navy-300">{icon}</span>
+      <span aria-hidden="true" className="text-navy-300">
+        {icon}
+      </span>
       {children}
     </div>
   );
@@ -167,7 +187,7 @@ export function DashboardView({
       ? {
           icon: <Wallet size={18} />,
           label: 'Biaya Perkara Tertagih',
-          value: <span className="text-xl">{formatRupiah(piutang.totalOutstanding ?? 0)}</span>,
+          value: <span className="text-lg">{formatRupiah(piutang.totalOutstanding ?? 0)}</span>,
           sub: `${piutang.invoiceCount ?? 0} invoice`,
           tone: 'emerald',
           href: '/invoices',
@@ -214,10 +234,10 @@ export function DashboardView({
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-700">
             {viewer.roleLabel}
           </p>
-          <h1 className="mt-1 font-display text-4xl font-semibold text-navy-800">
+          <h1 className="mt-1 font-display text-3xl font-semibold text-navy-800">
             {greeting(now)}, {firstName}.
           </h1>
-          <p className="mt-1 text-sm text-navy-400">Ringkasan kantor per {formatDate(now)}.</p>
+          <p className="mt-1 text-sm text-navy-400">{formatDate(now)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {viewer.canCreateSuratMasuk ? (
@@ -245,7 +265,10 @@ export function DashboardView({
           <SectionTitle
             icon={<Gavel size={16} />}
             action={
-              <Link href="/jadwal" className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}>
+              <Link
+                href="/jadwal"
+                className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}
+              >
                 Kalender <ArrowRight aria-hidden="true" size={15} />
               </Link>
             }
@@ -267,11 +290,17 @@ export function DashboardView({
                       className="-mx-2 flex items-center gap-4 rounded-control px-2 py-3 hover:bg-gold-50/40"
                     >
                       <div className="w-14 shrink-0 rounded-control bg-navy-700 py-1.5 text-center text-white dark:bg-gold-500 dark:text-navy-950">
-                        <div className="text-[10px] uppercase tracking-wider text-gold-300 dark:text-navy-950">{month}</div>
-                        <div className="text-xl font-bold leading-none">{Number(s.scheduleDate.slice(8, 10))}</div>
+                        <div className="text-[10px] uppercase tracking-wider text-gold-300 dark:text-navy-950">
+                          {month}
+                        </div>
+                        <div className="text-xl font-bold leading-none">
+                          {Number(s.scheduleDate.slice(8, 10))}
+                        </div>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-semibold text-navy-800">{s.caseTitle}</div>
+                        <div className="truncate text-sm font-semibold text-navy-800">
+                          {s.caseTitle}
+                        </div>
                         <div className="truncate text-xs text-navy-400">{s.kind}</div>
                         <div className="mt-0.5 flex items-center gap-1 text-xs text-navy-500">
                           <MapPin aria-hidden="true" size={13} />
@@ -298,14 +327,21 @@ export function DashboardView({
                 const Icon = NOTIF_ICON[n.type] ?? Bell;
                 return (
                   <li key={n.id}>
-                    <Link href={n.link} className="flex gap-3 rounded-control p-2.5 hover:bg-gold-50/50">
+                    <Link
+                      href={n.link}
+                      className="flex gap-3 rounded-control p-2.5 hover:bg-gold-50/50"
+                    >
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-navy-50 text-navy-700">
                         <Icon aria-hidden="true" size={15} />
                       </span>
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold text-navy-800">{n.title}</div>
-                        <div className="line-clamp-2 text-xs text-navy-500">{n.description}</div>
-                        <div className="mt-0.5 text-[11px] text-navy-400">{relTime(n.date, now)}</div>
+                        <div className="line-clamp-2 text-sm font-semibold text-navy-800">
+                          {n.title}
+                        </div>
+                        <div className="line-clamp-1 text-xs text-navy-500">{n.description}</div>
+                        <div className="mt-0.5 text-[11px] text-navy-400">
+                          {relTime(n.date, now)}
+                        </div>
                       </div>
                     </Link>
                   </li>
@@ -333,15 +369,24 @@ export function DashboardView({
             <ul className="max-h-60 space-y-2 overflow-y-auto pr-1">
               {tenggat14Hari.map((t) => (
                 <li key={t.id}>
-                  <Link href={t.link} className="flex items-center gap-3 rounded-control p-1.5 text-sm hover:bg-gold-50/40">
+                  <Link
+                    href={t.link}
+                    className="flex items-center gap-3 rounded-control p-1.5 text-sm hover:bg-gold-50/40"
+                  >
                     <span className="w-24 shrink-0 text-center">
                       <Badge tone={t.type === 'upaya_hukum' ? 'danger' : 'neutral'}>
                         {TENGGAT_LABEL[t.type]}
                       </Badge>
                     </span>
                     <span className="flex-1 truncate text-navy-700">{t.title}</span>
-                    <span className={`text-xs ${t.daysLeft <= 1 ? 'font-semibold text-danger-fg' : 'text-navy-400'}`}>
-                      {t.daysLeft === 0 ? 'Hari ini' : t.daysLeft < 0 ? `${Math.abs(t.daysLeft)} hr lewat` : `${t.daysLeft} hari`}
+                    <span
+                      className={`text-xs ${t.daysLeft <= 1 ? 'font-semibold text-danger-fg' : 'text-navy-400'}`}
+                    >
+                      {t.daysLeft === 0
+                        ? 'Hari ini'
+                        : t.daysLeft < 0
+                          ? `${Math.abs(t.daysLeft)} hr lewat`
+                          : `${t.daysLeft} hari`}
                     </span>
                   </Link>
                 </li>
@@ -356,7 +401,10 @@ export function DashboardView({
           icon={<Activity size={16} />}
           action={
             viewer.canReadAudit ? (
-              <Link href="/audit" className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}>
+              <Link
+                href="/audit"
+                className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}
+              >
                 Audit log <ArrowRight aria-hidden="true" size={15} />
               </Link>
             ) : undefined
@@ -380,7 +428,9 @@ export function DashboardView({
                   </span>
                   <div className="min-w-0 text-sm">
                     <span className="font-semibold">{name}</span>{' '}
-                    <span className="text-navy-400">· {a.action} · {a.module}</span>
+                    <span className="text-navy-400">
+                      · {a.action} · {a.module}
+                    </span>
                     <div className="truncate text-navy-600">{a.description}</div>
                     <div className="text-[11px] text-navy-400">{relTime(a.createdAt, now)}</div>
                   </div>

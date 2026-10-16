@@ -126,7 +126,6 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
     <div>
       <PageHeader
         title="Perkara"
-        description="Registrasi, penugasan tim, dan siklus status perkara."
         actions={
           can(user, 'C', 'cases') ? (
             <CreateCaseDialog canAssignTeam={can(user, 'C', 'users')} />
@@ -149,7 +148,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
               <div className="text-[11px] font-semibold uppercase tracking-wider text-navy-400">
                 {s}
               </div>
-              <div className="text-xl font-bold text-navy-800">{countOf(s)}</div>
+              <div className="text-lg font-semibold text-navy-800">{countOf(s)}</div>
             </Link>
           );
         })}

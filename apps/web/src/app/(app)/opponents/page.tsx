@@ -124,7 +124,6 @@ export default async function OpponentsPage({
     <div>
       <PageHeader
         title="Pihak Lawan"
-        description="Data pihak lawan pada perkara."
         actions={<CreateOpponentDialog />}
       />
       <div className="card-surface mb-4">

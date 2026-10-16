@@ -40,7 +40,7 @@ export function FileHeader({
               {status}
             </div>
           ) : null}
-          <h1 className="font-display text-3xl font-semibold text-navy-800">{title}</h1>
+          <h1 className="font-display text-2xl font-semibold text-navy-800">{title}</h1>
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>

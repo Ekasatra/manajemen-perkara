@@ -26,14 +26,13 @@ export default function AuthLayout({ children }: Readonly<{ children: ReactNode 
           <p className="mb-4 text-xs uppercase tracking-[0.3em] text-gold-300">
             Sistem Manajemen Kantor Hukum
           </p>
-          <p className="font-display text-5xl font-semibold leading-[1.1]">
+          <p className="font-display text-4xl font-semibold leading-[1.15]">
             Surat &amp; Perkara,
             <br />
             tertata dalam satu tempat.
           </p>
           <p className="mt-5 text-sm leading-relaxed text-white/70">
-            Administrasi korespondensi resmi, alur persetujuan surat berjenjang, registrasi perkara,
-            jadwal sidang, dokumen, dan honorarium.
+            Korespondensi, perkara, jadwal sidang, dokumen, dan honorarium.
           </p>
           <ul className="mt-8 grid grid-cols-3 gap-3 text-xs">
             {FEATURES.map(({ icon: Icon, label }) => (

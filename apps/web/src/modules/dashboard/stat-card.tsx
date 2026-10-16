@@ -38,7 +38,7 @@ export function StatCard({
           {icon}
         </span>
       </div>
-      <div className="text-[28px] font-bold leading-none text-navy-800">{value}</div>
+      <div className="text-2xl font-semibold leading-none text-navy-800">{value}</div>
       <div className="text-xs text-navy-400">{sub}</div>
     </>
   );

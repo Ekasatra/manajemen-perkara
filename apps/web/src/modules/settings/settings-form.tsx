@@ -163,11 +163,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
     <div>
       <PageHeader
         title="Pengaturan Sistem"
-        description={
-          canEdit
-            ? 'Konfigurasi kantor, alur kerja, dan peran.'
-            : 'Mode lihat: hanya Admin yang dapat mengubah pengaturan.'
-        }
+        description={canEdit ? undefined : 'Mode lihat.'}
         actions={
           canEdit ? (
             <button
@@ -186,7 +182,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
         <Section
           icon={<Building2 size={16} />}
           title="Profil Kantor"
-          desc="Dipakai pada kop surat, invoice, laporan, dan portal klien."
+          desc="Dipakai pada kop surat dan invoice."
         >
           <Field id="office_name" label="Nama Kantor" full>
             <input
@@ -249,7 +245,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
         <Section
           icon={<Tags size={16} />}
           title="Tipe Klien, Pihak Lawan & Kas Kantor"
-          desc="Daftar tipe dipisahkan koma."
+          desc="Pisahkan dengan koma."
         >
           <Field id="client_types" label="Tipe Klien" full>
             <input
@@ -273,7 +269,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
             id="kas_kantor_persen"
             label="Kas Kantor (% dipotong dari biaya perkara)"
             full
-            help="Sisanya (100% dikurangi nilai ini) dapat didistribusikan sebagai honor tim."
+            help="Sisanya dapat dibagikan sebagai honor tim."
           >
             <input
               id="kas_kantor_persen"
@@ -292,7 +288,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
         <Section
           icon={<Workflow size={16} />}
           title="Alur Kerja & Notifikasi"
-          desc="Penandatangan surat Instansi, batas upaya hukum, dan pengingat."
+          desc="Penandatangan, batas upaya hukum, pengingat."
         >
           <Field id="pimpinan_user_id" label="Pimpinan Firma (TTD surat Instansi)" full>
             <select
@@ -418,9 +414,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
           Akses
         </h2>
         <p className="mb-4 text-xs text-navy-400">
-          L = lihat · T = tambah · U = ubah · H = hapus. Ditegakkan di server. Perkara dibatasi pada
-          yang ditugaskan; * Advokat/Paralegal hanya data dirinya sendiri. Honor Tim: Admin penuh,
-          lainnya hanya honor sendiri.
+          L lihat · T tambah · U ubah · H hapus. * hanya data sendiri.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

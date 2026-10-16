@@ -173,7 +173,7 @@ export function ScheduleCalendar({
         <Link href={`/jadwal?bulan=${next}`} aria-label="Bulan berikutnya" className={`${buttonClass.secondary} min-h-10 px-3`}>
           <ChevronRight aria-hidden="true" size={16} />
         </Link>
-        <h2 className="ml-2 font-display text-2xl font-semibold text-navy-800">
+        <h2 className="ml-2 font-display text-xl font-semibold text-navy-800">
           {MONTH_NAMES[month]} {year}
         </h2>
         {canCreate ? (

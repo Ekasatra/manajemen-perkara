@@ -41,7 +41,7 @@ export function SetupForm() {
 
   return (
     <div className="card-surface p-7 sm:p-8">
-      <h1 className="font-display text-3xl font-semibold text-navy-800">Buat Akun Admin</h1>
+      <h1 className="font-display text-2xl font-semibold text-navy-800">Buat Akun Admin</h1>
       <p className="mt-1 text-sm text-navy-400">
         Buat akun Admin pertama untuk mulai menggunakan {APP_NAME}.
       </p>

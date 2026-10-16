@@ -62,7 +62,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
         </div>
         <div className="mx-auto max-w-5xl px-4 pb-8 pt-2 sm:px-6">
           <p className="text-xs uppercase tracking-[0.3em] text-gold-300">Dashboard Klien</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold sm:text-4xl">{client.name}</h1>
+          <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">{client.name}</h1>
           <p className="mt-1 flex items-center gap-1.5 text-xs text-white/60 sm:text-sm">
             <LockKeyhole aria-hidden="true" size={14} />
             Kode klien {client.clientCode} · Informasi bersifat rahasia dan hanya-baca

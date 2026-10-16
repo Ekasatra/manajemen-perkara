@@ -145,7 +145,7 @@ export default async function SuratKeluarPage({
     <div>
       <PageHeader
         title="Surat Keluar"
-        description="Unggah surat yang sudah bernomor → Review → Tanda tangan → Kirim, dengan routing penandatangan otomatis."
+        description="Draft, review, tanda tangan, lalu kirim."
         actions={
           <>
             <Link href="/templates" className={buttonClass.secondary}>

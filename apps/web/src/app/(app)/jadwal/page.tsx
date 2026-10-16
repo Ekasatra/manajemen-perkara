@@ -46,7 +46,6 @@ export default async function SchedulePage({
     <div>
       <PageHeader
         title="Jadwal Sidang"
-        description="Kalender sidang, mediasi, dan agenda perkara."
       />
       <ScheduleCalendar
         year={year}

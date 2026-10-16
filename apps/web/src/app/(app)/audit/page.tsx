@@ -136,7 +136,6 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     <div>
       <PageHeader
         title="Audit Log"
-        description="Jejak seluruh aktivitas create/update/delete, login, approval, dan export."
       />
       <div className="card-surface mb-4">
         <FilterBar

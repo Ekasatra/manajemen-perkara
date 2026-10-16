@@ -142,11 +142,6 @@ export default async function HonorTimPage({
     <div>
       <PageHeader
         title="Honor Tim"
-        description={
-          isAdmin
-            ? 'Biaya perkara dipotong untuk kas kantor; sisanya dibagikan ke tim. Honor baru terlihat oleh anggota setelah didistribusikan.'
-            : 'Perkara yang Anda tangani, tugas Anda, dan honor yang Anda peroleh.'
-        }
         actions={
           kasVisible ? (
             <Link href="/honor-tim/kas" className={buttonClass.secondary}>

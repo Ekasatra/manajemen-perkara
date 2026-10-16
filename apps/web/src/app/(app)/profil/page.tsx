@@ -18,7 +18,7 @@ export default async function ProfilePage() {
 
   return (
     <div>
-      <PageHeader title="Profil Saya" description="Data diri, preferensi notifikasi, dan keamanan akun." />
+      <PageHeader title="Profil Saya" />
       <ProfileForms
         email={user.email}
         roleLabel={ROLE_LABEL[user.role] ?? ''}

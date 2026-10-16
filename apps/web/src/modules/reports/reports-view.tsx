@@ -226,7 +226,7 @@ export function ReportsView({
     <div>
       <PageHeader
         title="Laporan & Export"
-        description="Filter per periode, klien, dan status, lalu ekspor ke CSV atau cetak ke PDF. Hanya Admin yang dapat melihatnya."
+        description="Filter, lalu ekspor ke CSV atau cetak ke PDF."
         actions={
           <>
             <button
@@ -370,7 +370,7 @@ export function ReportsView({
         <div className="mb-4 grid gap-4 lg:grid-cols-3">
           <StatTile
             label="Jumlah Data"
-            value={<span className="text-3xl">{data.length}</span>}
+            value={<span className="text-2xl">{data.length}</span>}
             note={`Laporan ${active.label}`}
           />
           <section className="card-surface p-5 lg:col-span-2">

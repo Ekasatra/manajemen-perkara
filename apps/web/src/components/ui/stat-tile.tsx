@@ -21,7 +21,7 @@ export function StatTile({
   return (
     <div className="card-surface flex flex-col gap-2 p-4">
       <span className="text-xs font-semibold uppercase tracking-wider text-navy-400">{label}</span>
-      <div className={`text-xl font-bold ${color}`}>{value}</div>
+      <div className={`text-lg font-semibold ${color}`}>{value}</div>
       {note ? <div className="text-xs text-navy-400">{note}</div> : null}
     </div>
   );
