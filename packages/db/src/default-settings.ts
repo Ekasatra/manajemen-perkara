@@ -8,6 +8,8 @@ export const DEFAULT_SETTINGS: Record<string, unknown> = {
   office_address: '',
   office_phone: '',
   office_email: '',
+  office_city: '', // kota tempat surat
+  office_website: '',
   logo_path: '', // path di bucket `settings`
 
   // Aturan bisnis

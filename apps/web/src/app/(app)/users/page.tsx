@@ -6,6 +6,10 @@ import { count, desc } from 'drizzle-orm';
 import { createDb, profiles } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan, can } from '@ekasatra/core';
+import { ShieldCheck } from 'lucide-react';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import type { BadgeTone } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
@@ -53,32 +57,60 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
 
   const total = countRows[0]?.value ?? 0;
 
+  const activeCount = rows.filter((r) => r.isActive).length;
+  const ROLE_TONE: Record<string, BadgeTone> = {
+    SuperAdmin: 'indigo',
+    Admin: 'info',
+    Advokat: 'neutral',
+    Paralegal: 'info',
+  };
+
   const columns: Column<UserRow>[] = [
-    { key: 'fullName', header: 'Nama', cell: (r) => r.fullName },
-    { key: 'email', header: 'Email', cell: (r) => r.email },
+    {
+      key: 'fullName',
+      header: 'User',
+      cell: (r) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={r.fullName} size={9} />
+          <div>
+            <div
+              className={`font-semibold ${r.isActive ? 'text-navy-800' : 'text-navy-300 line-through'}`}
+            >
+              {r.fullName}
+            </div>
+            <div className="text-xs text-navy-400">{r.email}</div>
+          </div>
+        </div>
+      ),
+    },
     {
       key: 'role',
       header: 'Role',
-      cell: (r) => (r.role === 'SuperAdmin' ? 'Super Admin' : r.role),
+      cell: (r) => (
+        <Badge tone={ROLE_TONE[r.role] ?? 'neutral'}>
+          {r.role === 'SuperAdmin' ? 'Super Admin' : r.role}
+        </Badge>
+      ),
     },
     {
       key: 'isActive',
       header: 'Status',
-      cell: (r) => (r.isActive ? 'Aktif' : 'Nonaktif'),
+      cell: (r) => (
+        <Badge tone={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Aktif' : 'Nonaktif'}</Badge>
+      ),
     },
     {
       key: 'lastLoginAt',
       header: 'Login Terakhir',
-      cell: (r) => formatDate(r.lastLoginAt),
-    },
-    {
-      key: 'createdAt',
-      header: 'Dibuat',
-      cell: (r) => formatDate(r.createdAt),
+      cell: (r) => (
+        <span className="text-xs">
+          {r.lastLoginAt ? formatDate(r.lastLoginAt) : 'belum pernah'}
+        </span>
+      ),
     },
     {
       key: 'aksi',
-      header: 'Aksi',
+      header: '',
       cell: (r) => {
         const isSuper = r.role === 'SuperAdmin';
         const canEdit = can(user, 'U', 'users') && (!isSuper || user.role === 'superadmin');
@@ -93,8 +125,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   return (
     <div>
       <PageHeader
-        title="Pengguna"
-        description="Akun pengguna dan role (Admin, Advokat, Paralegal)."
+        title="Manajemen User"
+        description={`${total} akun · ${activeCount} aktif`}
         actions={<CreateUserDialog />}
       />
       <DataTable<UserRow>
@@ -113,6 +145,25 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           action: <CreateUserDialog />,
         }}
       />
+      <section className="card-surface mt-4 p-5 text-sm text-navy-600">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-navy-800">
+          <ShieldCheck aria-hidden="true" size={16} className="text-gold-500" /> Catatan Peran
+        </h2>
+        <ul className="list-disc space-y-1 pl-5 text-xs text-navy-500">
+          <li>
+            <b>Admin</b> memiliki kewenangan penuh atas seluruh menu dan data.
+          </li>
+          <li>
+            <b>Advokat &amp; Paralegal</b> hanya melihat perkara yang ditugaskan dan tidak dapat
+            membuka menu Klien, Pihak Lawan, Biaya Perkara, Laporan, Pengaturan, dan Manajemen User.
+            Di Honor Tim mereka hanya melihat honor sendiri.
+          </li>
+          <li>
+            <b>Klien</b> tidak memerlukan akun. Gunakan tautan Portal Klien dari halaman rincian
+            klien.
+          </li>
+        </ul>
+      </section>
     </div>
   );
 }

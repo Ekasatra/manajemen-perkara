@@ -10,6 +10,8 @@ export const updateSettingsSchema = z.object({
   office_address: z.string().optional(),
   office_phone: z.string().optional(),
   office_email: z.email().or(z.literal('')).optional(),
+  office_city: z.string().optional(),
+  office_website: z.string().optional(),
   logo_path: z.string().optional(),
   scope_assigned_only: z.boolean().optional(),
   banding_deadline_days: z.number().int().min(0).optional(),
