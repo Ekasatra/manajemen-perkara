@@ -57,11 +57,11 @@ export function FormDialog({
       ref={ref}
       onClose={onClose}
       aria-labelledby="form-dialog-title"
-      className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-md p-0 text-navy-800 backdrop:bg-navy-900/50"
+      className="m-auto w-full rounded-card p-0 text-navy-800 shadow-float backdrop:bg-navy-900/50 sm:max-w-lg"
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
         <div>
-          <h2 id="form-dialog-title" className="font-display text-2xl font-semibold">
+          <h2 id="form-dialog-title" className="text-xl">
             {title}
           </h2>
           {description ? <p className="mt-1 text-sm text-navy-400">{description}</p> : null}
@@ -70,7 +70,7 @@ export function FormDialog({
         {children}
 
         {error ? (
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger-fg">
             {error}
           </p>
         ) : null}

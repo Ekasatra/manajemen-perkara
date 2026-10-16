@@ -77,17 +77,17 @@ export function DataTable<T>({
   const to = from + rows.length - 1;
 
   return (
-    <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+    <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm tabular-nums">
           <caption className="sr-only">{caption}</caption>
-          <thead className="bg-navy-50 text-navy-600">
+          <thead className="border-b border-navy-200 bg-navy-50 text-navy-600">
             <tr>
               {columns.map((c) => (
                 <th
                   key={c.key}
                   scope="col"
-                  className={`px-4 py-3 font-medium ${c.align === 'right' ? 'text-right' : ''}`}
+                  className={`whitespace-nowrap px-4 py-3 text-xs font-semibold ${c.align === 'right' ? 'text-right' : ''}`}
                 >
                   {c.header}
                 </th>
@@ -96,7 +96,7 @@ export function DataTable<T>({
           </thead>
           <tbody className="divide-y divide-navy-100">
             {rows.map((row) => (
-              <tr key={rowKey(row)}>
+              <tr key={rowKey(row)} className="hover:bg-navy-50">
                 {columns.map((c) => (
                   <td
                     key={c.key}

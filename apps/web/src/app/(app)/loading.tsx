@@ -1,5 +1,5 @@
-import { LoadingState } from '@/shell/states';
+import { PageSkeleton } from '@/components/ui/skeleton';
 
 export default function Loading() {
-  return <LoadingState />;
+  return <PageSkeleton />;
 }

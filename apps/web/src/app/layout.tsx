@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
+import { APP_NAME } from '@/components/ui/brand';
 import './globals.css';
 
 const inter = Inter({
@@ -16,7 +17,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: 'eKaSatra — Manajemen Perkara',
+  title: `${APP_NAME}: Manajemen Perkara`,
   description: 'Sistem manajemen perkara hukum: perkara, surat, keuangan, dan portal klien.',
 };
 

@@ -1,18 +1,18 @@
 import type { ReactNode } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
- * State UI standar (Agent A · A3): memuat, kosong, galat.
+ * State UI standar: memuat, kosong, galat.
  * Setiap state menyebut penyebab dan langkah berikutnya lewat `hint`/`action`.
  */
 
 export function LoadingState({ label = 'Memuat data…' }: { label?: string }) {
   return (
-    <div role="status" className="flex items-center gap-3 p-8 text-navy-400">
-      <span
-        aria-hidden="true"
-        className="size-5 animate-spin rounded-full border-2 border-navy-200 border-t-navy-600"
-      />
-      <span>{label}</span>
+    <div role="status" aria-busy="true" className="flex flex-col gap-3 p-6">
+      <span className="sr-only">{label}</span>
+      <Skeleton className="h-5 w-1/3" />
+      <Skeleton className="h-5 w-full" />
+      <Skeleton className="h-5 w-2/3" />
     </div>
   );
 }
@@ -21,14 +21,22 @@ export function EmptyState({
   title,
   hint,
   action,
+  icon,
 }: {
   title: string;
   hint?: string;
   action?: ReactNode;
+  /** Ikon relevan dengan isi (mis. `<Scale />`); dekoratif, disembunyikan dari pembaca layar. */
+  icon?: ReactNode;
 }) {
   return (
     <div className="flex flex-col items-center gap-2 p-10 text-center">
-      <p className="font-display text-xl font-semibold text-navy-800">{title}</p>
+      {icon ? (
+        <span aria-hidden="true" className="text-navy-300">
+          {icon}
+        </span>
+      ) : null}
+      <p className="text-xl font-semibold text-navy-800">{title}</p>
       {hint ? <p className="max-w-md text-sm text-navy-400">{hint}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
@@ -46,7 +54,7 @@ export function ErrorState({
 }) {
   return (
     <div role="alert" className="flex flex-col items-center gap-2 p-10 text-center">
-      <p className="font-display text-xl font-semibold text-navy-800">{title}</p>
+      <p className="text-xl font-semibold text-navy-800">{title}</p>
       <p className="max-w-md text-sm text-navy-400">{message}</p>
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
