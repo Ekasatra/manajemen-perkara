@@ -22,7 +22,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section aria-label={title}>
       <h2 className="mb-3 text-xl text-navy-800">{title}</h2>
-      <div className="rounded-card border border-navy-200 bg-surface px-5">{children}</div>
+      <div className="card-surface px-5">{children}</div>
     </section>
   );
 }
@@ -31,11 +31,7 @@ function Empty({ children }: { children: string }) {
   return <p className="py-6 text-center text-sm text-navy-400">{children}</p>;
 }
 
-export default async function ClientPortalPage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
+export default async function ClientPortalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const db = createDb();
 
@@ -46,7 +42,7 @@ export default async function ClientPortalPage({
     // Token salah atau dinonaktifkan: pesan generik yang sama agar token tidak dapat ditebak.
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-navy-50 px-4 py-12 text-center">
-        <div className="w-full max-w-md rounded-card border border-navy-200 bg-surface p-8">
+        <div className="w-full max-w-md card-surface p-8">
           <LockKeyhole aria-hidden="true" size={28} className="mx-auto text-navy-300" />
           <h1 className="mt-4 text-xl font-semibold text-navy-800">Akses portal tidak tersedia</h1>
           <p className="mt-2 text-sm text-navy-400">{PORTAL_GENERIC_ERROR_MESSAGE}</p>
@@ -138,7 +134,9 @@ export default async function ClientPortalPage({
                     <p className="font-medium text-navy-800">
                       {s.kind}, {s.caseTitle}
                     </p>
-                    <p className="text-sm text-navy-400">{s.location || 'Lokasi belum ditentukan'}</p>
+                    <p className="text-sm text-navy-400">
+                      {s.location || 'Lokasi belum ditentukan'}
+                    </p>
                   </div>
                   <div className="flex items-center gap-3 sm:text-right">
                     <p className="text-sm font-medium tabular-nums text-navy-800">
@@ -243,7 +241,9 @@ export default async function ClientPortalPage({
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium tabular-nums text-navy-800">{inv.invoiceNo}</span>
+                      <span className="font-medium tabular-nums text-navy-800">
+                        {inv.invoiceNo}
+                      </span>
                       <Badge tone={INVOICE_TONE[inv.status] ?? 'neutral'}>{inv.status}</Badge>
                     </div>
                     {inv.description ? (
@@ -254,7 +254,9 @@ export default async function ClientPortalPage({
                     </p>
                   </div>
                   <div className="sm:text-right">
-                    <p className="font-medium tabular-nums text-navy-800">{formatRupiah(inv.amount)}</p>
+                    <p className="font-medium tabular-nums text-navy-800">
+                      {formatRupiah(inv.amount)}
+                    </p>
                     {inv.paidAmount > 0 && inv.paidAmount < inv.amount ? (
                       <p className="text-sm tabular-nums text-success-fg">
                         Terbayar {formatRupiah(inv.paidAmount)}

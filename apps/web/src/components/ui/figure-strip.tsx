@@ -6,10 +6,7 @@ export type FigureItem = { label: string; value: string | number; note?: string 
  */
 export function FigureStrip({ label, items }: { label: string; items: FigureItem[] }) {
   return (
-    <section
-      aria-label={label}
-      className="overflow-hidden rounded-card border border-navy-200 bg-surface"
-    >
+    <section aria-label={label} className="overflow-hidden card-surface">
       <dl className="grid divide-navy-100 max-sm:divide-y sm:grid-flow-col sm:auto-cols-fr sm:divide-x">
         {items.map((item) => (
           <div key={item.label} className="px-5 py-4">

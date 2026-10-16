@@ -166,7 +166,7 @@ export function DashboardView({
               Agenda sidang 7 hari ke depan
             </SectionTitle>
             {sidang7Hari.length === 0 ? (
-              <div className="rounded-card border border-navy-200 bg-surface">
+              <div className="card-surface">
                 <Empty>Tidak ada agenda sidang dalam 7 hari ke depan.</Empty>
               </div>
             ) : (
@@ -174,10 +174,7 @@ export function DashboardView({
                 {sidang7Hari.map((s) => {
                   const daysLeft = daysBetween(today, s.scheduleDate);
                   return (
-                    <li
-                      key={s.id}
-                      className="relative overflow-hidden rounded-card border border-navy-200 bg-surface p-5 pl-6"
-                    >
+                    <li key={s.id} className="relative overflow-hidden card-surface p-5 pl-6">
                       <span
                         aria-hidden="true"
                         className={`absolute inset-y-0 left-0 w-1 ${stripClass(daysLeft)}`}
@@ -216,7 +213,7 @@ export function DashboardView({
             <SectionTitle aside={`${tenggat14Hari.length} tenggat`}>
               Tenggat 14 hari ke depan
             </SectionTitle>
-            <div className="rounded-card border border-navy-200 bg-surface px-5">
+            <div className="card-surface px-5">
               {tenggat14Hari.length === 0 ? (
                 <Empty>Tidak ada tenggat dalam 14 hari ke depan.</Empty>
               ) : (
@@ -285,7 +282,7 @@ export function DashboardView({
 
       <section className="mt-6">
         <SectionTitle>Perkara terbaru</SectionTitle>
-        <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">
+        <div className="overflow-hidden card-surface">
           {recentCases.length === 0 ? (
             <Empty>Belum ada perkara yang dapat Anda lihat.</Empty>
           ) : (
@@ -336,26 +333,30 @@ export function DashboardView({
           )}
         </Card>
 
-        <Card title="Pemberitahuan untuk Anda">
-          {data.notifikasiPersonal.length === 0 ? (
-            <Empty>Tidak ada pemberitahuan baru.</Empty>
-          ) : (
-            <ul className="divide-y divide-navy-100">
-              {data.notifikasiPersonal.slice(0, NOTIF_LIMIT).map((n) => (
-                <li key={n.id} className="py-3 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <Link href={n.link} className="font-medium text-navy-700 hover:underline">
-                      {n.title}
-                    </Link>
-                    {n.urgency === 'high' ? <Badge tone="danger">Mendesak</Badge> : null}
-                  </div>
-                  <p className="mt-0.5 text-navy-400">{n.description}</p>
-                  <p className="mt-0.5 text-xs tabular-nums text-navy-400">{formatDate(n.date)}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        <div id="pemberitahuan" className="scroll-mt-24">
+          <Card title="Pemberitahuan untuk Anda">
+            {data.notifikasiPersonal.length === 0 ? (
+              <Empty>Tidak ada pemberitahuan baru.</Empty>
+            ) : (
+              <ul className="divide-y divide-navy-100">
+                {data.notifikasiPersonal.slice(0, NOTIF_LIMIT).map((n) => (
+                  <li key={n.id} className="py-3 text-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link href={n.link} className="font-medium text-navy-700 hover:underline">
+                        {n.title}
+                      </Link>
+                      {n.urgency === 'high' ? <Badge tone="danger">Mendesak</Badge> : null}
+                    </div>
+                    <p className="mt-0.5 text-navy-400">{n.description}</p>
+                    <p className="mt-0.5 text-xs tabular-nums text-navy-400">
+                      {formatDate(n.date)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
 
         <Card title="Aktivitas terbaru">
           {data.aktivitasTerbaru.length === 0 ? (

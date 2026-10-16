@@ -72,7 +72,7 @@ export default async function SuratKeluarDetailPage({
         ) : (
           <ol className="space-y-2">
             {logs.map((l) => (
-              <li key={l.id} className="rounded-card border border-navy-200 bg-surface p-3 text-sm">
+              <li key={l.id} className="card-surface p-3 text-sm">
                 <p className="font-medium text-navy-800">
                   {l.action}, {l.actorName ?? 'Pengguna dihapus'}
                 </p>

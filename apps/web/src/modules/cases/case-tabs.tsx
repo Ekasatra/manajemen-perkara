@@ -132,7 +132,7 @@ const dateOrDash = (v: string | null | undefined) => (v ? formatDate(v) : '-');
 
 /** Kotak tabel/daftar bergaris, dipakai semua tab agar seragam. */
 function Box({ children }: { children: ReactNode }) {
-  return <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">{children}</div>;
+  return <div className="overflow-hidden card-surface">{children}</div>;
 }
 
 function Muted({ children }: { children: string }) {
@@ -143,11 +143,7 @@ function Muted({ children }: { children: string }) {
 function TabAction({ onClick, children }: { onClick: () => void; children: string }) {
   return (
     <div className="flex sm:justify-end">
-      <button
-        type="button"
-        onClick={onClick}
-        className={`${buttonClass.primary} w-full sm:w-auto`}
-      >
+      <button type="button" onClick={onClick} className={`${buttonClass.primary} w-full sm:w-auto`}>
         {children}
       </button>
     </div>
@@ -316,7 +312,9 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
                     <p className="font-medium text-navy-800">{t.title}</p>
                     <Badge tone="neutral">{t.eventType}</Badge>
                   </div>
-                  {t.description ? <p className="mt-1 text-sm text-navy-600">{t.description}</p> : null}
+                  {t.description ? (
+                    <p className="mt-1 text-sm text-navy-600">{t.description}</p>
+                  ) : null}
                 </div>
               </li>
             ))}
@@ -332,11 +330,15 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
           onSubmit={handleSubmit}
         >
           <div>
-            <label htmlFor="tl-title" className={labelClass}>Judul</label>
+            <label htmlFor="tl-title" className={labelClass}>
+              Judul
+            </label>
             <input id="tl-title" name="title" type="text" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="tl-type" className={labelClass}>Tipe</label>
+            <label htmlFor="tl-type" className={labelClass}>
+              Tipe
+            </label>
             <select id="tl-type" name="eventType" className={inputClass} defaultValue="Catatan">
               <option value="Catatan">Catatan</option>
               <option value="Putusan">Putusan</option>
@@ -349,11 +351,15 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
             </select>
           </div>
           <div>
-            <label htmlFor="tl-date" className={labelClass}>Tanggal</label>
+            <label htmlFor="tl-date" className={labelClass}>
+              Tanggal
+            </label>
             <input id="tl-date" name="eventDate" type="date" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="tl-desc" className={labelClass}>Keterangan</label>
+            <label htmlFor="tl-desc" className={labelClass}>
+              Keterangan
+            </label>
             <textarea id="tl-desc" name="description" rows={2} className={inputClass} />
           </div>
         </FormDialog>
@@ -421,23 +427,39 @@ function JadwalTab({ caseId, schedules, canUpdate }: Props) {
           onSubmit={handleSubmit}
         >
           <div>
-            <label htmlFor="sc-date" className={labelClass}>Tanggal</label>
+            <label htmlFor="sc-date" className={labelClass}>
+              Tanggal
+            </label>
             <input id="sc-date" name="scheduleDate" type="date" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="sc-time" className={labelClass}>Jam</label>
+            <label htmlFor="sc-time" className={labelClass}>
+              Jam
+            </label>
             <input id="sc-time" name="scheduleTime" type="time" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="sc-kind" className={labelClass}>Jenis</label>
-            <input id="sc-kind" name="kind" type="text" defaultValue="Sidang" className={inputClass} />
+            <label htmlFor="sc-kind" className={labelClass}>
+              Jenis
+            </label>
+            <input
+              id="sc-kind"
+              name="kind"
+              type="text"
+              defaultValue="Sidang"
+              className={inputClass}
+            />
           </div>
           <div>
-            <label htmlFor="sc-loc" className={labelClass}>Lokasi</label>
+            <label htmlFor="sc-loc" className={labelClass}>
+              Lokasi
+            </label>
             <input id="sc-loc" name="location" type="text" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="sc-notes" className={labelClass}>Catatan</label>
+            <label htmlFor="sc-notes" className={labelClass}>
+              Catatan
+            </label>
             <textarea id="sc-notes" name="notes" rows={2} className={inputClass} />
           </div>
         </FormDialog>
@@ -508,11 +530,15 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
           onSubmit={handleSubmit}
         >
           <div>
-            <label htmlFor="dc-title" className={labelClass}>Judul</label>
+            <label htmlFor="dc-title" className={labelClass}>
+              Judul
+            </label>
             <input id="dc-title" name="title" type="text" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="dc-file" className={labelClass}>File (PDF, Word, Excel, JPG, PNG; maks 25 MB)</label>
+            <label htmlFor="dc-file" className={labelClass}>
+              File (PDF, Word, Excel, JPG, PNG; maks 25 MB)
+            </label>
             <input
               id="dc-file"
               name="file"
@@ -676,7 +702,9 @@ function TimTab({ members, canManageTeam }: Props) {
         </Box>
       )}
       {!canManageTeam ? (
-        <p className="text-xs text-navy-400">Hanya Admin yang dapat mengelola anggota tim perkara.</p>
+        <p className="text-xs text-navy-400">
+          Hanya Admin yang dapat mengelola anggota tim perkara.
+        </p>
       ) : null}
     </div>
   );

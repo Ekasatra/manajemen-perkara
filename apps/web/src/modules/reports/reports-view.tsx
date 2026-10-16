@@ -158,7 +158,9 @@ export function ReportsView() {
           <>
             <button
               type="button"
-              onClick={() => window.open(`/api/v1/reports/${tab}?${query({ format: 'csv' })}`, '_blank')}
+              onClick={() =>
+                window.open(`/api/v1/reports/${tab}?${query({ format: 'csv' })}`, '_blank')
+              }
               className={buttonClass.secondary}
             >
               Ekspor CSV
@@ -170,7 +172,11 @@ export function ReportsView() {
         }
       />
 
-      <div role="tablist" aria-label="Jenis laporan" className="flex gap-1 overflow-x-auto border-b border-navy-200 print:hidden">
+      <div
+        role="tablist"
+        aria-label="Jenis laporan"
+        className="flex gap-1 overflow-x-auto border-b border-navy-200 print:hidden"
+      >
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -199,7 +205,7 @@ export function ReportsView() {
           e.preventDefault();
           void fetchReport();
         }}
-        className="mt-4 grid gap-4 rounded-card border border-navy-200 bg-surface p-4 sm:grid-cols-4 sm:items-end print:hidden"
+        className="mt-4 grid gap-4 card-surface p-4 sm:grid-cols-4 sm:items-end print:hidden"
       >
         <div>
           <label htmlFor="r-start" className={labelClass}>
@@ -248,12 +254,15 @@ export function ReportsView() {
         id="panel-laporan"
         aria-labelledby={`tab-${active.id}`}
         aria-busy={loading}
-        className="mt-4 overflow-hidden rounded-card border border-navy-200 bg-surface"
+        className="mt-4 overflow-hidden card-surface"
       >
         {loading ? (
           <LoadingState label="Memuat laporan…" />
         ) : data.length === 0 ? (
-          <EmptyState title={active.empty} hint="Ubah rentang tanggal atau status, lalu terapkan lagi." />
+          <EmptyState
+            title={active.empty}
+            hint="Ubah rentang tanggal atau status, lalu terapkan lagi."
+          />
         ) : (
           <ResponsiveTable
             caption={`Laporan ${active.label}`}

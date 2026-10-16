@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-/** Kartu datar bergaris 1 px: pemisahan tanpa bayangan (bayangan hanya untuk yang melayang). */
+/** Kartu kaca gaya GAS (`card-surface`): putih tembus, blur, sudut besar, bayangan lembut. */
 export function Card({
   title,
   action,
@@ -13,10 +13,10 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`rounded-card border border-navy-200 bg-surface p-5 ${className}`}>
+    <section className={`card-surface p-5 ${className}`}>
       {title ? (
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-base text-navy-800">{title}</h2>
+          <h2 className="text-sm font-bold text-navy-800">{title}</h2>
           {action}
         </div>
       ) : null}

@@ -98,7 +98,7 @@ export function KpiCard({
   tone?: 'default' | 'danger';
 }) {
   return (
-    <section className="flex flex-col justify-between rounded-card border border-navy-200 bg-surface p-5">
+    <section className="flex flex-col justify-between card-surface p-5">
       <h2 className={`text-sm ${tone === 'danger' ? 'text-danger-fg' : 'text-navy-400'}`}>
         {label}
       </h2>

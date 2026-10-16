@@ -98,7 +98,7 @@ export function HonorEditor({
 
   return (
     <div>
-      <ul aria-label="Honor per anggota tim" className="divide-y divide-navy-100 rounded-card border border-navy-200 bg-surface">
+      <ul aria-label="Honor per anggota tim" className="divide-y divide-navy-100 card-surface">
         {members.map((m) => (
           <li
             key={m.userId}

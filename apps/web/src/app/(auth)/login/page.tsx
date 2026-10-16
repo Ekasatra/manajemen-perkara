@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Brand } from '@/components/ui/brand';
+import { Eye, EyeOff, Lock, LogIn, Mail, ShieldCheck } from 'lucide-react';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 
 export default function LoginPage() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -39,63 +39,74 @@ export default function LoginPage() {
     }
   }
 
+  const iconClass = 'pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-300';
   return (
-    <div className="rounded-card border border-navy-200 bg-surface p-8">
-      <h1 className="text-title font-semibold text-navy-700">
-        <Brand />
-      </h1>
-      <div aria-hidden="true" className="mt-3">
-        <div className="h-px w-full bg-gold-500" />
-        <div className="mt-0.5 h-px w-16 bg-gold-500" />
-      </div>
-      <p className="mt-3 text-sm text-navy-400">
-        Sistem administrasi dan manajemen perkara hukum. Masuk dengan akun yang didaftarkan Admin.
+    <div className="card-surface p-7 sm:p-8">
+      <h1 className="font-display text-3xl font-semibold text-navy-800">Masuk</h1>
+      <p className="mb-6 mt-1 text-sm text-navy-400">
+        Gunakan email &amp; password akun kantor Anda.
       </p>
-      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="email" className={labelClass}>
             Email
           </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className={inputClass}
-          />
+          <div className="relative">
+            <Mail aria-hidden="true" size={15} className={iconClass} />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="nama@ekasatra.id"
+              className={`${inputClass} pl-10`}
+            />
+          </div>
         </div>
         <div>
           <label htmlFor="password" className={labelClass}>
             Password
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="current-password"
-            className={inputClass}
-          />
+          <div className="relative">
+            <Lock aria-hidden="true" size={15} className={iconClass} />
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              className={`${inputClass} pl-10 pr-11`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Sembunyikan sandi' : 'Lihat sandi'}
+              className="absolute right-1.5 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-control text-navy-400 hover:bg-navy-100 hover:text-navy-700"
+            >
+              {showPassword ? (
+                <EyeOff aria-hidden="true" size={16} />
+              ) : (
+                <Eye aria-hidden="true" size={16} />
+              )}
+            </button>
+          </div>
         </div>
         {error ? (
           <p role="alert" className="text-sm text-danger-fg">
             {error}
           </p>
         ) : null}
-        <button type="submit" disabled={pending} className={buttonClass.primary}>
+        <button type="submit" disabled={pending} className={`${buttonClass.primary} w-full py-3`}>
+          <LogIn aria-hidden="true" size={15} />
           {pending ? 'Memproses' : 'Masuk'}
         </button>
       </form>
-      <p className="mt-6 border-t border-navy-100 pt-4 text-xs text-navy-400">
-        Akses khusus staf terdaftar. Aktivitas masuk dan perubahan data tercatat di Audit Log.
-      </p>
-      <p className="mt-4 text-center text-sm text-navy-400">
-        Belum ada akun?{' '}
-        <Link href="/setup" className="text-navy-600 underline hover:text-navy-700">
-          Setup Admin pertama
-        </Link>
+      <p className="mt-6 flex items-center gap-2 border-t border-navy-50 pt-5 text-[11px] text-navy-400">
+        <ShieldCheck aria-hidden="true" size={15} className="shrink-0 text-gold-500" />
+        Aktivitas masuk dan perubahan data tercatat di Audit Log.
       </p>
     </div>
   );
