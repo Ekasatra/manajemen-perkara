@@ -144,12 +144,12 @@ export async function listCases(
     createdAt: cases.createdAt,
   }).from(cases);
 
-  const query =
-    conditions.length > 0 ? baseQuery.where(and(...conditions)) : baseQuery;
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
 
+  // Total memakai filter yang sama: user terbatas tak boleh tahu jumlah perkara kantor.
   const [rows, countRows] = await Promise.all([
-    query.orderBy(desc(cases.createdAt)).limit(opts.pageSize).offset(opts.offset),
-    db.select({ value: count() }).from(cases),
+    baseQuery.where(where).orderBy(desc(cases.createdAt)).limit(opts.pageSize).offset(opts.offset),
+    db.select({ value: count() }).from(cases).where(where),
   ]);
 
   return { rows, total: countRows[0]?.value ?? 0 };

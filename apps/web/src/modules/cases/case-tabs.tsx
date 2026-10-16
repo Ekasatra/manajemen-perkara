@@ -512,8 +512,15 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
             <input id="dc-title" name="title" type="text" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="dc-file" className={labelClass}>File</label>
-            <input id="dc-file" name="file" type="file" required className={inputClass} />
+            <label htmlFor="dc-file" className={labelClass}>File (PDF, Word, Excel, JPG, PNG; maks 25 MB)</label>
+            <input
+              id="dc-file"
+              name="file"
+              type="file"
+              required
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              className={inputClass}
+            />
           </div>
           <div>
             <label className="flex min-h-11 items-center gap-2 text-sm text-navy-800">
