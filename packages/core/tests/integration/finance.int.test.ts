@@ -132,9 +132,12 @@ describe.skipIf(!url)('invoices — Postgres', () => {
   it('invoice yang sudah dibayar tidak bisa dihapus; yang belum bisa', async () => {
     const paid = await createInvoice(db, admin, { caseId: ids.case, amount: 10_000 });
     await recordPayment(db, admin, paid.id, { amount: 1 });
-    await expect(deleteInvoice(db, admin, paid.id)).rejects.toThrow(/tidak dapat dihapus/);
+    // Hapus hanya Superadmin; Admin ditolak sebelum aturan bisnis diperiksa.
+    const superadmin: AuthContext = { ...admin, role: 'superadmin' };
+    await expect(deleteInvoice(db, admin, paid.id)).rejects.toThrow(/Akses ditolak/);
+    await expect(deleteInvoice(db, superadmin, paid.id)).rejects.toThrow(/tidak dapat dihapus/);
     const unpaid = await createInvoice(db, admin, { caseId: ids.case, amount: 10_000 });
-    await deleteInvoice(db, admin, unpaid.id);
+    await deleteInvoice(db, superadmin, unpaid.id);
     await expect(getInvoice(db, admin, unpaid.id)).rejects.toThrow(/tidak ditemukan/);
   });
 

@@ -1,10 +1,8 @@
 /**
  * Pembaca data modul lain yang dipakai keuangan (Agent F).
  *
- * ponytail: ini adaptor SEMENTARA. Kontraknya sengaja sempit supaya mudah diganti saat
- * `getCaseForUser` (D7) dan fungsi baca settings (C6) masuk main — lihat REQ-F1/REQ-F2.
- * Keuangan hanya perlu info dasar, jadi tidak membawa aturan visibilitas perkara: otorisasi
- * data keuangan lewat `can()` (invoice = Admin saja; honor = milik sendiri).
+ * Kontrak sengaja sempit dan tanpa aturan visibilitas perkara: otorisasi data keuangan lewat
+ * `can()` (invoice = Admin saja; honor = milik sendiri), jadi D7 `getCaseForUser` tidak dipakai.
  */
 import { desc, eq, gt, inArray, or, sql } from 'drizzle-orm';
 import {

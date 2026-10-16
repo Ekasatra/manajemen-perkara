@@ -12,6 +12,7 @@ import type { AuthContext } from '../kernel/auth';
 import { logActivity } from '../kernel/activity';
 import { withTx, type DbExecutor } from '../kernel/db-helpers';
 import { canViewKas, ensureCan } from '../kernel/policy';
+import { notify } from '../notifications/notify';
 import {
   getCaseBilledTotal,
   getCaseInfo,
@@ -224,8 +225,9 @@ export async function publishHonor(
   caseId: string,
 ): Promise<PublishResult> {
   ensureCan(user, 'U', 'honor_tim');
-  await requireCase(db, caseId);
-  return withTx(db, async (tx) => {
+  const kase = await requireCase(db, caseId);
+  const amounts = new Map<string, number>();
+  const result = await withTx(db, async (tx) => {
     const [memberIds, rows, money] = await Promise.all([
       getCaseMemberIds(tx, caseId),
       tx.select().from(honorTim).where(eq(honorTim.caseId, caseId)).for('update'),
@@ -257,7 +259,10 @@ export async function publishHonor(
     const changedUserIds: string[] = [];
     for (const r of rows) {
       if (!memberIds.includes(r.userId)) continue;
-      if (r.publishedAmount !== r.draftAmount) changedUserIds.push(r.userId);
+      if (r.publishedAmount !== r.draftAmount) {
+        changedUserIds.push(r.userId);
+        amounts.set(r.userId, r.draftAmount);
+      }
       await tx
         .update(honorTim)
         .set({ publishedAmount: r.draftAmount, publishedAt: now })
@@ -273,8 +278,19 @@ export async function publishHonor(
       description: 'Mendistribusikan honor tim',
       metadata: { total: plan.total, fund: money.fund, changed: changedUserIds.length },
     });
-    return { state: 'Terdistribusi', total: plan.total, fund: money.fund, changedUserIds };
+    return { state: 'Terdistribusi' as const, total: plan.total, fund: money.fund, changedUserIds };
   });
+  // Sesudah commit: email gagal tidak membatalkan distribusi (PRD §5.13).
+  await Promise.all(
+    result.changedUserIds.map((recipientUserId) =>
+      notify(db, {
+        type: 'honor_publish',
+        recipientUserId,
+        data: { caseId, caseTitle: kase.title, amount: amounts.get(recipientUserId) ?? 0 },
+      }).catch(() => undefined),
+    ),
+  );
+  return result;
 }
 
 /** Tandai honor satu anggota Dibayar / batalkan. Hanya yang sudah didistribusikan. */

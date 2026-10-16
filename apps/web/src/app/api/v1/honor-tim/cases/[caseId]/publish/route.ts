@@ -1,6 +1,6 @@
 /**
  * POST /api/v1/honor-tim/cases/:caseId/publish — distribusikan honor (Admin).
- * Respons memuat `changedUserIds` untuk email ke anggota (notify() Agent G · G4).
+ * Email ke anggota yang honornya berubah dikirim oleh `publishHonor` sesudah commit.
  */
 import { uuidParam } from '@ekasatra/core/finance';
 import { publishHonor } from '@ekasatra/core/honor-tim';

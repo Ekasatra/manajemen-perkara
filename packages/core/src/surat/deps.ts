@@ -1,13 +1,12 @@
 /**
- * Ketergantungan modul surat pada agen lain (Agent E).
- * - `Notifier`  → `notify()` Agent G (G4). Sebelum tersedia: `noopNotifier`.
- * - `CaseLookup` → D7 `getCaseForUser`/`listVisibleCaseIds` Agent D. Sebelum
- *   tersedia: `tempCaseLookup` (baca `cases`/`case_members` langsung).
- * Mengganti implementasi cukup mengganti `defaultDeps`; lihat docs/REQUESTS.md.
+ * Ketergantungan modul surat pada modul lain, sebagai port supaya tes bisa menyuntik tiruan.
+ * - `Notifier`  → `notifyGeneric()` (notifications, G4).
+ * - `CaseLookup` → `getCaseForUser`/`listVisibleCaseIds`/`getCaseTeamMembers` (cases, D7).
  */
-import { asc, eq } from 'drizzle-orm';
-import { caseMembers, cases, settings } from '@ekasatra/db';
-import { isAdminRole } from '../kernel/policy';
+import { eq } from 'drizzle-orm';
+import { createDb, settings } from '@ekasatra/db';
+import { getCaseForUser, getCaseTeamMembers, listVisibleCaseIds } from '../cases/read';
+import { notifyGeneric } from '../notifications/notify';
 import type { AuthContext } from '../kernel/auth';
 import type { DbExecutor } from '../kernel/db-helpers';
 
@@ -27,8 +26,13 @@ export interface Notifier {
 }
 
 export const noopNotifier: Notifier = {
-  async notify() {
-    /* menunggu notify() Agent G */
+  async notify() {},
+};
+
+// ponytail: notifier tidak menerima db dari pemanggil; createDb() memakai klien yang di-cache per proses.
+export const emailNotifier: Notifier = {
+  async notify(input) {
+    await notifyGeneric(createDb(), input);
   },
 };
 
@@ -52,38 +56,13 @@ export async function readSetting(db: DbExecutor, key: string): Promise<unknown>
   return row?.value;
 }
 
-async function scopeAssignedOnly(db: DbExecutor): Promise<boolean> {
-  const v = await readSetting(db, 'scope_assigned_only');
-  return v === true || v === 'Ya';
-}
-
-// ponytail: duplikasi sementara aturan scope D7; hapus saat D7 masuk main.
-export const tempCaseLookup: CaseLookup = {
-  async visibleCaseIds(db, user) {
-    if (isAdminRole(user.role) || !(await scopeAssignedOnly(db))) return 'all';
-    const [own, member] = await Promise.all([
-      db.select({ id: cases.id }).from(cases).where(eq(cases.createdBy, user.userId)),
-      db
-        .select({ id: caseMembers.caseId })
-        .from(caseMembers)
-        .where(eq(caseMembers.userId, user.userId)),
-    ]);
-    return [...new Set([...own, ...member].map((r) => r.id))];
-  },
+export const caseLookup: CaseLookup = {
+  visibleCaseIds: (db, user) => listVisibleCaseIds(db, user.userId, user.role),
 
   async getCase(db, user, caseId) {
-    const [c] = await db.select().from(cases).where(eq(cases.id, caseId)).limit(1);
+    const c = await getCaseForUser(db, caseId, user.userId, user.role);
     if (!c) return null;
-    const members = await db
-      .select()
-      .from(caseMembers)
-      .where(eq(caseMembers.caseId, caseId))
-      .orderBy(asc(caseMembers.createdAt));
-    const visible =
-      c.createdBy === user.userId || members.some((m) => m.userId === user.userId);
-    if (!visible && !isAdminRole(user.role) && (await scopeAssignedOnly(db))) {
-      return null;
-    }
+    const members = await getCaseTeamMembers(db, caseId);
     return {
       id: c.id,
       regNo: c.regNo,
@@ -98,7 +77,7 @@ export interface SuratDeps {
   notifier: Notifier;
 }
 
-export const defaultDeps: SuratDeps = { cases: tempCaseLookup, notifier: noopNotifier };
+export const defaultDeps: SuratDeps = { cases: caseLookup, notifier: emailNotifier };
 
 /** Unique-violation Postgres (23505), termasuk yang dibungkus `cause` oleh drizzle. */
 export function isUniqueViolation(err: unknown): boolean {
