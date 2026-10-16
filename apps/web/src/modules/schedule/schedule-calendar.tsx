@@ -269,7 +269,7 @@ export function ScheduleCalendar({
               ))}
             </select>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
             <div>
               <label htmlFor="sj-kind" className={labelClass}>Jenis</label>
               <select id="sj-kind" name="kind" defaultValue="Sidang" className={inputClass}>
@@ -351,7 +351,7 @@ export function ScheduleCalendar({
           <label htmlFor="tj-reason" className={labelClass}>Alasan penundaan</label>
           <textarea id="tj-reason" name="reason" rows={2} required className={inputClass} />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
           <div>
             <label htmlFor="tj-date" className={labelClass}>Jadwal pengganti (opsional)</label>
             <input id="tj-date" name="newDate" type="date" className={inputClass} />

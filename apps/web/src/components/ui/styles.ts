@@ -16,7 +16,7 @@ export const buttonClass = {
   softDanger: `${base} border border-danger-fg/20 bg-danger-bg text-danger-fg hover:opacity-90`,
 } as const;
 
-export const labelClass = 'mb-1.5 block text-xs font-semibold tracking-wide text-navy-600';
+export const labelClass = 'mb-2 block text-xs font-semibold tracking-wide text-navy-600';
 
 export const inputClass =
   'block min-h-11 w-full rounded-control border border-navy-200 bg-surface/80 px-3.5 py-2.5 text-sm text-navy-800 shadow-sm outline-none transition placeholder:text-navy-300 focus:border-gold-400 focus:ring-4 focus:ring-gold-100 md:min-h-10';

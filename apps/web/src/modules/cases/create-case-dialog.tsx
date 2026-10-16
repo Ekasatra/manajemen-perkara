@@ -23,6 +23,46 @@ async function call(url: string, method: string, body: unknown) {
   return data.data;
 }
 
+/** Daftar centang untuk pilihan ganda: lebih jelas dan lebih mudah disentuh daripada select multiple. */
+function CheckList({
+  legend,
+  hint,
+  name,
+  options,
+}: {
+  legend: string;
+  hint: string;
+  name: string;
+  options: StaffOption[];
+}) {
+  return (
+    <fieldset>
+      <legend className={labelClass}>
+        {legend} <span className="font-normal text-navy-400">({hint})</span>
+      </legend>
+      <ul className="max-h-40 space-y-1 overflow-y-auto rounded-control border border-navy-200 bg-surface/80 p-2">
+        {options.length === 0 ? (
+          <li className="px-2 py-1.5 text-sm text-navy-400">Belum ada pilihan</li>
+        ) : (
+          options.map((o) => (
+            <li key={o.id}>
+              <label className="flex min-h-9 cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 text-sm text-navy-800 hover:bg-gold-50/50">
+                <input
+                  type="checkbox"
+                  name={name}
+                  value={o.id}
+                  className="size-4 accent-gold-500"
+                />
+                {o.fullName}
+              </label>
+            </li>
+          ))
+        )}
+      </ul>
+    </fieldset>
+  );
+}
+
 function todayIso(): string {
   return new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
 }
@@ -136,7 +176,7 @@ export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: bo
             className={inputClass}
           />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
           <div>
             <label htmlFor="cc-casenumber" className={labelClass}>
               Nomor Perkara
@@ -216,46 +256,36 @@ export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: bo
         </div>
 
         {canAssignTeam ? (
-          <fieldset className="grid gap-3 sm:grid-cols-2">
-            <legend className={`${labelClass} mb-2`}>Tim perkara</legend>
-            <div>
-              <label htmlFor="cc-adv" className={labelClass}>
-                Advokat (boleh lebih dari satu)
-              </label>
-              <select id="cc-adv" name="advokat" multiple size={4} className={inputClass}>
-                {advocateChoices.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.fullName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="cc-par" className={labelClass}>
-                Paralegal (boleh lebih dari satu)
-              </label>
-              <select id="cc-par" name="paralegal" multiple size={4} className={inputClass}>
-                {byRole('Paralegal').map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.fullName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="sm:col-span-2">
-              <label htmlFor="cc-mgr" className={labelClass}>
-                Manajer Kasus (satu orang)
-              </label>
-              <select id="cc-mgr" name="manager" defaultValue="" className={inputClass}>
-                <option value="">Belum ditentukan</option>
-                {staff
-                  .filter((s) => s.role === 'Advokat' || s.role === 'Admin')
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.fullName}
-                    </option>
-                  ))}
-              </select>
+          <fieldset className="rounded-control border border-navy-100 p-4">
+            <legend className="px-2 text-sm font-bold text-navy-800">Tim perkara</legend>
+            <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+              <CheckList
+                legend="Advokat"
+                hint="boleh lebih dari satu"
+                name="advokat"
+                options={advocateChoices}
+              />
+              <CheckList
+                legend="Paralegal"
+                hint="boleh lebih dari satu"
+                name="paralegal"
+                options={byRole('Paralegal')}
+              />
+              <div className="sm:col-span-2">
+                <label htmlFor="cc-mgr" className={labelClass}>
+                  Manajer Kasus (satu orang)
+                </label>
+                <select id="cc-mgr" name="manager" defaultValue="" className={inputClass}>
+                  <option value="">Belum ditentukan</option>
+                  {staff
+                    .filter((s) => s.role === 'Advokat' || s.role === 'Admin')
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.fullName}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
           </fieldset>
         ) : (
@@ -275,7 +305,7 @@ export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: bo
           <legend className="px-1 text-sm font-bold text-navy-800">
             Tahap Awal Timeline (opsional)
           </legend>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-x-4 gap-y-5 sm:grid-cols-3">
             <div>
               <label htmlFor="cc-tltype" className={labelClass}>
                 Tahap
