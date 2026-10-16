@@ -5,6 +5,7 @@ import { count, desc } from 'drizzle-orm';
 import { createDb, opponents } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan } from '@ekasatra/core';
+import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
@@ -74,10 +75,11 @@ export default async function OpponentsPage({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy-700">Pihak Lawan</h1>
-        <CreateOpponentDialog />
-      </div>
+      <PageHeader
+        title="Pihak Lawan"
+        description="Daftar pihak lawan yang tercatat pada perkara."
+        actions={<CreateOpponentDialog />}
+      />
       <DataTable<OpponentRow>
         caption="Daftar pihak lawan"
         columns={columns}

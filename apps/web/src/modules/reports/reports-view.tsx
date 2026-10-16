@@ -1,7 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { formatDate, formatRupiah } from '@/lib/format';
+import { EmptyState, LoadingState } from '@/shell/states';
 
 export type ReportTab = 'cases' | 'surat-masuk' | 'surat-keluar' | 'honorarium' | 'schedules';
 
@@ -11,6 +17,97 @@ interface ReportRow {
   [field: string]: string | number | null | undefined;
 }
 
+type Column = { header: string; cell: (r: ReportRow) => ReactNode; align?: 'right' };
+type TabDef = { id: ReportTab; label: string; empty: string; columns: Column[] };
+
+const dateOrDash = (v: ReportRow[string]) => (v ? formatDate(String(v)) : '-');
+const textOrDash = (v: ReportRow[string]) => (v === null || v === undefined || v === '' ? '-' : v);
+const rupiahOrDash = (v: ReportRow[string]) => (typeof v === 'number' ? formatRupiah(v) : '-');
+
+/** Definisi kolom per tab: kolom penentu (nomor) di depan, tanggal dan nominal dari formatter bersama. */
+const TABS: TabDef[] = [
+  {
+    id: 'cases',
+    label: 'Perkara',
+    empty: 'Tidak ada perkara untuk filter ini.',
+    columns: [
+      { header: 'No. Reg', cell: (r) => <span className="font-medium">{r.regNo}</span> },
+      { header: 'Judul perkara', cell: (r) => r.title },
+      { header: 'Klien', cell: (r) => r.clientName },
+      { header: 'Pengadilan', cell: (r) => textOrDash(r.court) },
+      { header: 'Status', cell: (r) => <Badge tone="info">{String(r.status)}</Badge> },
+      { header: 'Tanggal mulai', cell: (r) => dateOrDash(r.startDate) },
+      { header: 'Batas upaya', cell: (r) => dateOrDash(r.upayaDeadline) },
+    ],
+  },
+  {
+    id: 'surat-masuk',
+    label: 'Surat Masuk',
+    empty: 'Tidak ada surat masuk untuk filter ini.',
+    columns: [
+      { header: 'No. agenda', cell: (r) => <span className="font-medium">{r.noAgenda}</span> },
+      { header: 'Pengirim', cell: (r) => r.sender },
+      { header: 'Perihal', cell: (r) => r.subject },
+      { header: 'Tanggal terima', cell: (r) => dateOrDash(r.tglTerima) },
+      { header: 'Sifat', cell: (r) => r.sifat },
+      { header: 'Status', cell: (r) => <Badge tone="info">{String(r.status)}</Badge> },
+      { header: 'Disposisi', cell: (r) => textOrDash(r.assignedToName) },
+    ],
+  },
+  {
+    id: 'surat-keluar',
+    label: 'Surat Keluar',
+    empty: 'Tidak ada surat keluar untuk filter ini.',
+    columns: [
+      {
+        header: 'No. surat',
+        cell: (r) => <span className="font-medium">{r.noSurat || 'Draft'}</span>,
+      },
+      { header: 'Perihal', cell: (r) => r.subject },
+      { header: 'Tujuan', cell: (r) => r.destination },
+      { header: 'Jenis', cell: (r) => r.jenis },
+      { header: 'Status', cell: (r) => <Badge tone="info">{String(r.status)}</Badge> },
+      { header: 'Tanggal surat', cell: (r) => dateOrDash(r.tglSurat) },
+      { header: 'Perkara', cell: (r) => textOrDash(r.caseTitle) },
+    ],
+  },
+  {
+    id: 'honorarium',
+    label: 'Honorarium',
+    empty: 'Tidak ada honorarium untuk filter ini.',
+    columns: [
+      { header: 'Perkara', cell: (r) => <span className="font-medium">{r.caseTitle}</span> },
+      { header: 'Anggota tim', cell: (r) => r.userName },
+      { header: 'Draft', align: 'right', cell: (r) => rupiahOrDash(r.draftAmount) },
+      { header: 'Terdistribusi', align: 'right', cell: (r) => rupiahOrDash(r.publishedAmount) },
+      { header: 'Status', cell: (r) => <Badge tone="neutral">{String(r.status)}</Badge> },
+      { header: 'Tanggal distribusi', cell: (r) => dateOrDash(r.publishedAt) },
+      { header: 'Tanggal bayar', cell: (r) => dateOrDash(r.paidAt) },
+    ],
+  },
+  {
+    id: 'schedules',
+    label: 'Jadwal & Sidang',
+    empty: 'Tidak ada jadwal untuk filter ini.',
+    columns: [
+      {
+        header: 'Tanggal dan waktu',
+        cell: (r) => (
+          <span className="font-medium">
+            {dateOrDash(r.scheduleDate)}
+            {r.scheduleTime ? `, ${r.scheduleTime}` : ''}
+          </span>
+        ),
+      },
+      { header: 'Jenis', cell: (r) => r.kind },
+      { header: 'Perkara', cell: (r) => r.caseTitle },
+      { header: 'Lokasi', cell: (r) => textOrDash(r.location) },
+      { header: 'Catatan', cell: (r) => textOrDash(r.notes) },
+      { header: 'Status', cell: (r) => <Badge tone="warning">{String(r.status)}</Badge> },
+    ],
+  },
+];
+
 export function ReportsView() {
   const [tab, setTab] = useState<ReportTab>('cases');
   const [startDate, setStartDate] = useState('');
@@ -19,21 +116,26 @@ export function ReportsView() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ReportRow[]>([]);
 
-  const fetchReport = async () => {
-    setLoading(true);
-    try {
+  const active = TABS.find((t) => t.id === tab) ?? TABS[0]!;
+
+  const query = useCallback(
+    (extra?: Record<string, string>) => {
       const params = new URLSearchParams();
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
       if (status) params.set('status', status);
+      for (const [k, v] of Object.entries(extra ?? {})) params.set(k, v);
+      return params.toString();
+    },
+    [startDate, endDate, status],
+  );
 
-      const res = await fetch(`/api/v1/reports/${tab}?${params.toString()}`);
+  const fetchReport = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/v1/reports/${tab}?${query()}`);
       const json = await res.json();
-      if (json.ok) {
-        setData(json.data);
-      } else {
-        setData([]);
-      }
+      setData(json.ok ? json.data : []);
     } catch {
       setData([]);
     } finally {
@@ -44,85 +146,67 @@ export function ReportsView() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- muat ulang saat ganti tab
     fetchReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hanya saat tab berganti; filter diterapkan lewat tombol
   }, [tab]);
 
-  const handleExportCsv = () => {
-    const params = new URLSearchParams();
-    if (startDate) params.set('startDate', startDate);
-    if (endDate) params.set('endDate', endDate);
-    if (status) params.set('status', status);
-    params.set('format', 'csv');
-
-    window.open(`/api/v1/reports/${tab}?${params.toString()}`, '_blank');
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
-    <div className="space-y-6">
-      {/* 1. Header */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-navy-800">
-            Laporan Operasional
-          </h1>
-          <p className="text-sm text-gray-500">
-            Modul laporan terpadu dan rekapitulasi data (Khusus Administrator).
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className={buttonClass.secondary}
-          >
-            Export CSV
-          </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className={buttonClass.primary}
-          >
-            Cetak Laporan
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-6">
-          {[
-            { id: 'cases', label: 'Perkara' },
-            { id: 'surat-masuk', label: 'Surat Masuk' },
-            { id: 'surat-keluar', label: 'Surat Keluar' },
-            { id: 'honorarium', label: 'Honorarium' },
-            { id: 'schedules', label: 'Jadwal & Sidang' },
-          ].map((t) => (
+    <div>
+      <PageHeader
+        title="Laporan"
+        description="Rekapitulasi data perkara, surat, honorarium, dan jadwal. Hanya Admin yang dapat melihatnya."
+        actions={
+          <>
             <button
-              key={t.id}
-              onClick={() => {
-                setTab(t.id as ReportTab);
-                setStatus('');
-              }}
-              className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
-                tab === t.id
-                  ? 'border-navy-700 text-navy-800'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-              }`}
+              type="button"
+              onClick={() => window.open(`/api/v1/reports/${tab}?${query({ format: 'csv' })}`, '_blank')}
+              className={buttonClass.secondary}
             >
-              {t.label}
+              Ekspor CSV
             </button>
-          ))}
-        </nav>
+            <button type="button" onClick={() => window.print()} className={buttonClass.primary}>
+              Cetak laporan
+            </button>
+          </>
+        }
+      />
+
+      <div role="tablist" aria-label="Jenis laporan" className="flex gap-1 overflow-x-auto border-b border-navy-200 print:hidden">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            id={`tab-${t.id}`}
+            aria-selected={tab === t.id}
+            aria-controls="panel-laporan"
+            onClick={() => {
+              setTab(t.id);
+              setStatus('');
+            }}
+            className={`-mb-px min-h-11 shrink-0 border-b-2 px-3 text-sm font-medium transition-colors md:min-h-9 ${
+              tab === t.id
+                ? 'border-navy-700 text-navy-800'
+                : 'border-transparent text-navy-400 hover:border-navy-300 hover:text-navy-700'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* 3. Filters Bar */}
-      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-4 sm:items-end">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void fetchReport();
+        }}
+        className="mt-4 grid gap-4 rounded-card border border-navy-200 bg-surface p-4 sm:grid-cols-4 sm:items-end print:hidden"
+      >
         <div>
-          <label className={labelClass}>Tanggal Mulai</label>
+          <label htmlFor="r-start" className={labelClass}>
+            Tanggal mulai
+          </label>
           <input
+            id="r-start"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -130,8 +214,11 @@ export function ReportsView() {
           />
         </div>
         <div>
-          <label className={labelClass}>Tanggal Akhir</label>
+          <label htmlFor="r-end" className={labelClass}>
+            Tanggal akhir
+          </label>
           <input
+            id="r-end"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
@@ -139,239 +226,43 @@ export function ReportsView() {
           />
         </div>
         <div>
-          <label className={labelClass}>Status</label>
+          <label htmlFor="r-status" className={labelClass}>
+            Status
+          </label>
           <input
+            id="r-status"
             type="text"
-            placeholder="Filter status..."
+            placeholder="Contoh: Aktif"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             className={inputClass}
           />
         </div>
-        <div>
-          <button
-            type="button"
-            onClick={fetchReport}
-            disabled={loading}
-            className={`w-full ${buttonClass.primary}`}
-          >
-            {loading ? 'Memuat...' : 'Terapkan Filter'}
-          </button>
-        </div>
-      </div>
+        <button type="submit" disabled={loading} className={`w-full ${buttonClass.primary}`}>
+          {loading ? 'Memuat…' : 'Terapkan filter'}
+        </button>
+      </form>
 
-      {/* 4. Table Display */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          {tab === 'cases' && (
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-3">No. Reg</th>
-                  <th className="px-4 py-3">Judul Perkara</th>
-                  <th className="px-4 py-3">Klien</th>
-                  <th className="px-4 py-3">Pengadilan</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Tgl Mulai</th>
-                  <th className="px-4 py-3">Batas Upaya</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {data.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-400">
-                      Tidak ada data perkara untuk filter ini.
-                    </td>
-                  </tr>
-                ) : (
-                  data.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 font-semibold text-navy-800">{c.regNo}</td>
-                      <td className="px-4 py-3">{c.title}</td>
-                      <td className="px-4 py-3 text-gray-600">{c.clientName}</td>
-                      <td className="px-4 py-3 text-gray-500">{c.court || '-'}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded bg-navy-50 px-2 py-0.5 text-xs font-medium text-navy-700">
-                          {c.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">{c.startDate || '-'}</td>
-                      <td className="px-4 py-3 font-medium text-red-600">{c.upayaDeadline || '-'}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {tab === 'surat-masuk' && (
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-3">No. Agenda</th>
-                  <th className="px-4 py-3">Pengirim</th>
-                  <th className="px-4 py-3">Perihal</th>
-                  <th className="px-4 py-3">Tgl Terima</th>
-                  <th className="px-4 py-3">Sifat</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Disposisi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {data.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-400">
-                      Tidak ada data surat masuk.
-                    </td>
-                  </tr>
-                ) : (
-                  data.map((sm) => (
-                    <tr key={sm.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 font-semibold text-navy-800">{sm.noAgenda}</td>
-                      <td className="px-4 py-3">{sm.sender}</td>
-                      <td className="px-4 py-3">{sm.subject}</td>
-                      <td className="px-4 py-3 text-gray-500">{sm.tglTerima}</td>
-                      <td className="px-4 py-3">{sm.sifat}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-                          {sm.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">{sm.assignedToName || '-'}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {tab === 'surat-keluar' && (
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-3">No. Surat</th>
-                  <th className="px-4 py-3">Perihal</th>
-                  <th className="px-4 py-3">Tujuan</th>
-                  <th className="px-4 py-3">Jenis</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Tgl Surat</th>
-                  <th className="px-4 py-3">Perkara</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {data.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-400">
-                      Tidak ada data surat keluar.
-                    </td>
-                  </tr>
-                ) : (
-                  data.map((sk) => (
-                    <tr key={sk.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 font-semibold text-navy-800">{sk.noSurat || '(Draft)'}</td>
-                      <td className="px-4 py-3">{sk.subject}</td>
-                      <td className="px-4 py-3 text-gray-600">{sk.destination}</td>
-                      <td className="px-4 py-3">{sk.jenis}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                          {sk.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">{sk.tglSurat || '-'}</td>
-                      <td className="px-4 py-3 text-gray-500">{sk.caseTitle || '-'}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {tab === 'honorarium' && (
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-3">Perkara</th>
-                  <th className="px-4 py-3">Anggota Tim</th>
-                  <th className="px-4 py-3">Draft (Rp)</th>
-                  <th className="px-4 py-3">Publish (Rp)</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Tgl Publish</th>
-                  <th className="px-4 py-3">Tgl Bayar</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {data.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-400">
-                      Tidak ada data honorarium.
-                    </td>
-                  </tr>
-                ) : (
-                  data.map((h) => (
-                    <tr key={h.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 font-semibold text-navy-800">{h.caseTitle}</td>
-                      <td className="px-4 py-3">{h.userName}</td>
-                      <td className="px-4 py-3 text-gray-500">{h.draftAmount?.toLocaleString('id-ID')}</td>
-                      <td className="px-4 py-3 font-medium text-emerald-700">
-                        {h.publishedAmount ? h.publishedAmount.toLocaleString('id-ID') : '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-                          {h.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{String(h.publishedAt ?? '').slice(0, 10) || '-'}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{String(h.paidAt ?? '').slice(0, 10) || '-'}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {tab === 'schedules' && (
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-3">Tanggal & Waktu</th>
-                  <th className="px-4 py-3">Jenis</th>
-                  <th className="px-4 py-3">Perkara</th>
-                  <th className="px-4 py-3">Lokasi</th>
-                  <th className="px-4 py-3">Catatan</th>
-                  <th className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {data.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-400">
-                      Tidak ada data jadwal.
-                    </td>
-                  </tr>
-                ) : (
-                  data.map((s) => (
-                    <tr key={s.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 font-semibold text-navy-800">
-                        {s.scheduleDate} {s.scheduleTime ? `• ${s.scheduleTime}` : ''}
-                      </td>
-                      <td className="px-4 py-3">{s.kind}</td>
-                      <td className="px-4 py-3">{s.caseTitle}</td>
-                      <td className="px-4 py-3 text-gray-600">{s.location || '-'}</td>
-                      <td className="px-4 py-3 text-gray-500">{s.notes || '-'}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                          {s.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
+      <div
+        role="tabpanel"
+        id="panel-laporan"
+        aria-labelledby={`tab-${active.id}`}
+        aria-busy={loading}
+        className="mt-4 overflow-hidden rounded-card border border-navy-200 bg-surface"
+      >
+        {loading ? (
+          <LoadingState label="Memuat laporan…" />
+        ) : data.length === 0 ? (
+          <EmptyState title={active.empty} hint="Ubah rentang tanggal atau status, lalu terapkan lagi." />
+        ) : (
+          <ResponsiveTable
+            caption={`Laporan ${active.label}`}
+            columns={active.columns.map((c) => ({ ...c, key: c.header }))}
+            rows={data}
+            rowKey={(r) => r.id}
+          />
+        )}
       </div>
     </div>
   );
 }
-

@@ -64,7 +64,7 @@ export function CreateClientDialog() {
             Tipe
           </label>
           <select id="cc-type" name="type" className={inputClass}>
-            <option value="">—</option>
+            <option value="">Belum dipilih</option>
             <option value="Perorangan">Perorangan</option>
             <option value="Perusahaan">Perusahaan</option>
             <option value="Instansi">Instansi</option>

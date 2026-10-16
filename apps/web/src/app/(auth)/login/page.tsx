@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Brand } from '@/components/ui/brand';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 
 export default function LoginPage() {
@@ -39,9 +40,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="rounded-md border border-navy-200 bg-white p-8 shadow-sm">
-      <h1 className="font-display text-3xl font-semibold text-navy-700">eKaSatra</h1>
-      <p className="mt-1 text-sm text-navy-400">Masuk untuk mengelola perkara</p>
+    <div className="rounded-card border border-navy-200 bg-surface p-8">
+      <h1 className="text-title font-semibold text-navy-700">
+        <Brand />
+      </h1>
+      <div aria-hidden="true" className="mt-3">
+        <div className="h-px w-full bg-gold-500" />
+        <div className="mt-0.5 h-px w-16 bg-gold-500" />
+      </div>
+      <p className="mt-3 text-sm text-navy-400">
+        Sistem administrasi dan manajemen perkara hukum. Masuk dengan akun yang didaftarkan Admin.
+      </p>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         <div>
           <label htmlFor="email" className={labelClass}>
@@ -71,14 +80,17 @@ export default function LoginPage() {
           />
         </div>
         {error ? (
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger-fg">
             {error}
           </p>
         ) : null}
         <button type="submit" disabled={pending} className={buttonClass.primary}>
-          {pending ? 'Memproses…' : 'Masuk'}
+          {pending ? 'Memproses' : 'Masuk'}
         </button>
       </form>
+      <p className="mt-6 border-t border-navy-100 pt-4 text-xs text-navy-400">
+        Akses khusus staf terdaftar. Aktivitas masuk dan perubahan data tercatat di Audit Log.
+      </p>
       <p className="mt-4 text-center text-sm text-navy-400">
         Belum ada akun?{' '}
         <Link href="/setup" className="text-navy-600 underline hover:text-navy-700">

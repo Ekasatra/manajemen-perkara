@@ -1,7 +1,9 @@
 /** Kas kantor (Agent F · F5). Hanya Admin + user di setting `kas_viewers`. */
-import Link from 'next/link';
 import { getKasSummary } from '@ekasatra/core/honor-tim';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { FileHeader } from '@/components/ui/file-header';
+import { FigureStrip } from '@/components/ui/figure-strip';
+import type { FigureItem } from '@/components/ui/figure-strip';
 import { formatRupiah } from '@/lib/format';
 import { pageContext } from '@/modules/invoices/route-ctx';
 
@@ -21,29 +23,19 @@ export default async function KasPage() {
     },
     { key: 'kas', header: 'Kas', align: 'right', cell: (r) => formatRupiah(r.kas) },
   ];
-  const cards: [string, string][] = [
-    ['Total tagihan', formatRupiah(kas.totalBilled)],
-    [`Kas kantor (${kas.kasPersen}%)`, formatRupiah(kas.totalKas)],
-    ['Dana distribusi', formatRupiah(kas.totalFund)],
-    ['Sudah didistribusikan', formatRupiah(kas.distributed)],
+  const figures: FigureItem[] = [
+    { label: 'Total tagihan', value: formatRupiah(kas.totalBilled) },
+    { label: `Kas kantor (${kas.kasPersen}%)`, value: formatRupiah(kas.totalKas) },
+    { label: 'Dana distribusi', value: formatRupiah(kas.totalFund) },
+    { label: 'Sudah didistribusikan', value: formatRupiah(kas.distributed) },
   ];
 
   return (
     <div>
-      <p className="mb-1 text-sm">
-        <Link href="/honor-tim" className="text-navy-600 underline">
-          ← Honor &amp; Kas
-        </Link>
-      </p>
-      <h1 className="text-2xl font-semibold text-navy-700">Kas Kantor</h1>
-      <dl className="my-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-        {cards.map(([k, v]) => (
-          <div key={k} className="rounded-md border border-navy-100 p-3">
-            <dt className="text-xs text-navy-500">{k}</dt>
-            <dd className="mt-1 text-lg font-semibold text-navy-800">{v}</dd>
-          </div>
-        ))}
-      </dl>
+      <FileHeader back={{ href: '/honor-tim', label: 'Honor Tim' }} title="Kas Kantor" />
+      <div className="mb-6">
+        <FigureStrip label="Ringkasan kas kantor" items={figures} />
+      </div>
       <DataTable<Row>
         caption="Kas per perkara"
         columns={columns}

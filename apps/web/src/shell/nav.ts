@@ -21,7 +21,7 @@ export type ModuleConfig = {
   icon?: string;
 };
 
-export const HOME: NavItem = { label: 'Beranda', href: '/' };
+export const HOME: NavItem = { label: 'Beranda', href: '/', icon: 'home' };
 
 const DEFAULT_ORDER = 100;
 

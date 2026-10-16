@@ -11,15 +11,15 @@ export function FilterForm({
   statuses: readonly string[];
 }) {
   return (
-    <form method="get" className="mb-4 flex flex-wrap gap-2" role="search">
+    <form method="get" className="mb-4 flex flex-col gap-2 sm:flex-row" role="search">
       <input
         name="q"
         defaultValue={q}
-        placeholder="Cari nomor, perihal, pihak…"
+        placeholder="Cari nomor, perihal, pihak"
         aria-label="Cari"
-        className={`${inputClass} max-w-xs`}
+        className={`${inputClass} sm:max-w-xs`}
       />
-      <select name="status" defaultValue={status ?? ''} aria-label="Status" className={`${inputClass} max-w-[12rem]`}>
+      <select name="status" defaultValue={status ?? ''} aria-label="Status" className={`${inputClass} sm:max-w-48`}>
         <option value="">Semua status</option>
         {statuses.map((s) => (
           <option key={s} value={s}>

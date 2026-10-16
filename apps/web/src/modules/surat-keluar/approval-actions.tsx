@@ -84,7 +84,7 @@ export function ApprovalActions({ id, actions }: { id: string; actions: Action[]
         )}
       </div>
       {error ? (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <p role="alert" className="mt-2 text-sm text-danger-fg">
           {error}
         </p>
       ) : null}

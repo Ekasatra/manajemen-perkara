@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { buttonClass, inputClass } from '@/components/ui/styles';
+import { formatRupiah } from '@/lib/format';
 import { callApi } from '@/modules/invoices/api-client';
 
 type Member = {
@@ -14,7 +15,7 @@ type Member = {
   status: 'Belum' | 'Dibayar';
 };
 
-const rp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
+const rp = formatRupiah;
 
 /**
  * Editor honor per perkara (Admin). Draft disimpan terpisah; anggota baru melihat nilainya
@@ -42,7 +43,12 @@ export function HonorEditor({
 
   const active = members.filter((m) => m.isMember);
   const total = useMemo(
-    () => active.reduce((sum, m) => sum + (Number(values[m.userId]) || 0), 0),
+    // Pratinjau hanya menjumlah bilangan bulat valid; simpan tetap memvalidasi dan memberi galat.
+    () =>
+      active.reduce((sum, m) => {
+        const n = Number(values[m.userId]);
+        return sum + (Number.isSafeInteger(n) ? n : 0);
+      }, 0),
     [active, values],
   );
   const over = total > fund;
@@ -92,91 +98,78 @@ export function HonorEditor({
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <caption className="sr-only">Honor per anggota tim</caption>
-          <thead className="border-b border-navy-200 text-navy-600">
-            <tr>
-              <th scope="col" className="py-2 pr-3 font-medium">
-                Anggota
-              </th>
-              <th scope="col" className="py-2 pr-3 font-medium">
-                Draft (Rp)
-              </th>
-              <th scope="col" className="py-2 pr-3 text-right font-medium">
-                Terdistribusi
-              </th>
-              <th scope="col" className="py-2 pr-3 font-medium">
-                Status
-              </th>
-              <th scope="col" className="py-2 font-medium">
-                <span className="sr-only">Aksi</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m) => (
-              <tr key={m.userId} className="border-b border-navy-100">
-                <td className="py-2 pr-3">
-                  {m.fullName}
-                  {!m.isMember && (
-                    <span className="ml-2 text-xs text-amber-800">(bukan anggota tim lagi)</span>
-                  )}
-                </td>
-                <td className="py-2 pr-3">
-                  <label className="sr-only" htmlFor={`h-${m.userId}`}>
-                    Draft honor {m.fullName}
-                  </label>
-                  <input
-                    id={`h-${m.userId}`}
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    step={1}
-                    className={`${inputClass} max-w-40`}
-                    value={values[m.userId] ?? ''}
-                    disabled={!m.isMember || m.status === 'Dibayar'}
-                    onChange={(e) => setValues((v) => ({ ...v, [m.userId]: e.target.value }))}
-                  />
-                </td>
-                <td className="py-2 pr-3 text-right">
-                  {m.publishedAmount === null ? '-' : rp(m.publishedAmount)}
-                </td>
-                <td className="py-2 pr-3">{m.publishedAmount === null ? 'Belum' : m.status}</td>
-                <td className="py-2">
-                  {m.publishedAmount !== null && (
-                    <button
-                      type="button"
-                      className={buttonClass.secondary}
-                      disabled={busy}
-                      onClick={() =>
-                        run(m.status === 'Dibayar' ? 'Status dibatalkan' : 'Ditandai Dibayar', () =>
-                          callApi(
-                            `${base}/members/${m.userId}/paid`,
-                            m.status === 'Dibayar' ? 'DELETE' : 'POST',
-                          ),
-                        )
-                      }
-                    >
-                      {m.status === 'Dibayar' ? 'Batalkan Dibayar' : 'Tandai Dibayar'}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ul aria-label="Honor per anggota tim" className="divide-y divide-navy-100 rounded-card border border-navy-200 bg-surface">
+        {members.map((m) => (
+          <li
+            key={m.userId}
+            className="grid gap-3 p-4 md:grid-cols-[1fr_10rem_8rem_6rem_auto] md:items-center"
+          >
+            <div className="font-medium text-navy-800">
+              {m.fullName}
+              {!m.isMember && (
+                <span className="ml-2 text-xs font-normal text-warning-fg">
+                  (bukan anggota tim lagi)
+                </span>
+              )}
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-navy-400" htmlFor={`h-${m.userId}`}>
+                Draft honor {m.fullName}
+              </label>
+              <input
+                id={`h-${m.userId}`}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                className={inputClass}
+                value={values[m.userId] ?? ''}
+                disabled={!m.isMember || m.status === 'Dibayar'}
+                onChange={(e) => setValues((v) => ({ ...v, [m.userId]: e.target.value }))}
+              />
+            </div>
+            <div className="text-sm md:text-right">
+              <span className="text-xs text-navy-400 md:hidden">Terdistribusi: </span>
+              <span className="tabular-nums">
+                {m.publishedAmount === null ? '-' : rp(m.publishedAmount)}
+              </span>
+            </div>
+            <div className="text-sm">
+              <span className="text-xs text-navy-400 md:hidden">Status: </span>
+              {m.publishedAmount === null ? 'Belum' : m.status}
+            </div>
+            <div>
+              {m.publishedAmount !== null && (
+                <button
+                  type="button"
+                  className={`${buttonClass.secondary} w-full md:w-auto`}
+                  disabled={busy}
+                  onClick={() =>
+                    run(m.status === 'Dibayar' ? 'Status dibatalkan' : 'Ditandai Dibayar', () =>
+                      callApi(
+                        `${base}/members/${m.userId}/paid`,
+                        m.status === 'Dibayar' ? 'DELETE' : 'POST',
+                      ),
+                    )
+                  }
+                >
+                  {m.status === 'Dibayar' ? 'Batalkan Dibayar' : 'Tandai Dibayar'}
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
 
       <p
-        className={`mt-4 text-sm ${over ? 'font-medium text-red-700' : 'text-navy-700'}`}
+        className={`mt-4 text-sm ${over ? 'font-medium text-danger-fg' : 'text-navy-700'}`}
         aria-live="polite"
       >
         Total draft {rp(total)} dari dana distribusi {rp(fund)}
-        {over ? ` — melebihi ${rp(total - fund)}` : ` — sisa ${rp(fund - total)}`}
+        {over ? `, melebihi ${rp(total - fund)}` : `, sisa ${rp(fund - total)}`}
       </p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <button type="button" className={buttonClass.secondary} disabled={busy} onClick={save}>
           Simpan Draft
         </button>
@@ -190,12 +183,12 @@ export function HonorEditor({
         </button>
       </div>
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-700">
+        <p role="alert" className="mt-3 text-sm text-danger-fg">
           {error}
         </p>
       )}
       {notice && !error && (
-        <p role="status" className="mt-3 text-sm text-green-800">
+        <p role="status" className="mt-3 text-sm text-success-fg">
           {notice}
         </p>
       )}

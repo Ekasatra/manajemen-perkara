@@ -3,14 +3,11 @@ import type { ReactNode } from 'react';
 import { EmptyState } from '@/shell/states';
 import { totalPages } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
+import { ResponsiveTable } from './responsive-table';
+import type { Column } from './responsive-table';
 import { buttonClass } from './styles';
 
-export type Column<T> = {
-  key: string;
-  header: string;
-  cell: (row: T) => ReactNode;
-  align?: 'right';
-};
+export type { Column };
 
 type Props<T> = {
   caption: string;
@@ -40,8 +37,8 @@ function pageHref(basePath: string, params: SearchParams, page: number): string 
 }
 
 /**
- * Tabel generik dengan paginasi sisi server (Agent A · A3). Server component:
- * navigasi halaman berupa link `?page=N`, jadi tanpa state klien.
+ * Tabel generik dengan paginasi sisi server. Server component: navigasi halaman berupa
+ * link `?page=N`, jadi tanpa state klien. Mobile-first lewat ResponsiveTable (kartu di bawah md).
  */
 export function DataTable<T>({
   caption,
@@ -55,21 +52,29 @@ export function DataTable<T>({
   searchParams = {},
   empty,
 }: Props<T>) {
-  if (total === 0) return <EmptyState {...empty} />;
+  if (total === 0) {
+    return (
+      <div className="rounded-card border border-navy-200 bg-surface">
+        <EmptyState {...empty} />
+      </div>
+    );
+  }
 
   const pages = totalPages(total, pageSize);
 
   if (rows.length === 0) {
     return (
-      <EmptyState
-        title="Halaman tidak ditemukan"
-        hint={`Data hanya sampai halaman ${pages}.`}
-        action={
-          <Link href={pageHref(basePath, searchParams, 1)} className={buttonClass.secondary}>
-            Ke halaman pertama
-          </Link>
-        }
-      />
+      <div className="rounded-card border border-navy-200 bg-surface">
+        <EmptyState
+          title="Halaman tidak ditemukan"
+          hint={`Data hanya sampai halaman ${pages}.`}
+          action={
+            <Link href={pageHref(basePath, searchParams, 1)} className={buttonClass.secondary}>
+              Ke halaman pertama
+            </Link>
+          }
+        />
+      </div>
     );
   }
 
@@ -77,43 +82,12 @@ export function DataTable<T>({
   const to = from + rows.length - 1;
 
   return (
-    <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <caption className="sr-only">{caption}</caption>
-          <thead className="bg-navy-50 text-navy-600">
-            <tr>
-              {columns.map((c) => (
-                <th
-                  key={c.key}
-                  scope="col"
-                  className={`px-4 py-3 font-medium ${c.align === 'right' ? 'text-right' : ''}`}
-                >
-                  {c.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-navy-100">
-            {rows.map((row) => (
-              <tr key={rowKey(row)}>
-                {columns.map((c) => (
-                  <td
-                    key={c.key}
-                    className={`px-4 py-3 ${c.align === 'right' ? 'text-right' : ''}`}
-                  >
-                    {c.cell(row)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">
+      <ResponsiveTable caption={caption} columns={columns} rows={rows} rowKey={rowKey} />
 
       <nav
         aria-label="Paginasi"
-        className="flex flex-wrap items-center justify-between gap-3 border-t border-navy-100 px-4 py-3 text-sm text-navy-600"
+        className="flex flex-col gap-3 border-t border-navy-100 px-4 py-3 text-sm text-navy-600 sm:flex-row sm:items-center sm:justify-between"
       >
         <span>
           Menampilkan {from}–{to} dari {total}
@@ -127,7 +101,7 @@ export function DataTable<T>({
               Sebelumnya
             </Link>
           ) : null}
-          <span>
+          <span className="whitespace-nowrap">
             Halaman {page} dari {pages}
           </span>
           {page < pages ? (

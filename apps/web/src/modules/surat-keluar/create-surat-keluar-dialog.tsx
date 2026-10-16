@@ -79,7 +79,7 @@ export function CreateSuratKeluarDialog({
           <div>
             <label htmlFor="sk-case" className={labelClass}>Perkara</label>
             <select id="sk-case" name="caseId" required className={inputClass}>
-              <option value="">— pilih perkara —</option>
+              <option value="">Pilih perkara</option>
               {cases.map((c) => (
                 <option key={c.id} value={c.id}>{c.label}</option>
               ))}

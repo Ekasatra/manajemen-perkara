@@ -6,6 +6,7 @@ import { count, desc, eq } from 'drizzle-orm';
 import { createDb, advocates } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan, can } from '@ekasatra/core';
+import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
@@ -70,10 +71,11 @@ export default async function AdvocatesPage({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy-700">Data Advokat</h1>
-        <CreateAdvocateDialog />
-      </div>
+      <PageHeader
+        title="Data Advokat"
+        description="Advokat kantor yang dapat ditugaskan pada perkara."
+        actions={<CreateAdvocateDialog />}
+      />
       <DataTable<AdvocateRow>
         caption="Daftar data advokat"
         columns={columns}

@@ -74,10 +74,10 @@ export function CreateCaseDialog() {
             Klien
           </label>
           <select id="cc-client" name="clientId" required className={inputClass}>
-            <option value="">— Pilih klien —</option>
+            <option value="">Pilih klien</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.clientCode} — {c.name}
+                {c.clientCode} · {c.name}
               </option>
             ))}
           </select>

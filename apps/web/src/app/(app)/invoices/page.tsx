@@ -2,17 +2,21 @@
  * Daftar invoice / biaya perkara (Agent F · F1). Admin saja (PRD §4).
  */
 import Link from 'next/link';
-import { ensureCan } from '@ekasatra/core';
+import { ensureCan, outstandingSummary } from '@ekasatra/core';
 import { listCaseOptions, listClientOptions } from '@ekasatra/core/finance';
 import { listInvoices, type InvoiceListItem } from '@ekasatra/core/invoices';
 import { INVOICE_STATUSES, listInvoicesQuerySchema } from '@ekasatra/shared/invoices';
+import { Badge } from '@/components/ui/badge';
 import { DataTable, type Column } from '@/components/ui/data-table';
+import { FigureStrip } from '@/components/ui/figure-strip';
+import { PageHeader } from '@/components/ui/page-header';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 import { formatDate, formatRupiah } from '@/lib/format';
 import type { SearchParams } from '@/lib/pagination';
 import { CreateInvoiceDialog } from '@/modules/invoices/create-invoice-dialog';
 import { pageContext } from '@/modules/invoices/route-ctx';
 import { StatusBadge } from '@/modules/invoices/status-badge';
+import { daysBetween, todayWib } from '@/modules/dashboard/metrics';
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
@@ -31,11 +35,13 @@ export default async function InvoicesPage({
   });
   const query = parsed.success ? parsed.data : listInvoicesQuerySchema.parse({});
 
-  const [list, clients, cases] = await Promise.all([
+  const [list, clients, cases, piutang] = await Promise.all([
     listInvoices(db, user, query),
     listClientOptions(db),
     listCaseOptions(db),
+    outstandingSummary(db, true),
   ]);
+  const today = todayWib();
 
   const columns: Column<InvoiceListItem>[] = [
     {
@@ -53,17 +59,48 @@ export default async function InvoicesPage({
     { key: 'amount', header: 'Jumlah', align: 'right', cell: (r) => formatRupiah(r.amount) },
     { key: 'paid', header: 'Dibayar', align: 'right', cell: (r) => formatRupiah(r.paidAmount) },
     { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.status} /> },
-    { key: 'due', header: 'Jatuh tempo', cell: (r) => formatDate(r.dueDate) },
+    {
+      key: 'due',
+      header: 'Jatuh tempo',
+      cell: (r) => {
+        const late = r.dueDate && r.status !== 'Lunas' ? daysBetween(r.dueDate, today) : 0;
+        return (
+          <span className="inline-flex flex-wrap items-center gap-2">
+            {formatDate(r.dueDate)}
+            {late > 0 ? <Badge tone="danger">Lewat {late} hari</Badge> : null}
+          </span>
+        );
+      },
+    },
   ];
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-navy-700">Biaya Perkara</h1>
-        <CreateInvoiceDialog clients={clients} cases={cases} />
+      <PageHeader
+        title="Invoice"
+        description="Biaya perkara: tagihan, pembayaran, dan jatuh tempo."
+        actions={<CreateInvoiceDialog clients={clients} cases={cases} />}
+      />
+
+      <div className="mb-6">
+        <FigureStrip
+          label="Ringkasan invoice"
+          items={[
+            {
+              label: 'Piutang belum lunas',
+              value: formatRupiah(piutang.totalOutstanding),
+              note: `${piutang.invoiceCount ?? 0} invoice belum lunas`,
+            },
+            {
+              label: 'Invoice pada tampilan ini',
+              value: list.total,
+              note: query.status ? `Status ${query.status}` : 'Semua status',
+            },
+          ]}
+        />
       </div>
 
-      <form method="get" className="mb-4 flex flex-wrap items-end gap-3">
+      <form method="get" className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
         <div>
           <label htmlFor="f-status" className={labelClass}>
             Status

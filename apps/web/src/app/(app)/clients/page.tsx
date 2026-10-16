@@ -5,6 +5,7 @@ import { count, desc } from 'drizzle-orm';
 import { createDb, clients } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan } from '@ekasatra/core';
+import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
@@ -72,10 +73,11 @@ export default async function ClientsPage({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy-700">Klien</h1>
-        <CreateClientDialog />
-      </div>
+      <PageHeader
+        title="Klien"
+        description="Daftar klien kantor beserta kode klien."
+        actions={<CreateClientDialog />}
+      />
       <DataTable<ClientRow>
         caption="Daftar klien"
         columns={columns}

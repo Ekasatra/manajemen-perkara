@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "seed": "node --env-file-if-exists=../../.env src/seed.ts",
-    "verify:local": "bash ../../supabase/local/verify.sh"
+    "verify:local": "bash ../../supabase/local/verify.sh",
+    "seed:demo": "node --env-file-if-exists=../../.env src/seed-demo.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

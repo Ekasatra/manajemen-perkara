@@ -5,6 +5,7 @@
 import { createDb, settings } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan, can } from '@ekasatra/core';
+import { PageHeader } from '@/components/ui/page-header';
 import { SettingsForm } from '@/modules/settings/settings-form';
 
 export default async function SettingsPage() {
@@ -23,7 +24,14 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-semibold text-navy-700">Pengaturan</h1>
+      <PageHeader
+        title="Pengaturan"
+        description={
+          canEdit
+            ? 'Pengaturan kantor. Perubahan disimpan ke audit log.'
+            : 'Pengaturan kantor. Hanya Admin yang dapat mengubahnya.'
+        }
+      />
       <SettingsForm initialSettings={allSettings} canEdit={canEdit} />
     </div>
   );

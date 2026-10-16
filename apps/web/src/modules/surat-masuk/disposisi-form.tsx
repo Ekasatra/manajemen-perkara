@@ -53,7 +53,7 @@ export function DisposisiForm({
       <div>
         <label htmlFor="ds-to" className={labelClass}>Disposisi kepada</label>
         <select id="ds-to" name="assignedTo" defaultValue={assignedTo ?? ''} className={inputClass}>
-          <option value="">— pilih —</option>
+          <option value="">Pilih penerima disposisi</option>
           {staff.map((s) => (
             <option key={s.id} value={s.id}>{s.label}</option>
           ))}
@@ -78,7 +78,7 @@ export function DisposisiForm({
           </button>
         ) : null}
       </div>
-      {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-danger-fg">{error}</p> : null}
     </form>
   );
 }

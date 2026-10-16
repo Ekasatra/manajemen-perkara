@@ -1,9 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { formatDate, formatRupiah } from '@/lib/format';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import type { ReactNode } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { FactList } from '@/components/ui/fact-list';
 import { FormDialog } from '@/components/ui/form-dialog';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
+import type { Column } from '@/components/ui/responsive-table';
+import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { formatDate, formatRupiah } from '@/lib/format';
+import { StatusBadge as InvoiceStatusBadge } from '@/modules/invoices/status-badge';
+import type { InvoiceStatus } from '@ekasatra/shared/invoices';
 
 type CaseRow = {
   id: string;
@@ -118,21 +125,58 @@ type Props = {
 const TABS = ['Ringkasan', 'Timeline', 'Jadwal', 'Dokumen', 'Surat', 'Biaya', 'Tim'] as const;
 type Tab = (typeof TABS)[number];
 
+const tabId = (t: Tab) => `case-tab-${t}`;
+const PANEL_ID = 'case-tab-panel';
+
+const dateOrDash = (v: string | null | undefined) => (v ? formatDate(v) : '-');
+
+/** Kotak tabel/daftar bergaris, dipakai semua tab agar seragam. */
+function Box({ children }: { children: ReactNode }) {
+  return <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">{children}</div>;
+}
+
+function Muted({ children }: { children: string }) {
+  return <p className="text-sm text-navy-400">{children}</p>;
+}
+
+/** Tombol aksi tab: lebar penuh di mobile, di kanan pada layar lebar. */
+function TabAction({ onClick, children }: { onClick: () => void; children: string }) {
+  return (
+    <div className="flex sm:justify-end">
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${buttonClass.primary} w-full sm:w-auto`}
+      >
+        {children}
+      </button>
+    </div>
+  );
+}
+
 export function CaseTabs(props: Props) {
   const [tab, setTab] = useState<Tab>('Ringkasan');
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap gap-1 border-b border-navy-200">
+      <div
+        role="tablist"
+        aria-label="Bagian perkara"
+        className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-navy-200 px-4 md:mx-0 md:px-0"
+      >
         {TABS.map((t) => (
           <button
             key={t}
+            id={tabId(t)}
             type="button"
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls={PANEL_ID}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium ${
+            className={`-mb-px min-h-11 shrink-0 border-b-2 px-4 text-sm font-medium transition-colors md:min-h-9 ${
               tab === t
-                ? 'border-b-2 border-navy-600 text-navy-700'
-                : 'text-navy-400 hover:text-navy-600'
+                ? 'border-navy-700 text-navy-800'
+                : 'border-transparent text-navy-400 hover:text-navy-700'
             }`}
           >
             {t}
@@ -140,58 +184,43 @@ export function CaseTabs(props: Props) {
         ))}
       </div>
 
-      {tab === 'Ringkasan' && <RingkasanTab {...props} />}
-      {tab === 'Timeline' && <TimelineTab {...props} />}
-      {tab === 'Jadwal' && <JadwalTab {...props} />}
-      {tab === 'Dokumen' && <DokumenTab {...props} />}
-      {tab === 'Surat' && <SuratTab {...props} />}
-      {tab === 'Biaya' && <BiayaTab {...props} />}
-      {tab === 'Tim' && <TimTab {...props} />}
+      <div role="tabpanel" id={PANEL_ID} aria-labelledby={tabId(tab)}>
+        {tab === 'Ringkasan' && <RingkasanTab {...props} />}
+        {tab === 'Timeline' && <TimelineTab {...props} />}
+        {tab === 'Jadwal' && <JadwalTab {...props} />}
+        {tab === 'Dokumen' && <DokumenTab {...props} />}
+        {tab === 'Surat' && <SuratTab {...props} />}
+        {tab === 'Biaya' && <BiayaTab {...props} />}
+        {tab === 'Tim' && <TimTab {...props} />}
+      </div>
     </div>
   );
 }
 
-function RingkasanTab({ caseRow, clientName, opponentName, canUpdate }: Props) {
+function RingkasanTab({ caseRow, canUpdate }: Props) {
   const statuses = ['Aktif', 'Putus', 'Banding', 'Kasasi', 'PK', 'Selesai'];
   return (
-    <div className="space-y-4">
-      <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Info label="No. Registrasi" value={caseRow.regNo} />
-        <Info label="Status" value={caseRow.status} />
-        <Info label="Klien" value={clientName} />
-        <Info label="Pihak Lawan" value={opponentName ?? '-'} />
-        <Info label="No. Perkara" value={caseRow.caseNumber ?? '-'} />
-        <Info label="Pengadilan" value={caseRow.court ?? '-'} />
-        <Info label="Jenis Perkara" value={caseRow.caseType ?? '-'} />
-        <Info label="Tanggal Mulai" value={caseRow.startDate ? formatDate(caseRow.startDate) : '-'} />
-        <Info label="Tanggal Putus" value={caseRow.putusDate ? formatDate(caseRow.putusDate) : '-'} />
-        <Info label="Batas Upaya Hukum" value={caseRow.upayaDeadline ? formatDate(caseRow.upayaDeadline) : '-'} />
-        <Info label="Tanggal Selesai" value={caseRow.closedDate ? formatDate(caseRow.closedDate) : '-'} />
-      </dl>
-
-      {caseRow.description ? (
-        <div>
-          <p className="mb-1 text-sm font-medium text-navy-800">Keterangan</p>
-          <p className="text-sm text-navy-600">{caseRow.description}</p>
-        </div>
-      ) : null}
+    <div className="space-y-6">
+      <FactList
+        rows={[
+          ['Tanggal putus', dateOrDash(caseRow.putusDate)],
+          ['Tanggal selesai', dateOrDash(caseRow.closedDate)],
+          ['Keterangan', caseRow.description ?? '-'],
+        ]}
+      />
 
       {canUpdate ? (
-        <div className="border-t border-navy-100 pt-4">
-          <StatusChanger caseId={caseRow.id} currentStatus={caseRow.status} statuses={statuses} />
-        </div>
+        <StatusChanger caseId={caseRow.id} currentStatus={caseRow.status} statuses={statuses} />
       ) : null}
 
-      <div className="border-t border-navy-100 pt-4">
-        <a
-          href={`/api/v1/cases/${caseRow.id}/export`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClass.secondary}
-        >
-          Export Progres (PDF)
-        </a>
-      </div>
+      <a
+        href={`/api/v1/cases/${caseRow.id}/export`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${buttonClass.secondary} w-full sm:w-auto`}
+      >
+        Ekspor progres (PDF)
+      </a>
     </div>
   );
 }
@@ -223,9 +252,9 @@ function StatusChanger({
   }
 
   return (
-    <div>
+    <div className="max-w-sm">
       <label htmlFor="status-select" className={labelClass}>
-        Ubah Status
+        Ubah status
       </label>
       <select
         id="status-select"
@@ -273,36 +302,32 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
 
   return (
     <div className="space-y-4">
-      {canUpdate ? (
-        <div className="flex justify-end">
-          <button type="button" onClick={() => setOpen(true)} className={buttonClass.primary}>
-            Tambah Entri
-          </button>
-        </div>
-      ) : null}
+      {canUpdate ? <TabAction onClick={() => setOpen(true)}>Tambah entri</TabAction> : null}
       {timeline.length === 0 ? (
-        <p className="text-sm text-navy-400">Belum ada entri timeline.</p>
+        <Muted>Belum ada entri timeline.</Muted>
       ) : (
-        <ol className="space-y-3">
-          {timeline.map((t) => (
-            <li key={t.id} className="rounded-md border border-navy-100 bg-white p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-navy-700">{t.title}</span>
-                <span className="text-xs text-navy-400">{formatDate(t.eventDate)}</span>
-              </div>
-              <div className="mt-1 flex items-center gap-2">
-                <span className="rounded bg-navy-50 px-2 py-0.5 text-xs text-navy-600">{t.eventType}</span>
-              </div>
-              {t.description ? <p className="mt-2 text-sm text-navy-600">{t.description}</p> : null}
-            </li>
-          ))}
-        </ol>
+        <Box>
+          <ol className="divide-y divide-navy-100">
+            {timeline.map((t) => (
+              <li key={t.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[9rem_1fr] sm:gap-4">
+                <p className="text-sm tabular-nums text-navy-400">{formatDate(t.eventDate)}</p>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-navy-800">{t.title}</p>
+                    <Badge tone="neutral">{t.eventType}</Badge>
+                  </div>
+                  {t.description ? <p className="mt-1 text-sm text-navy-600">{t.description}</p> : null}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Box>
       )}
       {canUpdate ? (
         <FormDialog
           open={open}
           onClose={() => setOpen(false)}
-          title="Tambah Entri Timeline"
+          title="Tambah entri timeline"
           submitLabel="Tambah"
           onSubmit={handleSubmit}
         >
@@ -337,6 +362,14 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
   );
 }
 
+const SCHEDULE_COLUMNS: Column<ScheduleRow>[] = [
+  { key: 'date', header: 'Tanggal', cell: (s) => formatDate(s.scheduleDate) },
+  { key: 'time', header: 'Jam', cell: (s) => s.scheduleTime ?? '-' },
+  { key: 'kind', header: 'Jenis', cell: (s) => s.kind },
+  { key: 'location', header: 'Lokasi', cell: (s) => s.location ?? '-' },
+  { key: 'status', header: 'Status', cell: (s) => <Badge tone="warning">{s.status}</Badge> },
+];
+
 function JadwalTab({ caseId, schedules, canUpdate }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -366,46 +399,24 @@ function JadwalTab({ caseId, schedules, canUpdate }: Props) {
 
   return (
     <div className="space-y-4">
-      {canUpdate ? (
-        <div className="flex justify-end">
-          <button type="button" onClick={() => setOpen(true)} className={buttonClass.primary}>
-            Tambah Jadwal
-          </button>
-        </div>
-      ) : null}
+      {canUpdate ? <TabAction onClick={() => setOpen(true)}>Tambah jadwal</TabAction> : null}
       {schedules.length === 0 ? (
-        <p className="text-sm text-navy-400">Belum ada jadwal.</p>
+        <Muted>Belum ada jadwal.</Muted>
       ) : (
-        <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-navy-50 text-navy-600">
-              <tr>
-                <th className="px-4 py-3 font-medium">Tanggal</th>
-                <th className="px-4 py-3 font-medium">Jam</th>
-                <th className="px-4 py-3 font-medium">Jenis</th>
-                <th className="px-4 py-3 font-medium">Lokasi</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-navy-100">
-              {schedules.map((s) => (
-                <tr key={s.id}>
-                  <td className="px-4 py-3">{formatDate(s.scheduleDate)}</td>
-                  <td className="px-4 py-3">{s.scheduleTime ?? '-'}</td>
-                  <td className="px-4 py-3">{s.kind}</td>
-                  <td className="px-4 py-3">{s.location ?? '-'}</td>
-                  <td className="px-4 py-3">{s.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Box>
+          <ResponsiveTable
+            caption="Jadwal perkara"
+            columns={SCHEDULE_COLUMNS}
+            rows={schedules}
+            rowKey={(s) => s.id}
+          />
+        </Box>
       )}
       {canUpdate ? (
         <FormDialog
           open={open}
           onClose={() => setOpen(false)}
-          title="Tambah Jadwal"
+          title="Tambah jadwal"
           submitLabel="Buat"
           onSubmit={handleSubmit}
         >
@@ -414,7 +425,7 @@ function JadwalTab({ caseId, schedules, canUpdate }: Props) {
             <input id="sc-date" name="scheduleDate" type="date" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="sc-time" className={labelClass}>Jam (HH:MM)</label>
+            <label htmlFor="sc-time" className={labelClass}>Jam</label>
             <input id="sc-time" name="scheduleTime" type="time" className={inputClass} />
           </div>
           <div>
@@ -449,52 +460,49 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
     window.location.reload();
   }
 
+  const columns: Column<DocumentRow>[] = [
+    { key: 'title', header: 'Judul', cell: (d) => d.title },
+    { key: 'file', header: 'File', cell: (d) => d.fileName ?? '-' },
+    {
+      key: 'shared',
+      header: 'Dibagikan ke klien',
+      cell: (d) => (d.sharedWithClient ? 'Ya' : 'Tidak'),
+    },
+    { key: 'created', header: 'Diunggah', cell: (d) => formatDate(d.createdAt) },
+    {
+      key: 'action',
+      header: 'Aksi',
+      cell: (d) => (
+        <a
+          href={`/api/v1/cases/${caseId}/documents/${d.id}/download`}
+          className="font-medium text-navy-700 underline"
+        >
+          Unduh
+        </a>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4">
-      {canUpdate ? (
-        <div className="flex justify-end">
-          <button type="button" onClick={() => setOpen(true)} className={buttonClass.primary}>
-            Unggah Dokumen
-          </button>
-        </div>
-      ) : null}
+      {canUpdate ? <TabAction onClick={() => setOpen(true)}>Unggah dokumen</TabAction> : null}
       {documents.length === 0 ? (
-        <p className="text-sm text-navy-400">Belum ada dokumen.</p>
+        <Muted>Belum ada dokumen.</Muted>
       ) : (
-        <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-navy-50 text-navy-600">
-              <tr>
-                <th className="px-4 py-3 font-medium">Judul</th>
-                <th className="px-4 py-3 font-medium">File</th>
-                <th className="px-4 py-3 font-medium">Dibagikan ke Klien</th>
-                <th className="px-4 py-3 font-medium">Diunggah</th>
-                <th className="px-4 py-3 font-medium">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-navy-100">
-              {documents.map((d) => (
-                <tr key={d.id}>
-                  <td className="px-4 py-3">{d.title}</td>
-                  <td className="px-4 py-3">{d.fileName ?? '-'}</td>
-                  <td className="px-4 py-3">{d.sharedWithClient ? 'Ya' : 'Tidak'}</td>
-                  <td className="px-4 py-3">{formatDate(d.createdAt)}</td>
-                  <td className="px-4 py-3">
-                    <a href={`/api/v1/cases/${caseId}/documents/${d.id}/download`} className="text-navy-600 hover:underline">
-                      Unduh
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Box>
+          <ResponsiveTable
+            caption="Dokumen perkara"
+            columns={columns}
+            rows={documents}
+            rowKey={(d) => d.id}
+          />
+        </Box>
       )}
       {canUpdate ? (
         <FormDialog
           open={open}
           onClose={() => setOpen(false)}
-          title="Unggah Dokumen"
+          title="Unggah dokumen"
           description="Maksimum 25 MB."
           submitLabel="Unggah"
           onSubmit={handleSubmit}
@@ -508,8 +516,9 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
             <input id="dc-file" name="file" type="file" required className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>
-              <input type="checkbox" name="sharedWithClient" value="true" /> Bagikan ke klien (portal)
+            <label className="flex min-h-11 items-center gap-2 text-sm text-navy-800">
+              <input type="checkbox" name="sharedWithClient" value="true" className="size-4" />
+              Bagikan ke klien (portal)
             </label>
           </div>
         </FormDialog>
@@ -518,190 +527,150 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
   );
 }
 
+const SURAT_MASUK_COLUMNS: Column<SuratMasukItem>[] = [
+  { key: 'agenda', header: 'No. agenda', cell: (s) => s.noAgenda },
+  { key: 'sender', header: 'Pengirim', cell: (s) => s.sender },
+  { key: 'subject', header: 'Perihal', cell: (s) => s.subject },
+  { key: 'date', header: 'Tanggal surat', cell: (s) => dateOrDash(s.tglSurat) },
+  { key: 'sifat', header: 'Sifat', cell: (s) => s.sifat },
+  { key: 'status', header: 'Status', cell: (s) => <Badge tone="info">{s.status}</Badge> },
+];
+
+const SURAT_KELUAR_COLUMNS: Column<SuratKeluarItem>[] = [
+  { key: 'no', header: 'No. surat', cell: (s) => s.noSurat },
+  { key: 'dest', header: 'Tujuan', cell: (s) => s.destination },
+  { key: 'subject', header: 'Perihal', cell: (s) => s.subject },
+  { key: 'jenis', header: 'Jenis', cell: (s) => s.jenis },
+  { key: 'date', header: 'Tanggal surat', cell: (s) => dateOrDash(s.tglSurat) },
+  { key: 'status', header: 'Status', cell: (s) => <Badge tone="info">{s.status}</Badge> },
+];
+
 function SuratTab({ suratMasuk, suratKeluar }: Props) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-navy-700">Surat Masuk</h3>
+    <div className="space-y-8">
+      <section aria-label="Surat masuk">
+        <h3 className="mb-3 text-base text-navy-800">Surat masuk</h3>
         {suratMasuk.length === 0 ? (
-          <p className="text-sm text-navy-400">Belum ada surat masuk untuk perkara ini.</p>
+          <Muted>Belum ada surat masuk untuk perkara ini.</Muted>
         ) : (
-          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-navy-50 text-navy-600">
-                <tr>
-                  <th className="px-4 py-3 font-medium">No. Agenda</th>
-                  <th className="px-4 py-3 font-medium">Pengirim</th>
-                  <th className="px-4 py-3 font-medium">Perihal</th>
-                  <th className="px-4 py-3 font-medium">Tgl. Surat</th>
-                  <th className="px-4 py-3 font-medium">Sifat</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy-100">
-                {suratMasuk.map((s) => (
-                  <tr key={s.id}>
-                    <td className="px-4 py-3">{s.noAgenda}</td>
-                    <td className="px-4 py-3">{s.sender}</td>
-                    <td className="px-4 py-3">{s.subject}</td>
-                    <td className="px-4 py-3">{s.tglSurat ? formatDate(s.tglSurat) : '-'}</td>
-                    <td className="px-4 py-3">{s.sifat}</td>
-                    <td className="px-4 py-3">{s.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Box>
+            <ResponsiveTable
+              caption="Surat masuk perkara"
+              columns={SURAT_MASUK_COLUMNS}
+              rows={suratMasuk}
+              rowKey={(s) => s.id}
+            />
+          </Box>
         )}
-      </div>
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-navy-700">Surat Keluar</h3>
+      </section>
+      <section aria-label="Surat keluar">
+        <h3 className="mb-3 text-base text-navy-800">Surat keluar</h3>
         {suratKeluar.length === 0 ? (
-          <p className="text-sm text-navy-400">Belum ada surat keluar untuk perkara ini.</p>
+          <Muted>Belum ada surat keluar untuk perkara ini.</Muted>
         ) : (
-          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-navy-50 text-navy-600">
-                <tr>
-                  <th className="px-4 py-3 font-medium">No. Surat</th>
-                  <th className="px-4 py-3 font-medium">Tujuan</th>
-                  <th className="px-4 py-3 font-medium">Perihal</th>
-                  <th className="px-4 py-3 font-medium">Jenis</th>
-                  <th className="px-4 py-3 font-medium">Tgl. Surat</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy-100">
-                {suratKeluar.map((s) => (
-                  <tr key={s.id}>
-                    <td className="px-4 py-3">{s.noSurat}</td>
-                    <td className="px-4 py-3">{s.destination}</td>
-                    <td className="px-4 py-3">{s.subject}</td>
-                    <td className="px-4 py-3">{s.jenis}</td>
-                    <td className="px-4 py-3">{s.tglSurat ? formatDate(s.tglSurat) : '-'}</td>
-                    <td className="px-4 py-3">{s.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Box>
+            <ResponsiveTable
+              caption="Surat keluar perkara"
+              columns={SURAT_KELUAR_COLUMNS}
+              rows={suratKeluar}
+              rowKey={(s) => s.id}
+            />
+          </Box>
         )}
-      </div>
+      </section>
     </div>
   );
 }
 
+const INVOICE_COLUMNS: Column<InvoiceItem>[] = [
+  { key: 'no', header: 'No. invoice', cell: (i) => i.invoiceNo },
+  { key: 'desc', header: 'Keterangan', cell: (i) => i.description ?? '-' },
+  { key: 'amount', header: 'Jumlah', align: 'right', cell: (i) => formatRupiah(i.amount) },
+  { key: 'paid', header: 'Dibayar', align: 'right', cell: (i) => formatRupiah(i.paidAmount) },
+  { key: 'rest', header: 'Sisa', align: 'right', cell: (i) => formatRupiah(i.outstanding) },
+  {
+    key: 'status',
+    header: 'Status',
+    cell: (i) => <InvoiceStatusBadge status={i.status as InvoiceStatus} />,
+  },
+];
+
+const HONOR_COLUMNS: Column<HonorariumItem>[] = [
+  { key: 'user', header: 'Anggota', cell: (h) => h.userName },
+  { key: 'draft', header: 'Draft', align: 'right', cell: (h) => formatRupiah(h.draftAmount) },
+  {
+    key: 'published',
+    header: 'Terdistribusi',
+    align: 'right',
+    cell: (h) => (h.publishedAmount != null ? formatRupiah(h.publishedAmount) : '-'),
+  },
+  { key: 'status', header: 'Status', cell: (h) => <Badge tone="neutral">{h.status}</Badge> },
+];
+
 function BiayaTab({ invoices, honorarium, canViewBiaya }: Props) {
   if (!canViewBiaya) {
-    return <p className="text-sm text-navy-400">Tab biaya hanya untuk Admin.</p>;
+    return <Muted>Tab biaya hanya untuk Admin.</Muted>;
   }
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-navy-700">Invoice</h3>
+    <div className="space-y-8">
+      <section aria-label="Invoice">
+        <h3 className="mb-3 text-base text-navy-800">Invoice</h3>
         {invoices.length === 0 ? (
-          <p className="text-sm text-navy-400">Belum ada invoice untuk perkara ini.</p>
+          <Muted>Belum ada invoice untuk perkara ini.</Muted>
         ) : (
-          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-navy-50 text-navy-600">
-                <tr>
-                  <th className="px-4 py-3 font-medium">No. Invoice</th>
-                  <th className="px-4 py-3 font-medium">Keterangan</th>
-                  <th className="px-4 py-3 font-medium">Jumlah</th>
-                  <th className="px-4 py-3 font-medium">Dibayar</th>
-                  <th className="px-4 py-3 font-medium">Sisa</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy-100">
-                {invoices.map((inv) => (
-                  <tr key={inv.id}>
-                    <td className="px-4 py-3">{inv.invoiceNo}</td>
-                    <td className="px-4 py-3">{inv.description ?? '-'}</td>
-                    <td className="px-4 py-3">{formatRupiah(inv.amount)}</td>
-                    <td className="px-4 py-3">{formatRupiah(inv.paidAmount)}</td>
-                    <td className="px-4 py-3">{formatRupiah(inv.outstanding)}</td>
-                    <td className="px-4 py-3">{inv.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Box>
+            <ResponsiveTable
+              caption="Invoice perkara"
+              columns={INVOICE_COLUMNS}
+              rows={invoices}
+              rowKey={(i) => i.id}
+            />
+          </Box>
         )}
-      </div>
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-navy-700">Honor Tim</h3>
+      </section>
+      <section aria-label="Honor tim">
+        <h3 className="mb-3 text-base text-navy-800">Honor tim</h3>
         {honorarium.length === 0 ? (
-          <p className="text-sm text-navy-400">Belum ada honor untuk perkara ini.</p>
+          <Muted>Belum ada honor untuk perkara ini.</Muted>
         ) : (
-          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-navy-50 text-navy-600">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Anggota</th>
-                  <th className="px-4 py-3 font-medium">Draft</th>
-                  <th className="px-4 py-3 font-medium">Dipublikasi</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy-100">
-                {honorarium.map((h) => (
-                  <tr key={h.id}>
-                    <td className="px-4 py-3">{h.userName}</td>
-                    <td className="px-4 py-3">{formatRupiah(h.draftAmount)}</td>
-                    <td className="px-4 py-3">{h.publishedAmount != null ? formatRupiah(h.publishedAmount) : '-'}</td>
-                    <td className="px-4 py-3">{h.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Box>
+            <ResponsiveTable
+              caption="Honor tim perkara"
+              columns={HONOR_COLUMNS}
+              rows={honorarium}
+              rowKey={(h) => h.id}
+            />
+          </Box>
         )}
-      </div>
+      </section>
     </div>
   );
 }
+
+const MEMBER_COLUMNS: Column<MemberRow>[] = [
+  { key: 'name', header: 'Nama', cell: (m) => m.fullName },
+  { key: 'role', header: 'Peran', cell: (m) => m.peran },
+  { key: 'joined', header: 'Bergabung', cell: (m) => formatDate(m.createdAt) },
+];
 
 function TimTab({ members, canManageTeam }: Props) {
   return (
     <div className="space-y-4">
       {members.length === 0 ? (
-        <p className="text-sm text-navy-400">Belum ada anggota tim.</p>
+        <Muted>Belum ada anggota tim.</Muted>
       ) : (
-        <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-navy-50 text-navy-600">
-              <tr>
-                <th className="px-4 py-3 font-medium">Nama</th>
-                <th className="px-4 py-3 font-medium">Peran</th>
-                <th className="px-4 py-3 font-medium">Bergabung</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-navy-100">
-              {members.map((m) => (
-                <tr key={`${m.userId}-${m.peran}`}>
-                  <td className="px-4 py-3">{m.fullName}</td>
-                  <td className="px-4 py-3">{m.peran}</td>
-                  <td className="px-4 py-3">{formatDate(m.createdAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Box>
+          <ResponsiveTable
+            caption="Anggota tim perkara"
+            columns={MEMBER_COLUMNS}
+            rows={members}
+            rowKey={(m) => `${m.userId}-${m.peran}`}
+          />
+        </Box>
       )}
       {!canManageTeam ? (
         <p className="text-xs text-navy-400">Hanya Admin yang dapat mengelola anggota tim perkara.</p>
       ) : null}
-    </div>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-sm font-medium text-navy-400">{label}</dt>
-      <dd className="mt-0.5 text-sm text-navy-800">{value}</dd>
     </div>
   );
 }

@@ -61,7 +61,7 @@ export function CreateOpponentDialog() {
             Tipe
           </label>
           <select id="co-type" name="type" className={inputClass}>
-            <option value="">—</option>
+            <option value="">Belum dipilih</option>
             <option value="Perorangan">Perorangan</option>
             <option value="Perusahaan">Perusahaan</option>
             <option value="Instansi">Instansi</option>

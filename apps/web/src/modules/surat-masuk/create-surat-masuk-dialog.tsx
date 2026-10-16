@@ -77,7 +77,7 @@ export function CreateSuratMasukDialog({ cases, staff }: { cases: Option[]; staf
         <div>
           <label htmlFor="sm-case" className={labelClass}>Perkara terkait</label>
           <select id="sm-case" name="caseId" className={inputClass}>
-            <option value="">—</option>
+            <option value="">Tanpa perkara</option>
             {cases.map((c) => (
               <option key={c.id} value={c.id}>{c.label}</option>
             ))}
@@ -86,7 +86,7 @@ export function CreateSuratMasukDialog({ cases, staff }: { cases: Option[]; staf
         <div>
           <label htmlFor="sm-assign" className={labelClass}>Disposisi kepada</label>
           <select id="sm-assign" name="assignedTo" className={inputClass}>
-            <option value="">— belum didisposisi —</option>
+            <option value="">Belum didisposisi</option>
             {staff.map((s) => (
               <option key={s.id} value={s.id}>{s.label}</option>
             ))}

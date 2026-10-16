@@ -1,75 +1,61 @@
-'use client';
+/**
+ * Grafik batang dari div + token. Semua warna dari token; tiap segmen punya label teks
+ * dan angka di legenda, jadi makna tidak hanya lewat warna (R-25).
+ */
 
-import React from 'react';
+/** Warna segmen per status perkara. Status tak dikenal memakai FALLBACK. */
+const STATUS_FILL: Record<string, string> = {
+  Aktif: 'bg-navy-700',
+  Selesai: 'bg-success-fg',
+  Tutup: 'bg-navy-300',
+  Banding: 'bg-gold-500',
+  Kasasi: 'bg-gold-700',
+  PK: 'bg-navy-400',
+};
+const STATUS_FILL_FALLBACK = 'bg-navy-200';
 
-export function CasesStatusChart({
-  byStatus,
-}: {
-  byStatus: { status: string; count: number }[];
-}) {
+export function CasesStatusChart({ byStatus }: { byStatus: { status: string; count: number }[] }) {
   const total = byStatus.reduce((sum, item) => sum + item.count, 0);
-
-  const colors: Record<string, string> = {
-    Aktif: '#1A2E44', // Navy
-    Selesai: '#10B981', // Green
-    Tutup: '#64748B', // Slate
-    Banding: '#B38B4D', // Gold
-    Kasasi: '#F59E0B', // Amber
-    PK: '#8B5CF6', // Purple
-  };
 
   if (total === 0) {
     return (
-      <div className="flex h-48 items-center justify-center text-sm text-gray-400">
-        Belum ada data status perkara
-      </div>
+      <p className="flex h-32 items-center justify-center text-sm text-navy-400">
+        Belum ada perkara tercatat.
+      </p>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Visual Bar Breakdown */}
-      <div className="flex h-4 w-full overflow-hidden rounded-full bg-gray-100">
-        {byStatus.map((item) => {
-          if (item.count === 0) return null;
-          const pct = (item.count / total) * 100;
-          const bg = colors[item.status] || '#94A3B8';
-          return (
+      <div className="flex h-3 w-full gap-px overflow-hidden rounded-control bg-navy-100">
+        {byStatus.map((item) =>
+          item.count === 0 ? null : (
             <div
               key={item.status}
-              style={{ width: `${pct}%`, backgroundColor: bg }}
-              className="h-full transition-all duration-300"
-              title={`${item.status}: ${item.count} (${pct.toFixed(0)}%)`}
+              style={{ width: `${(item.count / total) * 100}%` }}
+              className={`h-full ${STATUS_FILL[item.status] ?? STATUS_FILL_FALLBACK}`}
             />
-          );
-        })}
+          ),
+        )}
       </div>
 
-      {/* Legend & Details */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {byStatus.map((item) => {
-          const bg = colors[item.status] || '#94A3B8';
-          const pct = total > 0 ? ((item.count / total) * 100).toFixed(0) : '0';
-          return (
-            <div
-              key={item.status}
-              className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 p-2 text-xs"
-            >
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: bg }}
-                />
-                <span className="font-medium text-gray-700">{item.status}</span>
-              </div>
-              <span className="font-bold text-gray-900">
-                {item.count}{' '}
-                <span className="font-normal text-gray-400">({pct}%)</span>
+      <ul className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+        {byStatus.map((item) => (
+          <li key={item.status} className="flex items-center gap-2 text-sm">
+            <span
+              aria-hidden="true"
+              className={`size-3 shrink-0 rounded-control ${STATUS_FILL[item.status] ?? STATUS_FILL_FALLBACK}`}
+            />
+            <span className="text-navy-700">{item.status}</span>
+            <span className="ml-auto font-medium tabular-nums text-navy-800">
+              {item.count}{' '}
+              <span className="font-normal text-navy-400">
+                ({Math.round((item.count / total) * 100)}%)
               </span>
-            </div>
-          );
-        })}
-      </div>
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -79,56 +65,41 @@ export function SuratTrendChart({
 }: {
   trend6Bulan: { month: string; suratMasuk: number; suratKeluar: number }[];
 }) {
-  const maxVal = Math.max(
-    1,
-    ...trend6Bulan.map((t) => Math.max(t.suratMasuk, t.suratKeluar)),
-  );
+  const maxVal = Math.max(1, ...trend6Bulan.map((t) => Math.max(t.suratMasuk, t.suratKeluar)));
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Legend */}
-      <div className="flex items-center justify-end gap-4 text-xs font-medium">
-        <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded bg-navy-700" />
-          <span className="text-gray-600">Surat Masuk</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded bg-[#B38B4D]" />
-          <span className="text-gray-600">Surat Keluar</span>
-        </div>
-      </div>
+      <ul className="flex items-center justify-end gap-4 text-xs text-navy-700">
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="size-3 rounded-control bg-navy-700" />
+          Surat masuk
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="size-3 rounded-control bg-gold-500" />
+          Surat keluar
+        </li>
+      </ul>
 
-      {/* Bar Chart Display */}
-      <div className="flex h-48 items-end gap-3 border-b border-gray-200 pb-2 pt-4">
-        {trend6Bulan.map((item) => {
-          const smHeight = (item.suratMasuk / maxVal) * 140;
-          const skHeight = (item.suratKeluar / maxVal) * 140;
-
-          return (
-            <div
-              key={item.month}
-              className="group flex flex-1 flex-col items-center gap-1"
-            >
-              <div className="flex h-36 w-full items-end justify-center gap-1">
-                {/* Surat Masuk Bar */}
-                <div
-                  style={{ height: `${Math.max(4, smHeight)}px` }}
-                  className="w-full max-w-[16px] rounded-t bg-navy-700 transition-all duration-300 group-hover:bg-navy-600"
-                  title={`Surat Masuk: ${item.suratMasuk}`}
-                />
-                {/* Surat Keluar Bar */}
-                <div
-                  style={{ height: `${Math.max(4, skHeight)}px` }}
-                  className="w-full max-w-[16px] rounded-t bg-[#B38B4D] transition-all duration-300 group-hover:bg-[#97733B]"
-                  title={`Surat Keluar: ${item.suratKeluar}`}
-                />
-              </div>
-              <span className="text-[11px] text-gray-500">{item.month}</span>
+      <div className="flex gap-3 border-b border-navy-200 pb-2">
+        {trend6Bulan.map((item) => (
+          <div key={item.month} className="flex flex-1 flex-col items-center gap-1">
+            <div className="flex h-36 w-full items-end justify-center gap-1">
+              <div
+                style={{ height: `${(item.suratMasuk / maxVal) * 100}%` }}
+                className="min-h-px w-full max-w-4 rounded-t-control bg-navy-700"
+              />
+              <div
+                style={{ height: `${(item.suratKeluar / maxVal) * 100}%` }}
+                className="min-h-px w-full max-w-4 rounded-t-control bg-gold-500"
+              />
             </div>
-          );
-        })}
+            <span className="text-xs font-medium text-navy-700">{item.month}</span>
+            <span className="text-xs tabular-nums text-navy-400">
+              {item.suratMasuk} / {item.suratKeluar}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
-

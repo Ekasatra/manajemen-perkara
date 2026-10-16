@@ -6,6 +6,7 @@ import { count, desc } from 'drizzle-orm';
 import { createDb, profiles } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan } from '@ekasatra/core';
+import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
@@ -78,10 +79,11 @@ export default async function UsersPage({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy-700">Pengguna</h1>
-        <CreateUserDialog />
-      </div>
+      <PageHeader
+        title="Pengguna"
+        description="Akun pengguna dan role (Admin, Advokat, Paralegal)."
+        actions={<CreateUserDialog />}
+      />
       <DataTable<UserRow>
         caption="Daftar pengguna"
         columns={columns}

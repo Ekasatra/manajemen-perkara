@@ -9,6 +9,7 @@ import {
   wibToday,
   type SuratKeluarStatus,
 } from '@ekasatra/core/surat';
+import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { formatDate } from '@/lib/format';
 import { parsePageQuery, type SearchParams } from '@/lib/pagination';
@@ -55,7 +56,7 @@ export default async function SuratKeluarPage({
   const create = can(user, 'C', 'surat_keluar') ? (
     <CreateSuratKeluarDialog
       today={wibToday().date}
-      cases={cases.map((c) => ({ id: c.id, label: `${c.regNo} — ${c.title}` }))}
+      cases={cases.map((c) => ({ id: c.id, label: `${c.regNo} · ${c.title}` }))}
       reviewers={staff
         .filter((s) => s.role === 'Advokat')
         .map((s) => ({ id: s.id, label: s.fullName }))}
@@ -64,10 +65,11 @@ export default async function SuratKeluarPage({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-navy-700">Surat Keluar</h1>
-        {create}
-      </div>
+      <PageHeader
+        title="Surat Keluar"
+        description="Register surat keluar dan alur persetujuannya."
+        actions={create}
+      />
       <FilterForm q={str('q')} status={status} statuses={SURAT_KELUAR_STATUS} />
       <DataTable<Row>
         caption="Daftar surat keluar"
