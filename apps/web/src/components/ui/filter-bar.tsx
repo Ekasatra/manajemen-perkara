@@ -16,14 +16,15 @@ type Select = {
  * + rentang tanggal opsional. `hidden` meneruskan parameter lain (mis. tab) lewat form GET.
  */
 export function FilterBar({
-  q,
+  q = '',
   placeholder,
   selects,
   dates,
   hidden = {},
 }: {
-  q: string;
-  placeholder: string;
+  q?: string;
+  /** Tanpa placeholder = kolom pencarian disembunyikan. */
+  placeholder?: string;
   selects: Select[];
   dates?: { from: string; to: string; fromLabel: string; toLabel: string };
   hidden?: Record<string, string>;
@@ -35,24 +36,26 @@ export function FilterBar({
       {Object.entries(hidden).map(([k, v]) =>
         v ? <input key={k} type="hidden" name={k} value={v} /> : null,
       )}
-      <div className="relative min-w-[220px] flex-1">
-        <label htmlFor="sf-q" className="sr-only">
-          Cari
-        </label>
-        <Search
-          aria-hidden="true"
-          size={15}
-          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-300"
-        />
-        <input
-          id="sf-q"
-          name="q"
-          type="search"
-          defaultValue={q}
-          placeholder={placeholder}
-          className={`${inputClass} pl-10`}
-        />
-      </div>
+      {placeholder ? (
+        <div className="relative min-w-[220px] flex-1">
+          <label htmlFor="sf-q" className="sr-only">
+            Cari
+          </label>
+          <Search
+            aria-hidden="true"
+            size={15}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-300"
+          />
+          <input
+            id="sf-q"
+            name="q"
+            type="search"
+            defaultValue={q}
+            placeholder={placeholder}
+            className={`${inputClass} pl-10`}
+          />
+        </div>
+      ) : null}
       {selects.map((s) => (
         <div key={s.name}>
           <label htmlFor={`sf-${s.name}`} className="sr-only">
