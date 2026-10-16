@@ -19,7 +19,7 @@ export function FilterForm({
         aria-label="Cari"
         className={`${inputClass} max-w-xs`}
       />
-      <select name="status" defaultValue={status ?? ''} aria-label="Status" className={`${inputClass} max-w-[12rem]`}>
+      <select name="status" defaultValue={status ?? ''} aria-label="Status" className={`${inputClass} max-w-48`}>
         <option value="">Semua status</option>
         {statuses.map((s) => (
           <option key={s} value={s}>

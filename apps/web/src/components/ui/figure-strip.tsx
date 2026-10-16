@@ -14,7 +14,7 @@ export function FigureStrip({ label, items }: { label: string; items: FigureItem
         {items.map((item) => (
           <div key={item.label} className="px-5 py-4">
             <dt className="text-sm text-navy-400">{item.label}</dt>
-            <dd className="mt-1 font-display text-figure font-semibold tabular-nums text-navy-700">
+            <dd className="mt-1 font-display text-figure font-semibold lining-nums tabular-nums text-navy-700">
               {item.value}
             </dd>
             {item.note ? <p className="mt-0.5 text-xs text-navy-400">{item.note}</p> : null}

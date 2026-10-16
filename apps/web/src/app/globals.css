@@ -36,7 +36,7 @@
   --radius-card: 0.625rem;
 
   /* Ukuran judul halaman dan angka kunci; ukuran lain memakai skala Tailwind (xs, sm, base, xl). */
-  --text-title: 1.75rem;
+  --text-title: 2rem;
   --text-title--line-height: 1.2;
   --text-figure: 2.25rem;
   --text-figure--line-height: 1.1;

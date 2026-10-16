@@ -49,7 +49,7 @@ export default async function SuratMasukPage({
 
   const create = can(user, 'C', 'surat_masuk') ? (
     <CreateSuratMasukDialog
-      cases={cases.map((c) => ({ id: c.id, label: `${c.regNo} — ${c.title}` }))}
+      cases={cases.map((c) => ({ id: c.id, label: `${c.regNo} · ${c.title}` }))}
       staff={staff.map((s) => ({ id: s.id, label: s.fullName }))}
     />
   ) : null;

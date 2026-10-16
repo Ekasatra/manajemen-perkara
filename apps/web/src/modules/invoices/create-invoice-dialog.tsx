@@ -57,7 +57,7 @@ export function CreateInvoiceDialog({
             Perkara
           </label>
           <select id="inv-case" name="caseId" className={inputClass} defaultValue="">
-            <option value="">— tanpa perkara —</option>
+            <option value="">Tanpa perkara</option>
             {cases.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.label}
@@ -71,7 +71,7 @@ export function CreateInvoiceDialog({
             <span className="font-normal text-navy-500">(diabaikan bila perkara dipilih)</span>
           </label>
           <select id="inv-client" name="clientId" className={inputClass} defaultValue="">
-            <option value="">— pilih klien —</option>
+            <option value="">Pilih klien</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.label}
