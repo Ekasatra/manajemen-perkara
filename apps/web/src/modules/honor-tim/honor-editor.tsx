@@ -98,11 +98,21 @@ export function HonorEditor({
 
   return (
     <div>
+      <div
+        aria-hidden="true"
+        className="mb-2 hidden gap-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-navy-400 md:grid md:grid-cols-[1fr_10rem_8rem_6rem_9rem]"
+      >
+        <span>Anggota</span>
+        <span>Draft honor</span>
+        <span className="text-right">Terdistribusi</span>
+        <span>Status</span>
+        <span />
+      </div>
       <ul aria-label="Honor per anggota tim" className="divide-y divide-navy-100 card-surface">
         {members.map((m) => (
           <li
             key={m.userId}
-            className="grid gap-3 p-4 md:grid-cols-[1fr_10rem_8rem_6rem_auto] md:items-center"
+            className="grid gap-3 p-4 md:grid-cols-[1fr_10rem_8rem_6rem_9rem] md:items-center"
           >
             <div className="font-medium text-navy-800">
               {m.fullName}
@@ -113,8 +123,12 @@ export function HonorEditor({
               )}
             </div>
             <div>
-              <label className="mb-1 block text-xs text-navy-400" htmlFor={`h-${m.userId}`}>
-                Draft honor {m.fullName}
+              <label
+                className="mb-1 block text-xs text-navy-400 md:sr-only"
+                htmlFor={`h-${m.userId}`}
+              >
+                Draft honor
+                <span className="sr-only"> {m.fullName}</span>
               </label>
               <input
                 id={`h-${m.userId}`}

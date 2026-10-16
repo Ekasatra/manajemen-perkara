@@ -32,9 +32,9 @@ export function StatCard({
 }) {
   const body = (
     <>
-      <div className="flex items-start justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-navy-400">{label}</span>
-        <span aria-hidden="true" className={`flex size-9 items-center justify-center rounded-control ${TONE[tone]}`}>
+      <div className="flex items-start justify-between gap-2">
+        <span className="min-w-0 text-[11px] font-semibold uppercase tracking-wider text-navy-400">{label}</span>
+        <span aria-hidden="true" className={`flex size-8 shrink-0 items-center justify-center rounded-control ${TONE[tone]}`}>
           {icon}
         </span>
       </div>

@@ -197,7 +197,7 @@ export default async function HonorTimPage({
       {isAdmin ? (
         <nav
           aria-label="Tampilan honor"
-          className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-white/70 bg-surface/60 p-1 sm:w-fit"
+          className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
         >
           <Link
             href="/honor-tim"

@@ -170,7 +170,7 @@ export function CaseTabs(props: Props) {
       <div
         role="tablist"
         aria-label="Bagian perkara"
-        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-white/70 bg-surface/60 p-1 sm:w-fit"
+        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
       >
         {TABS.filter((t) => t !== 'Biaya' || props.canViewBiaya).map((t) => {
           const count = TAB_COUNT[t]?.(props);

@@ -242,12 +242,12 @@ export function DashboardView({
         <div className="flex flex-wrap gap-2">
           {viewer.canCreateSuratMasuk ? (
             <Link href="/surat-masuk" className={buttonClass.secondary}>
-              <Inbox aria-hidden="true" size={15} /> Catat Surat Masuk
+              <Inbox aria-hidden="true" size={15} /> <span className="sm:hidden">Surat Masuk</span><span className="hidden sm:inline">Catat Surat Masuk</span>
             </Link>
           ) : null}
           {viewer.canCreateSuratKeluar ? (
             <Link href="/surat-keluar" className={buttonClass.secondary}>
-              <Upload aria-hidden="true" size={15} /> Unggah Surat Keluar
+              <Upload aria-hidden="true" size={15} /> <span className="sm:hidden">Surat Keluar</span><span className="hidden sm:inline">Unggah Surat Keluar</span>
             </Link>
           ) : null}
           {viewer.canCreateCase ? <CreateCaseDialog /> : null}
@@ -415,11 +415,11 @@ export function DashboardView({
         {data.aktivitasTerbaru.length === 0 ? (
           <Empty icon={<Activity size={28} />}>Belum ada aktivitas</Empty>
         ) : (
-          <ul className="grid gap-x-8 md:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-x-8 md:grid-cols-2">
             {data.aktivitasTerbaru.map((a) => {
               const name = a.userName || 'Sistem';
               return (
-                <li key={a.id} className="flex gap-3 border-b border-navy-50 py-2.5">
+                <li key={a.id} className="flex min-w-0 gap-3 border-b border-navy-50 py-2.5">
                   <span
                     aria-hidden="true"
                     className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ring-2 ring-white ${avatarColor(name)}`}

@@ -248,7 +248,7 @@ export function ReportsView({
       <div
         role="tablist"
         aria-label="Jenis laporan"
-        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-white/70 bg-surface/60 p-1 sm:w-fit print:hidden"
+        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit print:hidden"
       >
         {TABS.map((t) => (
           <button

@@ -123,11 +123,9 @@
   }
 }
 
-/* Desktop sedikit lebih rapat: skala rem (teks, jarak, kontrol) mengecil 6% agar tampilan bersih dan tidak terasa besar. */
-@media (min-width: 768px) {
-  html {
-    font-size: 15px;
-  }
+/* Skala rem 15px di semua lebar layar: teks, jarak, dan kontrol lebih ringkas. */
+html {
+  font-size: 15px;
 }
 
 /* Latar gaya GAS: semburat emas kanan-atas dan navy kiri-bawah di atas gradien lembut, tetap saat scroll. */
@@ -205,6 +203,8 @@ body {
 h1,
 .font-display {
   font-family: var(--font-display);
+  /* Angka berdiri sejajar (bukan old-style) agar nomor surat dan invoice terbaca jelas. */
+  font-variant-numeric: lining-nums;
 }
 
 h2,

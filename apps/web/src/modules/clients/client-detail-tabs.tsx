@@ -68,7 +68,7 @@ export function ClientDetailTabs({
       <div
         role="tablist"
         aria-label="Rincian klien"
-        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-white/70 bg-surface/60 p-1 sm:w-fit"
+        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
       >
         {TABS.map((t) => (
           <button
