@@ -48,7 +48,9 @@ export default function LoginPage() {
         <div className="h-px w-full bg-gold-500" />
         <div className="mt-0.5 h-px w-16 bg-gold-500" />
       </div>
-      <p className="mt-3 text-sm text-navy-400">Masuk untuk mengelola perkara.</p>
+      <p className="mt-3 text-sm text-navy-400">
+        Sistem administrasi dan manajemen perkara hukum. Masuk dengan akun yang didaftarkan Admin.
+      </p>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         <div>
           <label htmlFor="email" className={labelClass}>
@@ -83,9 +85,12 @@ export default function LoginPage() {
           </p>
         ) : null}
         <button type="submit" disabled={pending} className={buttonClass.primary}>
-          {pending ? 'Memproses…' : 'Masuk'}
+          {pending ? 'Memproses' : 'Masuk'}
         </button>
       </form>
+      <p className="mt-6 border-t border-navy-100 pt-4 text-xs text-navy-400">
+        Akses khusus staf terdaftar. Aktivitas masuk dan perubahan data tercatat di Audit Log.
+      </p>
       <p className="mt-4 text-center text-sm text-navy-400">
         Belum ada akun?{' '}
         <Link href="/setup" className="text-navy-600 underline hover:text-navy-700">

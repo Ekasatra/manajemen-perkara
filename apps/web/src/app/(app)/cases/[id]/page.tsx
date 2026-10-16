@@ -4,12 +4,21 @@
  * Surat & biaya read-only — data dari fungsi baca modul E/F.
  */
 import { eq } from 'drizzle-orm';
-import { createDb, cases, caseTimeline, caseSchedules, caseDocuments, clients, opponents } from '@ekasatra/db';
+import {
+  createDb,
+  cases,
+  caseTimeline,
+  caseSchedules,
+  caseDocuments,
+  clients,
+  opponents,
+} from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import {
   requireUser,
   ensureCan,
   can,
+  getCaseForUser,
   getCaseTeamMembers,
   listSuratMasukForReport,
   listSuratKeluarForReport,
@@ -20,30 +29,52 @@ import { notFound } from '@ekasatra/shared';
 import { FileHeader } from '@/components/ui/file-header';
 import { formatDate } from '@/lib/format';
 import { CaseStatusBadge } from '@/modules/cases/case-status-badge';
+import { CaseFlow } from '@/modules/cases/case-flow';
 import { CaseTabs } from '@/modules/cases/case-tabs';
+import { todayWib } from '@/modules/dashboard/metrics';
 
-export default async function CaseDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function CaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const db = createDb();
   const supabase = await createSupabaseServerClient();
   const user = await requireUser(db, supabase);
   ensureCan(user, 'R', 'cases');
 
+  // Gerbang hak lihat per baris (scope_assigned_only): perkara yang bukan milik/tim user dijawab
+  // "tidak ditemukan", bukan "dilarang", supaya keberadaannya tidak bocor.
+  if (!(await getCaseForUser(db, id, user.userId, user.role)))
+    throw notFound('Perkara tidak ditemukan');
   const [caseRow] = await db.select().from(cases).where(eq(cases.id, id)).limit(1);
   if (!caseRow) throw notFound('Perkara tidak ditemukan');
 
   const [clientRow, opponentRow, timeline, schedules, documents, members] = await Promise.all([
-    db.select({ name: clients.name, clientCode: clients.clientCode }).from(clients).where(eq(clients.id, caseRow.clientId)).limit(1),
+    db
+      .select({ name: clients.name, clientCode: clients.clientCode })
+      .from(clients)
+      .where(eq(clients.id, caseRow.clientId))
+      .limit(1),
     caseRow.opponentId
-      ? db.select({ name: opponents.name }).from(opponents).where(eq(opponents.id, caseRow.opponentId)).limit(1)
+      ? db
+          .select({ name: opponents.name })
+          .from(opponents)
+          .where(eq(opponents.id, caseRow.opponentId))
+          .limit(1)
       : Promise.resolve([]),
-    db.select().from(caseTimeline).where(eq(caseTimeline.caseId, id)).orderBy(caseTimeline.eventDate),
-    db.select().from(caseSchedules).where(eq(caseSchedules.caseId, id)).orderBy(caseSchedules.scheduleDate),
-    db.select().from(caseDocuments).where(eq(caseDocuments.caseId, id)).orderBy(caseDocuments.createdAt),
+    db
+      .select()
+      .from(caseTimeline)
+      .where(eq(caseTimeline.caseId, id))
+      .orderBy(caseTimeline.eventDate),
+    db
+      .select()
+      .from(caseSchedules)
+      .where(eq(caseSchedules.caseId, id))
+      .orderBy(caseSchedules.scheduleDate),
+    db
+      .select()
+      .from(caseDocuments)
+      .where(eq(caseDocuments.caseId, id))
+      .orderBy(caseDocuments.createdAt),
     getCaseTeamMembers(db, id),
   ]);
 
@@ -82,6 +113,16 @@ export default async function CaseDetailPage({
           { label: 'Tanggal mulai', value: formatDate(caseRow.startDate) },
           { label: 'Batas upaya hukum', value: formatDate(caseRow.upayaDeadline) },
         ]}
+      />
+
+      <CaseFlow
+        status={caseRow.status}
+        startDate={caseRow.startDate}
+        putusDate={caseRow.putusDate}
+        closedDate={caseRow.closedDate}
+        upayaDeadline={caseRow.upayaDeadline}
+        events={timeline}
+        today={todayWib()}
       />
 
       <CaseTabs

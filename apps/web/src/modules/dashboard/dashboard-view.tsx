@@ -90,11 +90,13 @@ export function DashboardView({
 }) {
   const { cases, sidang7Hari, tenggat14Hari, surat, piutang, approvalMenungguSaya } = data;
   const today = todayWib(now);
-  const totalCases = cases.activeCount + cases.completedCount;
+  const totalCases = cases.byStatus.reduce((n, s) => n + s.count, 0);
   const buckets = deadlineBuckets(tenggat14Hari);
   const urgentCount = buckets.filter((b) => b.urgent).reduce((n, b) => n + b.count, 0);
   const load = scheduleLoad(sidang7Hari, today);
   const peak = Math.max(0, ...load.map((d) => d.count));
+  // Sorot puncak hanya bila memang ada hari yang lebih padat dari yang lain.
+  const isPeak = (count: number) => peak > 1 && count === peak;
   const otherStatuses = cases.byStatus.filter((s) => s.status !== 'Aktif' && s.count > 0);
 
   return (
@@ -113,7 +115,7 @@ export function DashboardView({
           visual={
             <Ring
               percent={percent(cases.activeCount, totalCases)}
-              label={`${percent(cases.activeCount, totalCases)} persen dari seluruh perkara masih berjalan`}
+              label={`${percent(cases.activeCount, totalCases)} persen dari ${totalCases} perkara berstatus aktif`}
             />
           }
           footer={otherStatuses.map((s) => `${s.status}: ${s.count}`)}
@@ -199,7 +201,9 @@ export function DashboardView({
                         <span>
                           {s.kind}, {s.location || 'lokasi belum ditentukan'}
                         </span>
-                        <Badge tone="warning">{s.status}</Badge>
+                        <Badge tone={s.status === 'Terjadwal' ? 'neutral' : 'warning'}>
+                          {s.status}
+                        </Badge>
                       </div>
                     </li>
                   );
@@ -257,7 +261,7 @@ export function DashboardView({
                   className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
                 >
                   <span
-                    className={`text-xs tabular-nums ${d.count > 0 && d.count === peak ? 'font-semibold text-gold-700' : 'text-navy-400'}`}
+                    className={`text-xs tabular-nums ${isPeak(d.count) ? 'font-semibold text-gold-700' : 'text-navy-400'}`}
                   >
                     {d.count}
                     <span className="sr-only"> sidang pada {formatDate(d.date)}</span>
@@ -265,7 +269,7 @@ export function DashboardView({
                   <div
                     aria-hidden="true"
                     style={{ height: `${peak > 0 ? Math.max((d.count / peak) * 100, 4) : 4}%` }}
-                    className={`w-full rounded-t-control ${d.count > 0 && d.count === peak ? 'bg-gold-500' : 'bg-navy-200'}`}
+                    className={`w-full rounded-t-control ${isPeak(d.count) ? 'bg-gold-500' : 'bg-navy-300'}`}
                   />
                   <span className="text-xs text-navy-400">{d.label}</span>
                 </li>

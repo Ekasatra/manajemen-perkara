@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
 import { APP_NAME } from '@/components/ui/brand';
 import { THEME_INIT_SCRIPT } from '@/shell/theme';
@@ -25,10 +26,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-      </head>
-      <body className={`${inter.variable} ${cormorant.variable} antialiased`}>{children}</body>
+      <body className={`${inter.variable} ${cormorant.variable} antialiased`}>
+        {/* Menentukan tema sebelum hidrasi agar tidak berkedip (docs: preventing-flash-before-hydration). */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }
