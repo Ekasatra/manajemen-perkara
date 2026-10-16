@@ -14,11 +14,7 @@ const STATUS_FILL: Record<string, string> = {
 };
 const STATUS_FILL_FALLBACK = 'bg-navy-200';
 
-export function CasesStatusChart({
-  byStatus,
-}: {
-  byStatus: { status: string; count: number }[];
-}) {
+export function CasesStatusChart({ byStatus }: { byStatus: { status: string; count: number }[] }) {
   const total = byStatus.reduce((sum, item) => sum + item.count, 0);
 
   if (total === 0) {

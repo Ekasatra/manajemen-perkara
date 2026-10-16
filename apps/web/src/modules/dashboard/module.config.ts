@@ -17,4 +17,3 @@ export const moduleConfig: ModuleConfig = {
   icon: 'dashboard',
   roles: ['admin', 'advokat', 'paralegal'],
 };
-

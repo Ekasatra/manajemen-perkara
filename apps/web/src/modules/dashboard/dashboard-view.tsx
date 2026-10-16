@@ -1,14 +1,18 @@
 import Link from 'next/link';
-import { Gavel } from 'lucide-react';
 import type { DashboardData } from '@ekasatra/shared';
 import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { FigureStrip } from '@/components/ui/figure-strip';
-import type { FigureItem } from '@/components/ui/figure-strip';
 import { PageHeader } from '@/components/ui/page-header';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
+import type { Column } from '@/components/ui/responsive-table';
+import { buttonClass } from '@/components/ui/styles';
 import { formatDate, formatDateTime, formatRupiah } from '@/lib/format';
+import { CaseStatusBadge } from '@/modules/cases/case-status-badge';
+import { CreateCaseDialog } from '@/modules/cases/create-case-dialog';
 import { CasesStatusChart, SuratTrendChart } from './charts';
+import { daysBetween, deadlineBuckets, percent, scheduleLoad, todayWib } from './metrics';
+import { KpiCard, MiniBars, Ring, Sparkline } from './visuals';
 
 /** Ambang hari untuk penanda tenggat: sampai URGENT_DAYS = mendesak, sampai SOON_DAYS = segera. */
 const URGENT_DAYS = 3;
@@ -17,128 +21,299 @@ const SOON_DAYS = 7;
 const NOTIF_LIMIT = 6;
 const ACTIVITY_LIMIT = 5;
 
+export type RecentCase = {
+  id: string;
+  regNo: string;
+  title: string;
+  status: string;
+  startDate: string | null;
+  upayaDeadline: string | null;
+};
+
 function deadlineTone(daysLeft: number): BadgeTone {
   if (daysLeft <= URGENT_DAYS) return 'danger';
   if (daysLeft <= SOON_DAYS) return 'warning';
   return 'info';
 }
 
+/** Strip di tepi kiri kartu agenda: merah hari ini, emas sampai 3 hari, netral sesudahnya. */
+function stripClass(daysLeft: number): string {
+  if (daysLeft <= 0) return 'bg-danger-fg';
+  if (daysLeft <= URGENT_DAYS) return 'bg-gold-500';
+  return 'bg-navy-300';
+}
+
 function Empty({ children }: { children: string }) {
   return <p className="py-6 text-center text-sm text-navy-400">{children}</p>;
 }
 
-export function DashboardView({ data }: { data: DashboardData }) {
-  const { cases, sidang7Hari, tenggat14Hari, surat, piutang } = data;
+function SectionTitle({ children, aside }: { children: string; aside?: string }) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <span aria-hidden="true" className="h-4 w-1 rounded-control bg-gold-500" />
+        <h2 className="text-base text-navy-800">{children}</h2>
+      </div>
+      {aside ? <span className="text-sm tabular-nums text-navy-400">{aside}</span> : null}
+    </div>
+  );
+}
 
-  const figures: FigureItem[] = [
-    {
-      label: 'Perkara aktif',
-      value: cases.activeCount,
-      note: `${cases.completedCount} perkara selesai`,
-    },
-    {
-      label: 'Surat masuk belum selesai',
-      value: surat.masukBelumSelesai,
-      note: `Hari ini: ${surat.masukHariIni} masuk, ${surat.keluarHariIni} keluar`,
-    },
-    piutang.authorized
-      ? {
-          label: 'Piutang belum lunas',
-          value: formatRupiah(piutang.totalOutstanding),
-          note: `${piutang.invoiceCount ?? 0} invoice`,
-        }
-      : { label: 'Klien baru bulan ini', value: data.klienBaruBulanIni },
-  ];
+const CASE_COLUMNS: Column<RecentCase>[] = [
+  {
+    key: 'title',
+    header: 'Perkara',
+    cell: (r) => (
+      <div>
+        <Link href={`/cases/${r.id}`} className="font-medium text-navy-700 hover:underline">
+          {r.title}
+        </Link>
+        <div className="text-xs tabular-nums text-navy-400">{r.regNo}</div>
+      </div>
+    ),
+  },
+  { key: 'status', header: 'Status', cell: (r) => <CaseStatusBadge status={r.status} /> },
+  { key: 'startDate', header: 'Mulai', cell: (r) => formatDate(r.startDate) },
+  { key: 'upaya', header: 'Batas upaya', cell: (r) => formatDate(r.upayaDeadline) },
+];
+
+export function DashboardView({
+  data,
+  recentCases = [],
+  canCreateCase = false,
+  now = new Date(),
+}: {
+  data: DashboardData;
+  recentCases?: RecentCase[];
+  canCreateCase?: boolean;
+  now?: Date;
+}) {
+  const { cases, sidang7Hari, tenggat14Hari, surat, piutang, approvalMenungguSaya } = data;
+  const today = todayWib(now);
+  const totalCases = cases.activeCount + cases.completedCount;
+  const buckets = deadlineBuckets(tenggat14Hari);
+  const urgentCount = buckets.filter((b) => b.urgent).reduce((n, b) => n + b.count, 0);
+  const load = scheduleLoad(sidang7Hari, today);
+  const peak = Math.max(0, ...load.map((d) => d.count));
+  const otherStatuses = cases.byStatus.filter((s) => s.status !== 'Aktif' && s.count > 0);
 
   return (
     <div>
       <PageHeader
-        title="Beranda"
-        description="Agenda sidang dan tenggat terdekat lebih dulu, lalu ringkasan perkara dan surat."
+        title="Ringkasan perkara dan persidangan"
+        description={formatDate(now)}
+        actions={canCreateCase ? <CreateCaseDialog /> : undefined}
       />
 
-      {/* Titik fokus: yang perlu ditangani paling dekat waktunya. */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card
-          title="Agenda sidang 7 hari ke depan"
-          action={<span className="text-sm text-navy-400">{sidang7Hari.length} agenda</span>}
-          className="lg:col-span-2"
-        >
-          {sidang7Hari.length === 0 ? (
-            <Empty>Tidak ada agenda sidang dalam 7 hari ke depan.</Empty>
-          ) : (
-            <ul className="divide-y divide-navy-100">
-              {sidang7Hari.map((s) => (
-                <li key={s.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start">
-                  <div className="flex items-center gap-3 sm:w-52 sm:shrink-0">
-                    <Gavel aria-hidden="true" size={18} className="shrink-0 text-navy-300" />
-                    <div className="text-sm">
-                      <div className="font-semibold tabular-nums text-navy-800">
-                        {formatDate(s.scheduleDate)}
-                      </div>
-                      {s.scheduleTime ? (
-                        <div className="tabular-nums text-navy-400">{s.scheduleTime} WIB</div>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/cases/${s.caseId}`}
-                      className="font-medium text-navy-700 hover:underline"
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Perkara berjalan"
+          value={cases.activeCount}
+          note={`${cases.completedCount} perkara selesai`}
+          visual={
+            <Ring
+              percent={percent(cases.activeCount, totalCases)}
+              label={`${percent(cases.activeCount, totalCases)} persen dari seluruh perkara masih berjalan`}
+            />
+          }
+          footer={otherStatuses.map((s) => `${s.status}: ${s.count}`)}
+        />
+        <KpiCard
+          label="Tenggat mendesak"
+          tone={urgentCount > 0 ? 'danger' : 'default'}
+          value={urgentCount}
+          note={`${tenggat14Hari.length} tenggat dalam 14 hari`}
+          visual={
+            <MiniBars
+              bars={buckets}
+              label={buckets.map((b) => `${b.label}: ${b.count}`).join(', ')}
+            />
+          }
+          footer={buckets.filter((b) => b.count > 0).map((b) => `${b.label}: ${b.count}`)}
+        />
+        {piutang.authorized ? (
+          <KpiCard
+            label="Piutang belum lunas"
+            value={formatRupiah(piutang.totalOutstanding)}
+            note={`${piutang.invoiceCount ?? 0} invoice`}
+          />
+        ) : (
+          <KpiCard
+            label="Surat menunggu persetujuan Anda"
+            value={approvalMenungguSaya.count}
+            note={approvalMenungguSaya.count > 0 ? 'Perlu ditinjau' : 'Semua sudah ditinjau'}
+          />
+        )}
+        <KpiCard
+          label="Surat masuk belum selesai"
+          value={surat.masukBelumSelesai}
+          note={`Hari ini: ${surat.masukHariIni} masuk, ${surat.keluarHariIni} keluar`}
+          visual={
+            <Sparkline
+              values={surat.trend6Bulan.map((t) => t.suratMasuk)}
+              label={`Surat masuk 6 bulan terakhir: ${surat.trend6Bulan.map((t) => t.suratMasuk).join(', ')}`}
+            />
+          }
+        />
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-7">
+          <section>
+            <SectionTitle aside={`${sidang7Hari.length} agenda`}>
+              Agenda sidang 7 hari ke depan
+            </SectionTitle>
+            {sidang7Hari.length === 0 ? (
+              <div className="rounded-card border border-navy-200 bg-surface">
+                <Empty>Tidak ada agenda sidang dalam 7 hari ke depan.</Empty>
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {sidang7Hari.map((s) => {
+                  const daysLeft = daysBetween(today, s.scheduleDate);
+                  return (
+                    <li
+                      key={s.id}
+                      className="relative overflow-hidden rounded-card border border-navy-200 bg-surface p-5 pl-6"
                     >
-                      {s.caseTitle}
-                    </Link>
-                    <div className="mt-0.5 text-sm text-navy-400">
-                      {s.kind}, {s.location || 'lokasi belum ditentukan'}
-                    </div>
-                  </div>
-                  <Badge tone="warning">{s.status}</Badge>
+                      <span
+                        aria-hidden="true"
+                        className={`absolute inset-y-0 left-0 w-1 ${stripClass(daysLeft)}`}
+                      />
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <Badge tone={deadlineTone(daysLeft)}>
+                          {daysLeft <= 0 ? 'Hari ini' : `H-${daysLeft}`}
+                        </Badge>
+                        <span className="tabular-nums text-navy-400">
+                          {formatDate(s.scheduleDate)}
+                          {s.scheduleTime ? `, ${s.scheduleTime.slice(0, 5)} WIB` : ''}
+                        </span>
+                      </div>
+                      <Link
+                        href={`/cases/${s.caseId}`}
+                        className="mt-2 block font-display text-xl font-semibold text-navy-700 hover:underline"
+                      >
+                        {s.caseTitle}
+                      </Link>
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-navy-100 pt-3 text-sm text-navy-400">
+                        <span>
+                          {s.kind}, {s.location || 'lokasi belum ditentukan'}
+                        </span>
+                        <Badge tone="warning">{s.status}</Badge>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section>
+            <SectionTitle aside={`${tenggat14Hari.length} tenggat`}>
+              Tenggat 14 hari ke depan
+            </SectionTitle>
+            <div className="rounded-card border border-navy-200 bg-surface px-5">
+              {tenggat14Hari.length === 0 ? (
+                <Empty>Tidak ada tenggat dalam 14 hari ke depan.</Empty>
+              ) : (
+                <ul className="divide-y divide-navy-100">
+                  {tenggat14Hari.map((t) => (
+                    <li key={t.id} className="flex items-start justify-between gap-3 py-3">
+                      <div className="min-w-0">
+                        <Link
+                          href={t.link}
+                          className="text-sm font-medium text-navy-700 hover:underline"
+                        >
+                          {t.title}
+                        </Link>
+                        {t.extraInfo ? (
+                          <p className="text-xs text-navy-400">{t.extraInfo}</p>
+                        ) : null}
+                      </div>
+                      <Badge tone={deadlineTone(t.daysLeft)}>
+                        {t.daysLeft === 0 ? 'Hari ini' : `H-${t.daysLeft}`}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <div className="space-y-6 lg:col-span-5">
+          <Card
+            title="Beban sidang 7 hari ke depan"
+            action={
+              <span className="text-sm tabular-nums text-navy-400">
+                Total: {sidang7Hari.length}
+              </span>
+            }
+          >
+            <ul className="flex h-36 items-end justify-between gap-2">
+              {load.map((d) => (
+                <li
+                  key={d.date}
+                  className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
+                >
+                  <span
+                    className={`text-xs tabular-nums ${d.count > 0 && d.count === peak ? 'font-semibold text-gold-700' : 'text-navy-400'}`}
+                  >
+                    {d.count}
+                    <span className="sr-only"> sidang pada {formatDate(d.date)}</span>
+                  </span>
+                  <div
+                    aria-hidden="true"
+                    style={{ height: `${peak > 0 ? Math.max((d.count / peak) * 100, 4) : 4}%` }}
+                    className={`w-full rounded-t-control ${d.count > 0 && d.count === peak ? 'bg-gold-500' : 'bg-navy-200'}`}
+                  />
+                  <span className="text-xs text-navy-400">{d.label}</span>
                 </li>
               ))}
             </ul>
-          )}
-        </Card>
+          </Card>
 
-        <Card title="Tenggat 14 hari ke depan">
-          {tenggat14Hari.length === 0 ? (
-            <Empty>Tidak ada tenggat dalam 14 hari ke depan.</Empty>
+          <Card title="Berapa perkara di tiap status?">
+            <CasesStatusChart byStatus={cases.byStatus} />
+          </Card>
+        </div>
+      </div>
+
+      <section className="mt-8">
+        <SectionTitle>Perkara terbaru</SectionTitle>
+        <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">
+          {recentCases.length === 0 ? (
+            <Empty>Belum ada perkara yang dapat Anda lihat.</Empty>
           ) : (
-            <ul className="divide-y divide-navy-100">
-              {tenggat14Hari.map((t) => (
-                <li key={t.id} className="flex items-start justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <Link href={t.link} className="text-sm font-medium text-navy-700 hover:underline">
-                      {t.title}
-                    </Link>
-                    {t.extraInfo ? <p className="text-xs text-navy-400">{t.extraInfo}</p> : null}
-                  </div>
-                  <Badge tone={deadlineTone(t.daysLeft)}>
-                    {t.daysLeft === 0 ? 'Hari ini' : `H-${t.daysLeft}`}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
+            <ResponsiveTable
+              caption="Perkara terbaru"
+              columns={CASE_COLUMNS}
+              rows={recentCases}
+              rowKey={(r) => r.id}
+            />
           )}
-        </Card>
-      </div>
+          <div className="border-t border-navy-200 px-4 py-3 text-right">
+            <Link href="/cases" className={buttonClass.ghost}>
+              Lihat semua perkara
+            </Link>
+          </div>
+        </div>
+      </section>
 
-      {/* Ringkasan pendukung: satu strip, bukan deretan kartu statistik. */}
-      <div className="mt-6">
-        <FigureStrip label="Ringkasan" items={figures} />
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <Card
           title="Surat menunggu persetujuan Anda"
-          action={<Badge tone={data.approvalMenungguSaya.count > 0 ? 'warning' : 'neutral'}>
-            {data.approvalMenungguSaya.count}
-          </Badge>}
+          action={
+            <Badge tone={approvalMenungguSaya.count > 0 ? 'warning' : 'neutral'}>
+              {approvalMenungguSaya.count}
+            </Badge>
+          }
         >
-          {data.approvalMenungguSaya.items.length === 0 ? (
+          {approvalMenungguSaya.items.length === 0 ? (
             <Empty>Semua surat sudah ditinjau atau ditandatangani.</Empty>
           ) : (
             <ul className="divide-y divide-navy-100">
-              {data.approvalMenungguSaya.items.map((a) => (
+              {approvalMenungguSaya.items.map((a) => (
                 <li key={a.id} className="py-3">
                   <Link
                     href={`/surat-keluar/${a.id}`}
@@ -186,8 +361,8 @@ export function DashboardView({ data }: { data: DashboardData }) {
               {data.aktivitasTerbaru.slice(0, ACTIVITY_LIMIT).map((act) => (
                 <li key={act.id} className="py-3 text-sm">
                   <p className="text-navy-800">
-                    <span className="font-medium">{act.userName || 'Sistem'}</span>{' '}
-                    {act.action} pada {act.module}
+                    <span className="font-medium">{act.userName || 'Sistem'}</span> {act.action}{' '}
+                    pada {act.module}
                     {act.description ? ` (${act.description})` : ''}
                   </p>
                   <p className="mt-0.5 text-xs tabular-nums text-navy-400">
@@ -200,10 +375,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
         </Card>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card title="Berapa perkara di tiap status?">
-          <CasesStatusChart byStatus={cases.byStatus} />
-        </Card>
+      <div className="mt-6">
         <Card title="Surat masuk dan keluar, 6 bulan terakhir">
           <SuratTrendChart trend6Bulan={surat.trend6Bulan} />
         </Card>

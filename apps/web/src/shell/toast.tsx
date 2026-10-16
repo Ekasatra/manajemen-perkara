@@ -54,7 +54,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={t.id}
               role={t.kind === 'error' ? 'alert' : 'status'}
-              className={`pointer-events-auto flex max-w-sm items-start gap-3 rounded-card border bg-white px-4 py-3 text-sm shadow-float ${kindClass[t.kind]}`}
+              className={`pointer-events-auto flex max-w-sm items-start gap-3 rounded-card border bg-surface px-4 py-3 text-sm shadow-float ${kindClass[t.kind]}`}
             >
               <Icon aria-hidden="true" size={18} className="mt-0.5 shrink-0" />
               <span className="flex-1">{t.message}</span>

@@ -132,7 +132,7 @@ const dateOrDash = (v: string | null | undefined) => (v ? formatDate(v) : '-');
 
 /** Kotak tabel/daftar bergaris, dipakai semua tab agar seragam. */
 function Box({ children }: { children: ReactNode }) {
-  return <div className="overflow-hidden rounded-card border border-navy-200 bg-white">{children}</div>;
+  return <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">{children}</div>;
 }
 
 function Muted({ children }: { children: string }) {

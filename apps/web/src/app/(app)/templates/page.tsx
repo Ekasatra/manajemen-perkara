@@ -34,7 +34,7 @@ export default async function TemplatesPage() {
             <h2 id={`cat-${g.category}`} className="mb-2 text-xl text-navy-800">
               {g.category}
             </h2>
-            <ul className="divide-y divide-navy-100 rounded-card border border-navy-200 bg-white">
+            <ul className="divide-y divide-navy-100 rounded-card border border-navy-200 bg-surface">
               {g.items.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
                   <div>

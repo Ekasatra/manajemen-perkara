@@ -22,7 +22,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section aria-label={title}>
       <h2 className="mb-3 text-xl text-navy-800">{title}</h2>
-      <div className="rounded-card border border-navy-200 bg-white px-5">{children}</div>
+      <div className="rounded-card border border-navy-200 bg-surface px-5">{children}</div>
     </section>
   );
 }
@@ -46,7 +46,7 @@ export default async function ClientPortalPage({
     // Token salah atau dinonaktifkan: pesan generik yang sama agar token tidak dapat ditebak.
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-navy-50 px-4 py-12 text-center">
-        <div className="w-full max-w-md rounded-card border border-navy-200 bg-white p-8">
+        <div className="w-full max-w-md rounded-card border border-navy-200 bg-surface p-8">
           <LockKeyhole aria-hidden="true" size={28} className="mx-auto text-navy-300" />
           <h1 className="mt-4 text-xl font-semibold text-navy-800">Akses portal tidak tersedia</h1>
           <p className="mt-2 text-sm text-navy-400">{PORTAL_GENERIC_ERROR_MESSAGE}</p>
@@ -60,14 +60,14 @@ export default async function ClientPortalPage({
 
   return (
     <div className="min-h-screen bg-navy-50 pb-16">
-      <header className="bg-navy-700 text-white">
+      <header className="border-b border-chrome-line bg-chrome text-white">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
           <div>
             <p className="text-sm text-gold-300">Portal Klien</p>
             <p className="font-display text-2xl font-semibold">{FIRM_NAME}</p>
           </div>
           <div className="text-sm sm:text-right">
-            <p className="text-navy-200">Klien</p>
+            <p className="text-chrome-fg">Klien</p>
             <p className="font-medium">{client.name}</p>
           </div>
         </div>

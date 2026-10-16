@@ -40,7 +40,7 @@ export function SetupForm() {
   }
 
   return (
-    <div className="rounded-card border border-navy-200 bg-white p-8">
+    <div className="rounded-card border border-navy-200 bg-surface p-8">
       <Brand variant="compact" className="text-navy-400" />
       <h1 className="mt-2 text-title font-semibold text-navy-700">Setup Admin</h1>
       <div aria-hidden="true" className="mt-3">

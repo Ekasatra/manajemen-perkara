@@ -199,7 +199,7 @@ export function ReportsView() {
           e.preventDefault();
           void fetchReport();
         }}
-        className="mt-4 grid gap-4 rounded-card border border-navy-200 bg-white p-4 sm:grid-cols-4 sm:items-end print:hidden"
+        className="mt-4 grid gap-4 rounded-card border border-navy-200 bg-surface p-4 sm:grid-cols-4 sm:items-end print:hidden"
       >
         <div>
           <label htmlFor="r-start" className={labelClass}>
@@ -248,7 +248,7 @@ export function ReportsView() {
         id="panel-laporan"
         aria-labelledby={`tab-${active.id}`}
         aria-busy={loading}
-        className="mt-4 overflow-hidden rounded-card border border-navy-200 bg-white"
+        className="mt-4 overflow-hidden rounded-card border border-navy-200 bg-surface"
       >
         {loading ? (
           <LoadingState label="Memuat laporan…" />

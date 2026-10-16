@@ -40,7 +40,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="rounded-card border border-navy-200 bg-white p-8">
+    <div className="rounded-card border border-navy-200 bg-surface p-8">
       <h1 className="text-title font-semibold text-navy-700">
         <Brand />
       </h1>

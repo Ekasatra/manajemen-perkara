@@ -13,7 +13,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`rounded-card border border-navy-200 bg-white p-5 ${className}`}>
+    <section className={`rounded-card border border-navy-200 bg-surface p-5 ${className}`}>
       {title ? (
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-base text-navy-800">{title}</h2>

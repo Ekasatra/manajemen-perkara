@@ -54,7 +54,7 @@ export function DataTable<T>({
 }: Props<T>) {
   if (total === 0) {
     return (
-      <div className="rounded-card border border-navy-200 bg-white">
+      <div className="rounded-card border border-navy-200 bg-surface">
         <EmptyState {...empty} />
       </div>
     );
@@ -64,7 +64,7 @@ export function DataTable<T>({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-card border border-navy-200 bg-white">
+      <div className="rounded-card border border-navy-200 bg-surface">
         <EmptyState
           title="Halaman tidak ditemukan"
           hint={`Data hanya sampai halaman ${pages}.`}
@@ -82,7 +82,7 @@ export function DataTable<T>({
   const to = from + rows.length - 1;
 
   return (
-    <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
+    <div className="overflow-hidden rounded-card border border-navy-200 bg-surface">
       <ResponsiveTable caption={caption} columns={columns} rows={rows} rowKey={rowKey} />
 
       <nav

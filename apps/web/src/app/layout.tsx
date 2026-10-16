@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
 import { APP_NAME } from '@/components/ui/brand';
+import { THEME_INIT_SCRIPT } from '@/shell/theme';
 import './globals.css';
 
 const inter = Inter({
@@ -23,7 +24,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className={`${inter.variable} ${cormorant.variable} antialiased`}>{children}</body>
     </html>
   );
