@@ -1,30 +1,30 @@
 import { createDb } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { can, requireUser, getDashboardData, listCases } from '@ekasatra/core';
+import { can, requireUser, getDashboardData } from '@ekasatra/core';
+import { ROLE_LABEL } from '@/lib/role-label';
 import { DashboardView } from '@/modules/dashboard/dashboard-view';
+import type { DashboardViewer } from '@/modules/dashboard/dashboard-view';
 import { EmptyState } from '@/shell/states';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-const RECENT_CASES = 5;
-
 export default async function HomePage() {
   let data;
-  let recentCases;
-  let canCreateCase = false;
+  let viewer: DashboardViewer;
   try {
     const db = createDb();
     const supabase = await createSupabaseServerClient();
     const user = await requireUser(db, supabase);
-    // Daftar ini lewat listCases, jadi sudah dibatasi perkara yang boleh dilihat user (scope_assigned_only).
-    const [dashboard, recent] = await Promise.all([
-      getDashboardData(db, user),
-      listCases(db, user, { page: 1, pageSize: RECENT_CASES, offset: 0 }),
-    ]);
-    data = dashboard;
-    recentCases = recent.rows;
-    canCreateCase = can(user, 'C', 'cases');
+    data = await getDashboardData(db, user);
+    viewer = {
+      name: user.fullName,
+      roleLabel: ROLE_LABEL[user.role] ?? '',
+      canCreateCase: can(user, 'C', 'cases'),
+      canCreateSuratMasuk: can(user, 'C', 'surat_masuk'),
+      canCreateSuratKeluar: can(user, 'C', 'surat_keluar'),
+      canReadAudit: can(user, 'R', 'audit_log'),
+    };
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
     if (code === 'UNAUTHORIZED') redirect('/login');
@@ -38,5 +38,5 @@ export default async function HomePage() {
     }
     throw err;
   }
-  return <DashboardView data={data} recentCases={recentCases} canCreateCase={canCreateCase} />;
+  return <DashboardView data={data} viewer={viewer} />;
 }

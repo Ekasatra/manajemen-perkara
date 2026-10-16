@@ -4,10 +4,13 @@
  */
 import {
   Briefcase,
+  CalendarDays,
   ChartColumn,
+  CircleUser,
   Coins,
   Contact,
   FileCode2,
+  FolderOpen,
   History,
   Inbox,
   LayoutDashboard,
@@ -35,6 +38,9 @@ export const NAV_ICONS = {
   reports: ChartColumn,
   settings: Settings,
   audit: History,
+  profile: CircleUser,
+  schedule: CalendarDays,
+  documents: FolderOpen,
 } as const;
 
 export type NavIconName = keyof typeof NAV_ICONS;

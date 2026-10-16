@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Bell, Calendar, LogOut, Menu, X } from 'lucide-react';
+import { Bell, Calendar, CircleUser, LogOut, Menu, X } from 'lucide-react';
 import { APP_NAME, Brand } from '@/components/ui/brand';
+import { avatarColor } from '@/lib/avatar';
 import { NAV_ICONS } from './nav-icons';
 import type { NavIconName } from './nav-icons';
 import { ThemeToggle } from './theme-toggle';
@@ -32,22 +33,6 @@ function initials(name: string): string {
   return (
     (parts[0]?.[0] ?? '') + (parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '')
   ).toUpperCase();
-}
-
-// Warna avatar bergilir per nama, sama dengan aplikasi GAS.
-const AVATAR_COLORS = [
-  'bg-navy-600',
-  'bg-gold-500',
-  'bg-teal-600',
-  'bg-indigo-600',
-  'bg-rose-500',
-  'bg-sky-600',
-];
-
-export function avatarColor(name: string): string {
-  let sum = 0;
-  for (const ch of name) sum += ch.charCodeAt(0);
-  return AVATAR_COLORS[sum % AVATAR_COLORS.length] ?? AVATAR_COLORS[0]!;
 }
 
 function isActive(pathname: string, href: string): boolean {
@@ -274,6 +259,14 @@ export function AppShell({
             </span>
             <ThemeToggle />
             {bell}
+            <Link
+              href="/profil"
+              aria-label="Profil Saya"
+              title="Profil Saya"
+              className="inline-flex size-10 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800 md:size-9"
+            >
+              <CircleUser aria-hidden="true" size={18} />
+            </Link>
           </div>
         </header>
         <main id="konten" className="min-h-screen p-3 pb-16 sm:p-6 sm:pb-16 print:m-0 print:p-0">

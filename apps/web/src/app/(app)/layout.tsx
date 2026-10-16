@@ -3,6 +3,7 @@ import { can, requireUser } from '@ekasatra/core';
 import type { PolicyUser, Resource } from '@ekasatra/core';
 import { createDb } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { ROLE_LABEL } from '@/lib/role-label';
 import { AppShell } from '@/shell/app-shell';
 import type { NavItem, Viewer } from '@/shell/app-shell';
 
@@ -38,6 +39,13 @@ const NAV: NavEntry[] = [
     resource: 'templates',
   },
   { label: 'Perkara', href: '/cases', icon: 'cases', group: 'Perkara', resource: 'cases' },
+  {
+    label: 'Jadwal Sidang',
+    href: '/jadwal',
+    icon: 'schedule',
+    group: 'Perkara',
+    resource: 'schedules',
+  },
   { label: 'Klien', href: '/clients', icon: 'clients', group: 'Perkara', resource: 'clients' },
   {
     label: 'Pihak Lawan',
@@ -45,6 +53,13 @@ const NAV: NavEntry[] = [
     icon: 'opponents',
     group: 'Perkara',
     resource: 'opponents',
+  },
+  {
+    label: 'Dokumen & Drive',
+    href: '/dokumen',
+    icon: 'documents',
+    group: 'Perkara',
+    resource: 'case_documents',
   },
   {
     label: 'Biaya Perkara',
@@ -89,14 +104,9 @@ const NAV: NavEntry[] = [
     group: 'Sistem',
     resource: 'settings',
   },
+  { label: 'Profil Saya', href: '/profil', icon: 'profile', group: 'Sistem' },
 ];
 
-const ROLE_LABEL: Record<string, string> = {
-  superadmin: 'Super Admin',
-  admin: 'Admin',
-  advokat: 'Advokat',
-  paralegal: 'Paralegal',
-};
 
 /** Sesi tidak valid tidak dilempar dari sini: tiap halaman sudah mengarahkan ke /login sendiri. */
 async function loadViewer() {

@@ -276,6 +276,105 @@ export async function getUpcomingSchedulesForDashboard(
   return rows;
 }
 
+export type ScheduleCalendarItem = {
+  id: string;
+  caseId: string;
+  caseTitle: string;
+  caseRegNo: string;
+  scheduleDate: string;
+  scheduleTime: string | null;
+  kind: string;
+  location: string | null;
+  notes: string | null;
+  status: string;
+};
+
+/**
+ * Semua jadwal (apa pun statusnya) pada rentang tanggal, dibatasi perkara yang terlihat user.
+ * Dipakai halaman Jadwal Sidang (kalender bulanan).
+ */
+export async function listSchedulesInRange(
+  db: DbExecutor,
+  user: { userId: string; role: string },
+  from: string,
+  to: string,
+): Promise<ScheduleCalendarItem[]> {
+  const visibleIds = await listVisibleCaseIds(db, user.userId, user.role);
+  const conditions = [gte(caseSchedules.scheduleDate, from), lte(caseSchedules.scheduleDate, to)];
+  if (visibleIds !== 'all') {
+    if (visibleIds.length === 0) return [];
+    conditions.push(inArray(caseSchedules.caseId, visibleIds));
+  }
+  return db
+    .select({
+      id: caseSchedules.id,
+      caseId: caseSchedules.caseId,
+      caseTitle: cases.title,
+      caseRegNo: cases.regNo,
+      scheduleDate: caseSchedules.scheduleDate,
+      scheduleTime: caseSchedules.scheduleTime,
+      kind: caseSchedules.kind,
+      location: caseSchedules.location,
+      notes: caseSchedules.notes,
+      status: caseSchedules.status,
+    })
+    .from(caseSchedules)
+    .innerJoin(cases, eq(caseSchedules.caseId, cases.id))
+    .where(and(...conditions))
+    .orderBy(caseSchedules.scheduleDate, caseSchedules.scheduleTime);
+}
+
+export type DocumentCatalogItem = {
+  id: string;
+  caseId: string;
+  caseTitle: string;
+  caseRegNo: string;
+  title: string;
+  fileName: string | null;
+  fileSize: number | null;
+  sharedWithClient: boolean;
+  uploadedByName: string | null;
+  createdAt: Date;
+};
+
+/**
+ * Dokumen semua perkara yang terlihat user (halaman Dokumen & Drive).
+ * Pencarian memakai judul dokumen; `caseId` mempersempit ke satu perkara.
+ */
+export async function listDocumentCatalog(
+  db: DbExecutor,
+  user: { userId: string; role: string },
+  opts: { q?: string; caseId?: string; limit?: number } = {},
+): Promise<DocumentCatalogItem[]> {
+  const visibleIds = await listVisibleCaseIds(db, user.userId, user.role);
+  const conditions = [];
+  if (visibleIds !== 'all') {
+    if (visibleIds.length === 0) return [];
+    conditions.push(inArray(caseDocuments.caseId, visibleIds));
+  }
+  if (opts.caseId) conditions.push(eq(caseDocuments.caseId, opts.caseId));
+  if (opts.q) conditions.push(sql`${caseDocuments.title} ilike ${'%' + opts.q + '%'}`);
+  return db
+    .select({
+      id: caseDocuments.id,
+      caseId: caseDocuments.caseId,
+      caseTitle: cases.title,
+      caseRegNo: cases.regNo,
+      title: caseDocuments.title,
+      fileName: caseDocuments.fileName,
+      fileSize: caseDocuments.fileSize,
+      sharedWithClient: caseDocuments.sharedWithClient,
+      uploadedByName: profiles.fullName,
+      createdAt: caseDocuments.createdAt,
+    })
+    .from(caseDocuments)
+    .innerJoin(cases, eq(caseDocuments.caseId, cases.id))
+    .leftJoin(profiles, eq(caseDocuments.uploadedBy, profiles.id))
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(caseDocuments.createdAt))
+    .limit(opts.limit ?? 200);
+}
+
 /**
  * Tenggat 14 hari: Upaya Hukum & Jadwal Sidang (PRD §5.10).
  */

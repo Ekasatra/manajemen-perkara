@@ -1,390 +1,395 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
+import {
+  Activity,
+  AlarmClock,
+  ArrowRight,
+  Bell,
+  BellOff,
+  BellRing,
+  Briefcase,
+  CalendarCheck,
+  ChartColumn,
+  ChartPie,
+  CircleCheck,
+  CornerDownRight,
+  Gavel,
+  Inbox,
+  Mail,
+  MapPin,
+  PenTool,
+  Undo2,
+  Upload,
+  UserPlus,
+  Wallet,
+} from 'lucide-react';
 import type { DashboardData } from '@ekasatra/shared';
 import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { PageHeader } from '@/components/ui/page-header';
-import { ResponsiveTable } from '@/components/ui/responsive-table';
-import type { Column } from '@/components/ui/responsive-table';
 import { buttonClass } from '@/components/ui/styles';
-import { formatDate, formatDateTime, formatRupiah } from '@/lib/format';
-import { CaseStatusBadge } from '@/modules/cases/case-status-badge';
+import { formatDate, formatRupiah } from '@/lib/format';
+import { avatarColor } from '@/lib/avatar';
 import { CreateCaseDialog } from '@/modules/cases/create-case-dialog';
-import { CasesStatusChart, SuratTrendChart } from './charts';
-import { daysBetween, deadlineBuckets, percent, scheduleLoad, todayWib } from './metrics';
-import { KpiCard, MiniBars, Ring, Sparkline } from './visuals';
+import { MailBars, StatusDonut } from './charts';
+import { daysBetween, todayWib } from './metrics';
+import { StatCard } from './stat-card';
+import type { StatTone } from './stat-card';
 
-/** Ambang hari untuk penanda tenggat: sampai URGENT_DAYS = mendesak, sampai SOON_DAYS = segera. */
-const URGENT_DAYS = 3;
-const SOON_DAYS = 7;
-/** Batas daftar ringkas di kolom samping. */
-const NOTIF_LIMIT = 6;
-const ACTIVITY_LIMIT = 5;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const NOTIF_ICON = {
+  approval: PenTool,
+  disposisi: CornerDownRight,
+  reject: Undo2,
+  sidang: Gavel,
+} as const;
+const TENGGAT_LABEL = { upaya_hukum: 'Upaya Hukum', sidang: 'Sidang', invoice: 'Jatuh Tempo' } as const;
 
-export type RecentCase = {
-  id: string;
-  regNo: string;
-  title: string;
-  status: string;
-  startDate: string | null;
-  upayaDeadline: string | null;
+export type DashboardViewer = {
+  name: string;
+  roleLabel: string;
+  canCreateCase: boolean;
+  canCreateSuratMasuk: boolean;
+  canCreateSuratKeluar: boolean;
+  canReadAudit: boolean;
 };
 
-function deadlineTone(daysLeft: number): BadgeTone {
-  if (daysLeft <= URGENT_DAYS) return 'danger';
-  if (daysLeft <= SOON_DAYS) return 'warning';
-  return 'info';
+function greeting(now: Date): string {
+  const hour = Number(
+    new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Asia/Jakarta' }).format(now),
+  );
+  if (hour < 11) return 'Selamat pagi';
+  if (hour < 15) return 'Selamat siang';
+  if (hour < 18) return 'Selamat sore';
+  return 'Selamat malam';
 }
 
-/** Strip di tepi kiri kartu agenda: merah hari ini, emas sampai 3 hari, netral sesudahnya. */
-function stripClass(daysLeft: number): string {
-  if (daysLeft <= 0) return 'bg-danger-fg';
-  if (daysLeft <= URGENT_DAYS) return 'bg-gold-500';
-  return 'bg-navy-300';
+function relTime(iso: string, now: Date): string {
+  const diff = (now.getTime() - new Date(iso).getTime()) / 1000;
+  if (Number.isNaN(diff)) return '';
+  if (diff < 60) return 'baru saja';
+  if (diff < 3600) return `${Math.floor(diff / 60)} mnt lalu`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
+  if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} hari lalu`;
+  return formatDate(iso);
 }
 
-function Empty({ children }: { children: string }) {
-  return <p className="py-6 text-center text-sm text-navy-400">{children}</p>;
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
 }
 
-function SectionTitle({ children, aside }: { children: string; aside?: string }) {
+function SectionTitle({ icon, children, action }: { icon: ReactNode; children: string; action?: ReactNode }) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <span aria-hidden="true" className="h-4 w-1 rounded-control bg-gold-500" />
-        <h2 className="text-base text-navy-800">{children}</h2>
-      </div>
-      {aside ? <span className="text-sm tabular-nums text-navy-400">{aside}</span> : null}
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <h2 className="flex items-center gap-2 text-sm font-bold text-navy-800">
+        <span aria-hidden="true" className="text-gold-500">{icon}</span>
+        {children}
+      </h2>
+      {action}
     </div>
   );
 }
 
-const CASE_COLUMNS: Column<RecentCase>[] = [
-  {
-    key: 'title',
-    header: 'Perkara',
-    cell: (r) => (
-      <div>
-        <Link href={`/cases/${r.id}`} className="font-medium text-navy-700 hover:underline">
-          {r.title}
-        </Link>
-        <div className="text-xs tabular-nums text-navy-400">{r.regNo}</div>
-      </div>
-    ),
-  },
-  { key: 'status', header: 'Status', cell: (r) => <CaseStatusBadge status={r.status} /> },
-  { key: 'startDate', header: 'Mulai', cell: (r) => formatDate(r.startDate) },
-  { key: 'upaya', header: 'Batas upaya', cell: (r) => formatDate(r.upayaDeadline) },
-];
+function Empty({ icon, children }: { icon: ReactNode; children: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 py-8 text-sm text-navy-400">
+      <span aria-hidden="true" className="text-navy-300">{icon}</span>
+      {children}
+    </div>
+  );
+}
+
+function leftBadge(daysLeft: number): { tone: BadgeTone; label: string } {
+  if (daysLeft <= 0) return { tone: 'danger', label: 'Hari ini' };
+  if (daysLeft === 1) return { tone: 'warning', label: 'Besok' };
+  return { tone: 'neutral', label: `H-${daysLeft}` };
+}
 
 export function DashboardView({
   data,
-  recentCases = [],
-  canCreateCase = false,
+  viewer,
   now = new Date(),
 }: {
   data: DashboardData;
-  recentCases?: RecentCase[];
-  canCreateCase?: boolean;
+  viewer: DashboardViewer;
   now?: Date;
 }) {
   const { cases, sidang7Hari, tenggat14Hari, surat, piutang, approvalMenungguSaya } = data;
   const today = todayWib(now);
-  const totalCases = cases.byStatus.reduce((n, s) => n + s.count, 0);
-  const buckets = deadlineBuckets(tenggat14Hari);
-  const urgentCount = buckets.filter((b) => b.urgent).reduce((n, b) => n + b.count, 0);
-  const load = scheduleLoad(sidang7Hari, today);
-  const peak = Math.max(0, ...load.map((d) => d.count));
-  // Sorot puncak hanya bila memang ada hari yang lebih padat dari yang lain.
-  const isPeak = (count: number) => peak > 1 && count === peak;
-  const otherStatuses = cases.byStatus.filter((s) => s.status !== 'Aktif' && s.count > 0);
+  const firstName = viewer.name.split(/\s+/)[0] ?? viewer.name;
+  const nearest = sidang7Hari[0];
+
+  const stats: {
+    icon: ReactNode;
+    label: string;
+    value: ReactNode;
+    sub: ReactNode;
+    tone: StatTone;
+    href?: string;
+  }[] = [
+    {
+      icon: <Briefcase size={18} />,
+      label: 'Perkara Aktif',
+      value: cases.activeCount,
+      sub: 'Aktif · Putus · Upaya hukum',
+      tone: 'navy',
+      href: '/cases',
+    },
+    {
+      icon: <CircleCheck size={18} />,
+      label: 'Perkara Selesai',
+      value: cases.completedCount,
+      sub: 'telah berkekuatan hukum tetap',
+      tone: 'slate',
+      href: '/cases',
+    },
+    {
+      icon: <Gavel size={18} />,
+      label: 'Sidang 7 Hari',
+      value: sidang7Hari.length,
+      sub: nearest ? `terdekat ${formatDate(nearest.scheduleDate)}` : 'tidak ada jadwal',
+      tone: 'gold',
+    },
+    {
+      icon: <Mail size={18} />,
+      label: 'Surat Hari Ini',
+      value: surat.masukHariIni + surat.keluarHariIni,
+      sub: `${surat.masukHariIni} masuk · ${surat.keluarHariIni} keluar`,
+      tone: 'sky',
+      href: '/surat-masuk',
+    },
+    piutang.authorized
+      ? {
+          icon: <Wallet size={18} />,
+          label: 'Biaya Perkara Tertagih',
+          value: <span className="text-xl">{formatRupiah(piutang.totalOutstanding ?? 0)}</span>,
+          sub: `${piutang.invoiceCount ?? 0} invoice`,
+          tone: 'emerald',
+          href: '/invoices',
+        }
+      : {
+          icon: <Inbox size={18} />,
+          label: 'Surat Belum Selesai',
+          value: surat.masukBelumSelesai,
+          sub: 'surat masuk perlu diproses',
+          tone: 'emerald',
+          href: '/surat-masuk',
+        },
+    {
+      icon: <UserPlus size={18} />,
+      label: 'Klien Baru',
+      value: data.klienBaruBulanIni,
+      sub: 'bulan ini',
+      tone: 'indigo',
+      href: '/clients',
+    },
+    {
+      icon: <AlarmClock size={18} />,
+      label: 'Deadline',
+      value: tenggat14Hari.length,
+      sub: 'upaya hukum, sidang & jatuh tempo',
+      tone: 'rose',
+    },
+    {
+      icon: <BellRing size={18} />,
+      label: 'Notifikasi',
+      value: data.notifikasiPersonal.length,
+      sub: approvalMenungguSaya.count
+        ? `${approvalMenungguSaya.count} surat menunggu Anda`
+        : 'untuk Anda',
+      tone: 'amber',
+      href: '/#pemberitahuan',
+    },
+  ];
 
   return (
     <div>
-      <PageHeader
-        title="Ringkasan perkara dan persidangan"
-        description={formatDate(now)}
-        actions={canCreateCase ? <CreateCaseDialog /> : undefined}
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="Perkara berjalan"
-          value={cases.activeCount}
-          note={`${cases.completedCount} perkara selesai`}
-          visual={
-            <Ring
-              percent={percent(cases.activeCount, totalCases)}
-              label={`${percent(cases.activeCount, totalCases)} persen dari ${totalCases} perkara berstatus aktif`}
-            />
-          }
-          footer={otherStatuses.map((s) => `${s.status}: ${s.count}`)}
-        />
-        <KpiCard
-          label="Tenggat mendesak"
-          tone={urgentCount > 0 ? 'danger' : 'default'}
-          value={urgentCount}
-          note={`${tenggat14Hari.length} tenggat dalam 14 hari`}
-          visual={
-            <MiniBars
-              bars={buckets}
-              label={buckets.map((b) => `${b.label}: ${b.count}`).join(', ')}
-            />
-          }
-          footer={buckets.filter((b) => b.count > 0).map((b) => `${b.label}: ${b.count}`)}
-        />
-        {piutang.authorized ? (
-          <KpiCard
-            label="Piutang belum lunas"
-            value={formatRupiah(piutang.totalOutstanding)}
-            note={`${piutang.invoiceCount ?? 0} invoice`}
-          />
-        ) : (
-          <KpiCard
-            label="Surat menunggu persetujuan Anda"
-            value={approvalMenungguSaya.count}
-            note={approvalMenungguSaya.count > 0 ? 'Perlu ditinjau' : 'Semua sudah ditinjau'}
-          />
-        )}
-        <KpiCard
-          label="Surat masuk belum selesai"
-          value={surat.masukBelumSelesai}
-          note={`Hari ini: ${surat.masukHariIni} masuk, ${surat.keluarHariIni} keluar`}
-          visual={
-            <Sparkline
-              values={surat.trend6Bulan.map((t) => t.suratMasuk)}
-              label={`Surat masuk 6 bulan terakhir: ${surat.trend6Bulan.map((t) => t.suratMasuk).join(', ')}`}
-            />
-          }
-        />
+      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-700">
+            {viewer.roleLabel}
+          </p>
+          <h1 className="mt-1 font-display text-4xl font-semibold text-navy-800">
+            {greeting(now)}, {firstName}.
+          </h1>
+          <p className="mt-1 text-sm text-navy-400">Ringkasan kantor per {formatDate(now)}.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {viewer.canCreateSuratMasuk ? (
+            <Link href="/surat-masuk" className={buttonClass.secondary}>
+              <Inbox aria-hidden="true" size={15} /> Catat Surat Masuk
+            </Link>
+          ) : null}
+          {viewer.canCreateSuratKeluar ? (
+            <Link href="/surat-keluar" className={buttonClass.secondary}>
+              <Upload aria-hidden="true" size={15} /> Unggah Surat Keluar
+            </Link>
+          ) : null}
+          {viewer.canCreateCase ? <CreateCaseDialog /> : null}
+        </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-12">
-        <div className="space-y-4 lg:col-span-7">
-          <section>
-            <SectionTitle aside={`${sidang7Hari.length} agenda`}>
-              Agenda sidang 7 hari ke depan
-            </SectionTitle>
-            {sidang7Hari.length === 0 ? (
-              <div className="card-surface">
-                <Empty>Tidak ada agenda sidang dalam 7 hari ke depan.</Empty>
-              </div>
-            ) : (
-              <ul className="space-y-3">
-                {sidang7Hari.map((s) => {
-                  const daysLeft = daysBetween(today, s.scheduleDate);
-                  return (
-                    <li key={s.id} className="relative overflow-hidden card-surface p-5 pl-6">
-                      <span
-                        aria-hidden="true"
-                        className={`absolute inset-y-0 left-0 w-1 ${stripClass(daysLeft)}`}
-                      />
-                      <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <Badge tone={deadlineTone(daysLeft)}>
-                          {daysLeft <= 0 ? 'Hari ini' : `H-${daysLeft}`}
-                        </Badge>
-                        <span className="tabular-nums text-navy-400">
-                          {formatDate(s.scheduleDate)}
-                          {s.scheduleTime ? `, ${s.scheduleTime.slice(0, 5)} WIB` : ''}
-                        </span>
-                      </div>
-                      <Link
-                        href={`/cases/${s.caseId}`}
-                        className="mt-2 block font-display text-lg font-semibold text-navy-700 hover:underline"
-                      >
-                        {s.caseTitle}
-                      </Link>
-                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-navy-100 pt-3 text-sm text-navy-400">
-                        <span>
-                          {s.kind}, {s.location || 'lokasi belum ditentukan'}
-                        </span>
-                        <Badge tone={s.status === 'Terjadwal' ? 'neutral' : 'warning'}>
-                          {s.status}
-                        </Badge>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        {stats.map((s) => (
+          <StatCard key={s.label} {...s} />
+        ))}
+      </div>
 
-          <section>
-            <SectionTitle aside={`${tenggat14Hari.length} tenggat`}>
-              Tenggat 14 hari ke depan
-            </SectionTitle>
-            <div className="card-surface px-5">
-              {tenggat14Hari.length === 0 ? (
-                <Empty>Tidak ada tenggat dalam 14 hari ke depan.</Empty>
-              ) : (
-                <ul className="divide-y divide-navy-100">
-                  {tenggat14Hari.map((t) => (
-                    <li key={t.id} className="flex items-start justify-between gap-3 py-3">
-                      <div className="min-w-0">
-                        <Link
-                          href={t.link}
-                          className="text-sm font-medium text-navy-700 hover:underline"
-                        >
-                          {t.title}
-                        </Link>
-                        {t.extraInfo ? (
-                          <p className="text-xs text-navy-400">{t.extraInfo}</p>
-                        ) : null}
-                      </div>
-                      <Badge tone={deadlineTone(t.daysLeft)}>
-                        {t.daysLeft === 0 ? 'Hari ini' : `H-${t.daysLeft}`}
-                      </Badge>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
-        </div>
-
-        <div className="space-y-4 lg:col-span-5">
-          <Card
-            title="Beban sidang 7 hari ke depan"
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <section className="card-surface p-5 xl:col-span-2">
+          <SectionTitle
+            icon={<Gavel size={16} />}
             action={
-              <span className="text-sm tabular-nums text-navy-400">
-                Total: {sidang7Hari.length}
-              </span>
+              <Link href="/jadwal" className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}>
+                Kalender <ArrowRight aria-hidden="true" size={15} />
+              </Link>
             }
           >
-            <ul className="flex h-36 items-end justify-between gap-2">
-              {load.map((d) => (
-                <li
-                  key={d.date}
-                  className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
-                >
-                  <span
-                    className={`text-xs tabular-nums ${isPeak(d.count) ? 'font-semibold text-gold-700' : 'text-navy-400'}`}
-                  >
-                    {d.count}
-                    <span className="sr-only"> sidang pada {formatDate(d.date)}</span>
-                  </span>
-                  <div
-                    aria-hidden="true"
-                    style={{ height: `${peak > 0 ? Math.max((d.count / peak) * 100, 4) : 4}%` }}
-                    className={`w-full rounded-t-control ${isPeak(d.count) ? 'bg-gold-500' : 'bg-navy-300'}`}
-                  />
-                  <span className="text-xs text-navy-400">{d.label}</span>
+            Jadwal Sidang 7 Hari ke Depan
+          </SectionTitle>
+          {sidang7Hari.length === 0 ? (
+            <Empty icon={<CalendarCheck size={28} />}>Tidak ada sidang dalam 7 hari ke depan</Empty>
+          ) : (
+            <ul className="divide-y divide-navy-50">
+              {sidang7Hari.map((s) => {
+                const left = daysBetween(today, s.scheduleDate);
+                const badge = leftBadge(left);
+                const month = MONTHS[Number(s.scheduleDate.slice(5, 7)) - 1] ?? '';
+                return (
+                  <li key={s.id}>
+                    <Link
+                      href={`/cases/${s.caseId}`}
+                      className="-mx-2 flex items-center gap-4 rounded-control px-2 py-3 hover:bg-gold-50/40"
+                    >
+                      <div className="w-14 shrink-0 rounded-control bg-navy-700 py-1.5 text-center text-white dark:bg-gold-500 dark:text-navy-950">
+                        <div className="text-[10px] uppercase tracking-wider text-gold-300 dark:text-navy-950">{month}</div>
+                        <div className="text-xl font-bold leading-none">{Number(s.scheduleDate.slice(8, 10))}</div>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-semibold text-navy-800">{s.caseTitle}</div>
+                        <div className="truncate text-xs text-navy-400">{s.kind}</div>
+                        <div className="mt-0.5 flex items-center gap-1 text-xs text-navy-500">
+                          <MapPin aria-hidden="true" size={13} />
+                          {s.location || '—'}
+                          {s.scheduleTime ? ` · ${s.scheduleTime.slice(0, 5)} WIB` : ''}
+                        </div>
+                      </div>
+                      <Badge tone={badge.tone}>{badge.label}</Badge>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <section id="pemberitahuan" className="card-surface scroll-mt-24 p-5">
+          <SectionTitle icon={<BellRing size={16} />}>Notifikasi</SectionTitle>
+          {data.notifikasiPersonal.length === 0 ? (
+            <Empty icon={<BellOff size={28} />}>Tidak ada notifikasi baru</Empty>
+          ) : (
+            <ul className="max-h-[340px] space-y-2 overflow-y-auto pr-1">
+              {data.notifikasiPersonal.map((n) => {
+                const Icon = NOTIF_ICON[n.type] ?? Bell;
+                return (
+                  <li key={n.id}>
+                    <Link href={n.link} className="flex gap-3 rounded-control p-2.5 hover:bg-gold-50/50">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-navy-50 text-navy-700">
+                        <Icon aria-hidden="true" size={15} />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-navy-800">{n.title}</div>
+                        <div className="line-clamp-2 text-xs text-navy-500">{n.description}</div>
+                        <div className="mt-0.5 text-[11px] text-navy-400">{relTime(n.date, now)}</div>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <section className="card-surface p-5">
+          <SectionTitle icon={<ChartPie size={16} />}>Perkara per Status</SectionTitle>
+          <StatusDonut byStatus={cases.byStatus} />
+        </section>
+        <section className="card-surface p-5">
+          <SectionTitle icon={<ChartColumn size={16} />}>Volume Surat 6 Bulan</SectionTitle>
+          <MailBars trend={surat.trend6Bulan} />
+        </section>
+        <section className="card-surface p-5 lg:col-span-2 xl:col-span-1">
+          <SectionTitle icon={<AlarmClock size={16} />}>Deadline Mendatang</SectionTitle>
+          {tenggat14Hari.length === 0 ? (
+            <Empty icon={<CalendarCheck size={28} />}>Tidak ada deadline dekat</Empty>
+          ) : (
+            <ul className="max-h-60 space-y-2 overflow-y-auto pr-1">
+              {tenggat14Hari.map((t) => (
+                <li key={t.id}>
+                  <Link href={t.link} className="flex items-center gap-3 rounded-control p-1.5 text-sm hover:bg-gold-50/40">
+                    <span className="w-24 shrink-0 text-center">
+                      <Badge tone={t.type === 'upaya_hukum' ? 'danger' : 'neutral'}>
+                        {TENGGAT_LABEL[t.type]}
+                      </Badge>
+                    </span>
+                    <span className="flex-1 truncate text-navy-700">{t.title}</span>
+                    <span className={`text-xs ${t.daysLeft <= 1 ? 'font-semibold text-danger-fg' : 'text-navy-400'}`}>
+                      {t.daysLeft === 0 ? 'Hari ini' : t.daysLeft < 0 ? `${Math.abs(t.daysLeft)} hr lewat` : `${t.daysLeft} hari`}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>
-          </Card>
-
-          <Card title="Berapa perkara di tiap status?">
-            <CasesStatusChart byStatus={cases.byStatus} />
-          </Card>
-        </div>
+          )}
+        </section>
       </div>
 
-      <section className="mt-6">
-        <SectionTitle>Perkara terbaru</SectionTitle>
-        <div className="overflow-hidden card-surface">
-          {recentCases.length === 0 ? (
-            <Empty>Belum ada perkara yang dapat Anda lihat.</Empty>
-          ) : (
-            <ResponsiveTable
-              caption="Perkara terbaru"
-              columns={CASE_COLUMNS}
-              rows={recentCases}
-              rowKey={(r) => r.id}
-            />
-          )}
-          <div className="border-t border-navy-200 px-4 py-3 text-right">
-            <Link href="/cases" className={buttonClass.ghost}>
-              Lihat semua perkara
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <Card
-          title="Surat menunggu persetujuan Anda"
+      <section className="card-surface mt-4 p-5">
+        <SectionTitle
+          icon={<Activity size={16} />}
           action={
-            <Badge tone={approvalMenungguSaya.count > 0 ? 'warning' : 'neutral'}>
-              {approvalMenungguSaya.count}
-            </Badge>
+            viewer.canReadAudit ? (
+              <Link href="/audit" className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}>
+                Audit log <ArrowRight aria-hidden="true" size={15} />
+              </Link>
+            ) : undefined
           }
         >
-          {approvalMenungguSaya.items.length === 0 ? (
-            <Empty>Semua surat sudah ditinjau atau ditandatangani.</Empty>
-          ) : (
-            <ul className="divide-y divide-navy-100">
-              {approvalMenungguSaya.items.map((a) => (
-                <li key={a.id} className="py-3">
-                  <Link
-                    href={`/surat-keluar/${a.id}`}
-                    className="text-sm font-medium text-navy-700 hover:underline"
+          Aktivitas Terbaru
+        </SectionTitle>
+        {data.aktivitasTerbaru.length === 0 ? (
+          <Empty icon={<Activity size={28} />}>Belum ada aktivitas</Empty>
+        ) : (
+          <ul className="grid gap-x-8 md:grid-cols-2">
+            {data.aktivitasTerbaru.map((a) => {
+              const name = a.userName || 'Sistem';
+              return (
+                <li key={a.id} className="flex gap-3 border-b border-navy-50 py-2.5">
+                  <span
+                    aria-hidden="true"
+                    className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ring-2 ring-white ${avatarColor(name)}`}
                   >
-                    {a.subject}
-                  </Link>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-navy-400">
-                    <Badge tone="warning">{a.status}</Badge>
-                    {a.noSurat ? <span>No. {a.noSurat}</span> : null}
-                    {a.tglSurat ? <span>{formatDate(a.tglSurat)}</span> : null}
+                    {initials(name)}
+                  </span>
+                  <div className="min-w-0 text-sm">
+                    <span className="font-semibold">{name}</span>{' '}
+                    <span className="text-navy-400">· {a.action} · {a.module}</span>
+                    <div className="truncate text-navy-600">{a.description}</div>
+                    <div className="text-[11px] text-navy-400">{relTime(a.createdAt, now)}</div>
                   </div>
                 </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <div id="pemberitahuan" className="scroll-mt-24">
-          <Card title="Pemberitahuan untuk Anda">
-            {data.notifikasiPersonal.length === 0 ? (
-              <Empty>Tidak ada pemberitahuan baru.</Empty>
-            ) : (
-              <ul className="divide-y divide-navy-100">
-                {data.notifikasiPersonal.slice(0, NOTIF_LIMIT).map((n) => (
-                  <li key={n.id} className="py-3 text-sm">
-                    <div className="flex items-start justify-between gap-2">
-                      <Link href={n.link} className="font-medium text-navy-700 hover:underline">
-                        {n.title}
-                      </Link>
-                      {n.urgency === 'high' ? <Badge tone="danger">Mendesak</Badge> : null}
-                    </div>
-                    <p className="mt-0.5 text-navy-400">{n.description}</p>
-                    <p className="mt-0.5 text-xs tabular-nums text-navy-400">
-                      {formatDate(n.date)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
-
-        <Card title="Aktivitas terbaru">
-          {data.aktivitasTerbaru.length === 0 ? (
-            <Empty>Belum ada aktivitas tercatat.</Empty>
-          ) : (
-            <ul className="divide-y divide-navy-100">
-              {data.aktivitasTerbaru.slice(0, ACTIVITY_LIMIT).map((act) => (
-                <li key={act.id} className="py-3 text-sm">
-                  <p className="text-navy-800">
-                    <span className="font-medium">{act.userName || 'Sistem'}</span> {act.action}{' '}
-                    pada {act.module}
-                    {act.description ? ` (${act.description})` : ''}
-                  </p>
-                  <p className="mt-0.5 text-xs tabular-nums text-navy-400">
-                    {formatDateTime(act.createdAt)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
-
-      <div className="mt-6">
-        <Card title="Surat masuk dan keluar, 6 bulan terakhir">
-          <SuratTrendChart trend6Bulan={surat.trend6Bulan} />
-        </Card>
-      </div>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

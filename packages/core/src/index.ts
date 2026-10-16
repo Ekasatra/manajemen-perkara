@@ -80,6 +80,8 @@ export {
   // Baca dashboard (G1/G6)
   getCaseSummaryForDashboard,
   getUpcomingSchedulesForDashboard,
+  listSchedulesInRange,
+  listDocumentCatalog,
   getTenggat14HariCases,
   // Baca laporan (G2)
   listCasesForReport,
@@ -162,6 +164,7 @@ export {
 // Dashboard (Agent G · G1)
 export { getDashboardData } from './dashboard';
 export type { DashboardUser } from './dashboard';
+export type { ScheduleCalendarItem, DocumentCatalogItem } from './cases/read';
 
 // Reports (Agent G · G2)
 export {
