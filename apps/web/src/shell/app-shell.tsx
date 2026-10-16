@@ -193,7 +193,7 @@ export function AppShell({
       <div className={`print:ml-0 ${collapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <div className="sticky top-0 z-10 hidden h-16 items-center justify-between gap-4 border-b border-navy-200 bg-navy-50 px-8 md:flex print:hidden">
           <p className="min-w-0 truncate text-sm text-navy-400">
-            {current?.group ? (
+            {current?.group && current.group !== current.label ? (
               <>
                 {current.group}
                 <span aria-hidden="true"> / </span>
