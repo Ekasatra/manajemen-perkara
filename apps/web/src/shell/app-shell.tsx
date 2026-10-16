@@ -67,7 +67,7 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
         Lewati ke konten
       </a>
 
-      <header className="flex items-center gap-3 border-b border-navy-200 bg-white px-4 py-2 md:hidden">
+      <header className="flex items-center gap-3 border-b border-navy-200 bg-white px-4 py-2 md:hidden print:hidden">
         <button
           type="button"
           aria-expanded={open}
@@ -91,7 +91,7 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
 
       <aside
         id="sidebar"
-        className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-navy-700 text-navy-100 transition-transform md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-navy-700 text-navy-100 transition-transform md:translate-x-0 print:hidden ${
           collapsed ? 'md:w-16' : ''
         } ${open ? 'translate-x-0' : 'max-md:invisible max-md:-translate-x-full'}`}
       >
@@ -169,7 +169,7 @@ export function AppShell({ nav, children }: { nav: NavItem[]; children: ReactNod
 
       <main
         id="konten"
-        className={`min-h-screen p-4 md:p-8 ${collapsed ? 'md:ml-16' : 'md:ml-64'}`}
+        className={`min-h-screen p-4 md:p-8 print:m-0 print:p-0 ${collapsed ? 'md:ml-16' : 'md:ml-64'}`}
       >
         <div className="mx-auto max-w-7xl">{children}</div>
       </main>

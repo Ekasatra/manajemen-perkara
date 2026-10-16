@@ -20,7 +20,7 @@ export function DownloadLink({ endpoint, label }: { endpoint: string; label: str
       <button type="button" onClick={() => void open()} className={buttonClass.secondary}>
         {label}
       </button>
-      {error ? <span role="alert" className="ml-2 text-sm text-red-700">{error}</span> : null}
+      {error ? <span role="alert" className="ml-2 text-sm text-danger-fg">{error}</span> : null}
     </span>
   );
 }

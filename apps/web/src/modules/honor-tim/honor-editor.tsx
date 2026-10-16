@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { buttonClass, inputClass } from '@/components/ui/styles';
+import { formatRupiah } from '@/lib/format';
 import { callApi } from '@/modules/invoices/api-client';
 
 type Member = {
@@ -14,7 +15,7 @@ type Member = {
   status: 'Belum' | 'Dibayar';
 };
 
-const rp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
+const rp = formatRupiah;
 
 /**
  * Editor honor per perkara (Admin). Draft disimpan terpisah; anggota baru melihat nilainya
@@ -42,7 +43,12 @@ export function HonorEditor({
 
   const active = members.filter((m) => m.isMember);
   const total = useMemo(
-    () => active.reduce((sum, m) => sum + (Number(values[m.userId]) || 0), 0),
+    // Pratinjau hanya menjumlah bilangan bulat valid; simpan tetap memvalidasi dan memberi galat.
+    () =>
+      active.reduce((sum, m) => {
+        const n = Number(values[m.userId]);
+        return sum + (Number.isSafeInteger(n) ? n : 0);
+      }, 0),
     [active, values],
   );
   const over = total > fund;
@@ -120,7 +126,7 @@ export function HonorEditor({
                 <td className="py-2 pr-3">
                   {m.fullName}
                   {!m.isMember && (
-                    <span className="ml-2 text-xs text-amber-800">(bukan anggota tim lagi)</span>
+                    <span className="ml-2 text-xs text-warning-fg">(bukan anggota tim lagi)</span>
                   )}
                 </td>
                 <td className="py-2 pr-3">
@@ -169,11 +175,11 @@ export function HonorEditor({
       </div>
 
       <p
-        className={`mt-4 text-sm ${over ? 'font-medium text-red-700' : 'text-navy-700'}`}
+        className={`mt-4 text-sm ${over ? 'font-medium text-danger-fg' : 'text-navy-700'}`}
         aria-live="polite"
       >
         Total draft {rp(total)} dari dana distribusi {rp(fund)}
-        {over ? ` — melebihi ${rp(total - fund)}` : ` — sisa ${rp(fund - total)}`}
+        {over ? `, melebihi ${rp(total - fund)}` : `, sisa ${rp(fund - total)}`}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -190,12 +196,12 @@ export function HonorEditor({
         </button>
       </div>
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-700">
+        <p role="alert" className="mt-3 text-sm text-danger-fg">
           {error}
         </p>
       )}
       {notice && !error && (
-        <p role="status" className="mt-3 text-sm text-green-800">
+        <p role="status" className="mt-3 text-sm text-success-fg">
           {notice}
         </p>
       )}

@@ -285,7 +285,7 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
       ) : (
         <ol className="space-y-3">
           {timeline.map((t) => (
-            <li key={t.id} className="rounded-md border border-navy-100 bg-white p-4">
+            <li key={t.id} className="rounded-card border border-navy-100 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-navy-700">{t.title}</span>
                 <span className="text-xs text-navy-400">{formatDate(t.eventDate)}</span>
@@ -376,7 +376,7 @@ function JadwalTab({ caseId, schedules, canUpdate }: Props) {
       {schedules.length === 0 ? (
         <p className="text-sm text-navy-400">Belum ada jadwal.</p>
       ) : (
-        <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+        <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="bg-navy-50 text-navy-600">
               <tr>
@@ -461,7 +461,7 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
       {documents.length === 0 ? (
         <p className="text-sm text-navy-400">Belum ada dokumen.</p>
       ) : (
-        <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+        <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="bg-navy-50 text-navy-600">
               <tr>
@@ -526,7 +526,7 @@ function SuratTab({ suratMasuk, suratKeluar }: Props) {
         {suratMasuk.length === 0 ? (
           <p className="text-sm text-navy-400">Belum ada surat masuk untuk perkara ini.</p>
         ) : (
-          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+          <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="bg-navy-50 text-navy-600">
                 <tr>
@@ -559,7 +559,7 @@ function SuratTab({ suratMasuk, suratKeluar }: Props) {
         {suratKeluar.length === 0 ? (
           <p className="text-sm text-navy-400">Belum ada surat keluar untuk perkara ini.</p>
         ) : (
-          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+          <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="bg-navy-50 text-navy-600">
                 <tr>
@@ -602,7 +602,7 @@ function BiayaTab({ invoices, honorarium, canViewBiaya }: Props) {
         {invoices.length === 0 ? (
           <p className="text-sm text-navy-400">Belum ada invoice untuk perkara ini.</p>
         ) : (
-          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+          <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="bg-navy-50 text-navy-600">
                 <tr>
@@ -635,7 +635,7 @@ function BiayaTab({ invoices, honorarium, canViewBiaya }: Props) {
         {honorarium.length === 0 ? (
           <p className="text-sm text-navy-400">Belum ada honor untuk perkara ini.</p>
         ) : (
-          <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+          <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="bg-navy-50 text-navy-600">
                 <tr>
@@ -669,7 +669,7 @@ function TimTab({ members, canManageTeam }: Props) {
       {members.length === 0 ? (
         <p className="text-sm text-navy-400">Belum ada anggota tim.</p>
       ) : (
-        <div className="overflow-hidden rounded-md border border-navy-200 bg-white">
+        <div className="overflow-hidden rounded-card border border-navy-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="bg-navy-50 text-navy-600">
               <tr>

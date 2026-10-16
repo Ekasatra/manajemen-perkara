@@ -55,7 +55,7 @@ export function SettingsForm({ initialSettings, canEdit }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-5">
-      <fieldset className="flex flex-col gap-3 rounded-md border border-navy-200 p-4">
+      <fieldset className="flex flex-col gap-3 rounded-card border border-navy-200 p-4">
         <legend className="px-2 text-sm font-medium text-navy-600">Profil Kantor</legend>
         <div>
           <label htmlFor="office_name" className={labelClass}>Nama Kantor</label>
@@ -75,7 +75,7 @@ export function SettingsForm({ initialSettings, canEdit }: Props) {
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3 rounded-md border border-navy-200 p-4">
+      <fieldset className="flex flex-col gap-3 rounded-card border border-navy-200 p-4">
         <legend className="px-2 text-sm font-medium text-navy-600">Aturan Bisnis</legend>
         <div>
           <label htmlFor="kas_kantor_persen" className={labelClass}>Persen Kas Kantor (%)</label>
@@ -99,7 +99,7 @@ export function SettingsForm({ initialSettings, canEdit }: Props) {
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3 rounded-md border border-navy-200 p-4">
+      <fieldset className="flex flex-col gap-3 rounded-card border border-navy-200 p-4">
         <legend className="px-2 text-sm font-medium text-navy-600">Daftar Dinamis</legend>
         <div>
           <label htmlFor="client_types" className={labelClass}>Tipe Klien (pisah koma)</label>

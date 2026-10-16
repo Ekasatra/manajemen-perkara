@@ -4,6 +4,9 @@
  */
 export const APP_NAME = 'eKaSatra';
 
+/** Nama kantor yang tampil di portal klien (nilai sama dengan default pengaturan kantor). */
+export const FIRM_NAME = 'EKASATRA Law & Policy Advisory';
+
 const SIZE = {
   full: 'text-2xl',
   compact: 'text-xl',

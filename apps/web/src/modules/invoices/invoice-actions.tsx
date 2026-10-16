@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { formatRupiah } from '@/lib/format';
 import { callApi, parseRupiah } from './api-client';
 
 type Props = {
@@ -114,7 +115,7 @@ export function InvoiceActions({ id, invoiceNo, amount, paidAmount, dueDate, des
         )}
       </div>
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-700">
+        <p role="alert" className="mt-3 text-sm text-danger-fg">
           {error}
         </p>
       )}
@@ -123,7 +124,7 @@ export function InvoiceActions({ id, invoiceNo, amount, paidAmount, dueDate, des
         open={dialog === 'payment'}
         onClose={() => setDialog(null)}
         title="Catat Pembayaran"
-        description={`Sisa tagihan: Rp ${Math.max(amount - paidAmount, 0).toLocaleString('id-ID')}`}
+        description={`Sisa tagihan: ${formatRupiah(Math.max(amount - paidAmount, 0))}`}
         submitLabel="Catat"
         onSubmit={pay}
       >

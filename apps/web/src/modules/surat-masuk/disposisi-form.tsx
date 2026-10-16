@@ -78,7 +78,7 @@ export function DisposisiForm({
           </button>
         ) : null}
       </div>
-      {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-danger-fg">{error}</p> : null}
     </form>
   );
 }
