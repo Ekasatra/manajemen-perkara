@@ -13,6 +13,7 @@ describe('normalizeRole', () => {
   });
 
   it('menerima lowercase shared + viewer', () => {
+    expect(normalizeRole('SuperAdmin')).toBe('superadmin');
     expect(normalizeRole('admin')).toBe('admin');
     expect(normalizeRole('viewer')).toBe('viewer');
   });
@@ -29,69 +30,69 @@ describe('POLICY — matriks PRD §4', () => {
     [
       'users',
       'Users, Klien, Pihak Lawan: hanya Admin CRUD',
-      { admin: 'CRUD', advokat: '', paralegal: '', viewer: '' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
     ],
-    ['clients', '', { admin: 'CRUD', advokat: '', paralegal: '', viewer: '' }],
-    ['opponents', '', { admin: 'CRUD', advokat: '', paralegal: '', viewer: '' }],
+    ['clients', '', { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' }],
+    ['opponents', '', { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' }],
     [
       'advocates',
       'Data Advokat: non-Admin hanya milik sendiri',
-      { admin: 'CRUD', advokat: 'RU', paralegal: 'RU', viewer: 'R' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'RU', paralegal: 'RU', viewer: 'R' },
     ],
     [
       'settings',
       'Pengaturan: Admin CRUD, lainnya R',
-      { admin: 'CRUD', advokat: 'R', paralegal: 'R', viewer: 'R' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
     ],
     [
       'cases',
       'Perkara: Advokat RU+C, Paralegal RU',
-      { admin: 'CRUD', advokat: 'RUC', paralegal: 'RU', viewer: 'R' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'RUC', paralegal: 'RU', viewer: 'R' },
     ],
     [
       'timeline',
       'Timeline/Jadwal/Dokumen: Paralegal CRU',
-      { admin: 'CRUD', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
     ],
-    ['schedules', '', { admin: 'CRUD', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' }],
-    ['case_documents', '', { admin: 'CRUD', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' }],
+    ['schedules', '', { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' }],
+    ['case_documents', '', { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' }],
     [
       'surat_masuk',
       'Surat: semua staf CRU',
-      { admin: 'CRUD', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
     ],
-    ['surat_keluar', '', { admin: 'CRUD', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' }],
+    ['surat_keluar', '', { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' }],
     [
       'invoices',
       'Biaya Perkara: hanya Admin',
-      { admin: 'CRUD', advokat: '', paralegal: '', viewer: '' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
     ],
     [
       'honor_tim',
       'Honor: Admin kelola, lainnya lihat milik sendiri',
-      { admin: 'CRUD', advokat: 'R', paralegal: 'R', viewer: 'R' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
     ],
     [
       'kas',
       'Kas: Admin R, non-Admin via kas_viewers (canViewKas)',
-      { admin: 'R', advokat: '', paralegal: '', viewer: '' },
+      { superadmin: 'R', admin: 'R', advokat: '', paralegal: '', viewer: '' },
     ],
     [
       'reports',
       'Laporan & Audit Log: Admin R saja',
-      { admin: 'R', advokat: '', paralegal: '', viewer: '' },
+      { superadmin: 'R', admin: 'R', advokat: '', paralegal: '', viewer: '' },
     ],
-    ['audit_log', '', { admin: 'R', advokat: '', paralegal: '', viewer: '' }],
+    ['audit_log', '', { superadmin: 'R', admin: 'R', advokat: '', paralegal: '', viewer: '' }],
     [
       'templates',
       'Template: unggah Admin, unduh semua staf',
-      { admin: 'CRUD', advokat: 'R', paralegal: 'R', viewer: 'R' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
     ],
   ];
 
   for (const [resource, , expected] of table) {
     it(`${resource}: sesuai PRD §4`, () => {
-      for (const role of ['admin', 'advokat', 'paralegal', 'viewer'] as const) {
+      for (const role of ['superadmin', 'admin', 'advokat', 'paralegal', 'viewer'] as const) {
         const allowed = expected[role] ?? '';
         for (const action of ['C', 'R', 'U', 'D'] as const) {
           expect(can({ role }, action, resource as never), `${role}/${action}/${resource}`).toBe(
@@ -104,7 +105,7 @@ describe('POLICY — matriks PRD §4', () => {
 
   it('semua resource didefinisikan lengkap', () => {
     for (const r of RESOURCES) {
-      for (const role of ['admin', 'advokat', 'paralegal', 'viewer'] as const) {
+      for (const role of ['superadmin', 'admin', 'advokat', 'paralegal', 'viewer'] as const) {
         expect(typeof POLICY[r][role], `${r}/${role}`).toBe('string');
         expect(POLICY[r][role], `${r}/${role}`).toMatch(/^[CRUD]*$/);
       }
@@ -117,6 +118,17 @@ describe('can / ensureCan', () => {
     expect(can({ role: 'advokat' }, 'D', 'cases')).toBe(false);
     expect(can({ role: 'paralegal' }, 'U', 'users')).toBe(false);
     expect(can({ role: 'admin' }, 'U', 'invoices')).toBe(true);
+  });
+
+  it('hanya superadmin yang boleh menghapus; admin tetap boleh buat dan ubah', () => {
+    for (const resource of RESOURCES) {
+      expect(can({ role: 'admin' }, 'D', resource), `admin/D/${resource}`).toBe(false);
+    }
+    for (const resource of ['users', 'clients', 'opponents', 'cases', 'invoices'] as const) {
+      expect(can({ role: 'superadmin' }, 'D', resource)).toBe(true);
+      expect(can({ role: 'admin' }, 'C', resource)).toBe(true);
+      expect(can({ role: 'admin' }, 'U', resource)).toBe(true);
+    }
   });
 
   it('menerima role berkapitalisasi dari DB', () => {

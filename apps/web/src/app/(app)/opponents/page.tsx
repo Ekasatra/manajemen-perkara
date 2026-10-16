@@ -4,13 +4,14 @@
 import { count, desc } from 'drizzle-orm';
 import { createDb, opponents } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { requireUser, ensureCan } from '@ekasatra/core';
+import { requireUser, ensureCan, can } from '@ekasatra/core';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
 import { formatDate } from '@/lib/format';
 import { CreateOpponentDialog } from '@/modules/opponents/create-opponent-dialog';
+import { PartyActions } from '@/modules/parties/party-actions';
 
 type OpponentRow = {
   id: string;
@@ -25,12 +26,12 @@ function getPhone(contacts: unknown): string {
   if (!Array.isArray(contacts)) return '-';
   const c = contacts.find(
     (item) =>
-      item && typeof item === 'object' && 'type' in item &&
+      item &&
+      typeof item === 'object' &&
+      'type' in item &&
       ['HP', 'WhatsApp', 'Telepon'].includes(String((item as { type: string }).type)),
   );
-  return c && typeof c === 'object' && 'value' in c
-    ? String((c as { value: string }).value)
-    : '-';
+  return c && typeof c === 'object' && 'value' in c ? String((c as { value: string }).value) : '-';
 }
 
 export default async function OpponentsPage({
@@ -64,6 +65,8 @@ export default async function OpponentsPage({
   ]);
 
   const total = countRows[0]?.value ?? 0;
+  const canEdit = can(user, 'U', 'opponents');
+  const canDelete = can(user, 'D', 'opponents');
 
   const columns: Column<OpponentRow>[] = [
     { key: 'name', header: 'Nama', cell: (r) => r.name },
@@ -71,6 +74,17 @@ export default async function OpponentsPage({
     { key: 'phone', header: 'Telepon', cell: (r) => getPhone(r.contacts) },
     { key: 'address', header: 'Alamat', cell: (r) => r.address ?? '-' },
     { key: 'createdAt', header: 'Dibuat', cell: (r) => formatDate(r.createdAt) },
+    ...(canEdit || canDelete
+      ? [
+          {
+            key: 'aksi',
+            header: 'Aksi',
+            cell: (r: OpponentRow) => (
+              <PartyActions entity="opponents" row={r} canEdit={canEdit} canDelete={canDelete} />
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (

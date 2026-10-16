@@ -14,12 +14,22 @@ type Props = {
   paidAmount: number;
   dueDate: string | null;
   description: string | null;
+  /** Hanya Superadmin (`can(user, 'D', 'invoices')` dari server). */
+  canDelete: boolean;
 };
 
-type Dialog = 'payment' | 'edit' | null;
+type Dialog = 'payment' | 'edit' | 'delete' | null;
 
 /** Aksi pada detail invoice. Status & paid_date selalu dihitung server dari paid_amount. */
-export function InvoiceActions({ id, invoiceNo, amount, paidAmount, dueDate, description }: Props) {
+export function InvoiceActions({
+  id,
+  invoiceNo,
+  amount,
+  paidAmount,
+  dueDate,
+  description,
+  canDelete,
+}: Props) {
   const router = useRouter();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +57,12 @@ export function InvoiceActions({ id, invoiceNo, amount, paidAmount, dueDate, des
     await callApi(`${base}/payments`, 'POST', { amount: value, ...(paidDate ? { paidDate } : {}) });
     setDialog(null);
     router.refresh();
+  }
+
+  async function remove() {
+    await callApi(base, 'DELETE');
+    setDialog(null);
+    router.push('/invoices');
   }
 
   async function edit(form: FormData) {
@@ -97,18 +113,11 @@ export function InvoiceActions({ id, invoiceNo, amount, paidAmount, dueDate, des
             PDF Kuitansi
           </a>
         )}
-        {paidAmount === 0 && (
+        {canDelete && paidAmount === 0 && (
           <button
             type="button"
-            className={buttonClass.secondary}
-            disabled={busy}
-            onClick={() => {
-              if (!window.confirm(`Hapus invoice ${invoiceNo}?`)) return;
-              void run(async () => {
-                await callApi(base, 'DELETE');
-                router.push('/invoices');
-              });
-            }}
+            className={`${buttonClass.secondary} text-danger-fg`}
+            onClick={() => setDialog('delete')}
           >
             Hapus
           </button>
@@ -119,6 +128,23 @@ export function InvoiceActions({ id, invoiceNo, amount, paidAmount, dueDate, des
           {error}
         </p>
       )}
+
+      {canDelete && dialog === 'delete' ? (
+        <FormDialog
+          open
+          onClose={() => setDialog(null)}
+          title="Hapus invoice?"
+          description={`${invoiceNo} akan dihapus permanen dan tidak bisa dikembalikan.`}
+          submitLabel="Hapus"
+          destructive
+          onSubmit={remove}
+        >
+          <p className="text-sm text-navy-600">
+            Invoice yang sudah ada pembayaran tidak dapat dihapus. Tindakan ini tercatat di Audit
+            Log.
+          </p>
+        </FormDialog>
+      ) : null}
 
       <FormDialog
         open={dialog === 'payment'}

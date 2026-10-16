@@ -7,7 +7,7 @@
  */
 import { asc, eq } from 'drizzle-orm';
 import { caseMembers, cases, settings } from '@ekasatra/db';
-import { normalizeRole } from '../kernel/policy';
+import { isAdminRole } from '../kernel/policy';
 import type { AuthContext } from '../kernel/auth';
 import type { DbExecutor } from '../kernel/db-helpers';
 
@@ -60,7 +60,7 @@ async function scopeAssignedOnly(db: DbExecutor): Promise<boolean> {
 // ponytail: duplikasi sementara aturan scope D7; hapus saat D7 masuk main.
 export const tempCaseLookup: CaseLookup = {
   async visibleCaseIds(db, user) {
-    if (normalizeRole(user.role) === 'admin' || !(await scopeAssignedOnly(db))) return 'all';
+    if (isAdminRole(user.role) || !(await scopeAssignedOnly(db))) return 'all';
     const [own, member] = await Promise.all([
       db.select({ id: cases.id }).from(cases).where(eq(cases.createdBy, user.userId)),
       db
@@ -81,7 +81,7 @@ export const tempCaseLookup: CaseLookup = {
       .orderBy(asc(caseMembers.createdAt));
     const visible =
       c.createdBy === user.userId || members.some((m) => m.userId === user.userId);
-    if (!visible && normalizeRole(user.role) !== 'admin' && (await scopeAssignedOnly(db))) {
+    if (!visible && !isAdminRole(user.role) && (await scopeAssignedOnly(db))) {
       return null;
     }
     return {

@@ -9,7 +9,7 @@ import type { AuthContext } from '../kernel/auth';
 import type { DbExecutor } from '../kernel/db-helpers';
 import { withTx } from '../kernel/db-helpers';
 import { logActivity } from '../kernel/activity';
-import { ensureCan, normalizeRole } from '../kernel/policy';
+import { ensureCan, isAdminRole } from '../kernel/policy';
 import {
   availableActions,
   canEditSurat,
@@ -30,7 +30,7 @@ const BUCKET = 'surat';
 const PREFIX = 'keluar';
 
 type Row = typeof suratKeluar.$inferSelect;
-const isAdmin = (u: AuthContext) => normalizeRole(u.role) === 'admin';
+const isAdmin = (u: AuthContext) => isAdminRole(u.role);
 const actorOf = (u: AuthContext) => ({ id: u.userId, role: u.role });
 
 async function assertNoDuplicate(db: DbExecutor, noSurat: string, exceptId?: string) {

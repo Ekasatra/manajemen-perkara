@@ -40,11 +40,23 @@ export type Resource = (typeof RESOURCES)[number];
 /** Nilai role apa pun (termasuk enum DB berkapital) → Role kanonik lowercase. */
 export function normalizeRole(value: string): Role {
   const role = value.trim().toLowerCase();
-  if (role === 'admin' || role === 'advokat' || role === 'paralegal' || role === 'viewer') {
+  if (
+    role === 'superadmin' ||
+    role === 'admin' ||
+    role === 'advokat' ||
+    role === 'paralegal' ||
+    role === 'viewer'
+  ) {
     return role;
   }
   // Least privilege: role tak dikenal diperlakukan sebagai pembaca saja.
   return 'viewer';
+}
+
+/** Admin dan Superadmin sama-sama staf pengelola: melihat semua perkara dan surat. */
+export function isAdminRole(value: string): boolean {
+  const role = normalizeRole(value);
+  return role === 'admin' || role === 'superadmin';
 }
 
 /**
@@ -53,29 +65,35 @@ export function normalizeRole(value: string): Role {
  * Aksi disimpan sebagai string 'C'/'R'/'U'/'D' berurutan, mis. 'CRU'.
  */
 export const POLICY: Record<Resource, Record<Role, string>> = {
-  users: { admin: 'CRUD', advokat: '', paralegal: '', viewer: '' },
-  clients: { admin: 'CRUD', advokat: '', paralegal: '', viewer: '' },
-  opponents: { admin: 'CRUD', advokat: '', paralegal: '', viewer: '' },
+  users: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
+  clients: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
+  opponents: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
   // Data advokat: non-Admin hanya milik sendiri (pembatasan baris di modul C).
-  advocates: { admin: 'CRUD', advokat: 'RU', paralegal: 'RU', viewer: 'R' },
-  settings: { admin: 'CRUD', advokat: 'R', paralegal: 'R', viewer: 'R' },
+  advocates: { superadmin: 'CRUD', admin: 'CRU', advokat: 'RU', paralegal: 'RU', viewer: 'R' },
+  settings: { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
   // "R U + C (tim hanya dirinya)" — pembatasan baris di modul D.
-  cases: { admin: 'CRUD', advokat: 'RUC', paralegal: 'RU', viewer: 'R' },
-  timeline: { admin: 'CRUD', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
-  schedules: { admin: 'CRUD', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
-  case_documents: { admin: 'CRUD', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
-  surat_masuk: { admin: 'CRUD', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
-  surat_keluar: { admin: 'CRUD', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
-  invoices: { admin: 'CRUD', advokat: '', paralegal: '', viewer: '' },
+  cases: { superadmin: 'CRUD', admin: 'CRU', advokat: 'RUC', paralegal: 'RU', viewer: 'R' },
+  timeline: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
+  schedules: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
+  case_documents: {
+    superadmin: 'CRUD',
+    admin: 'CRU',
+    advokat: 'CRUD',
+    paralegal: 'CRU',
+    viewer: 'R',
+  },
+  surat_masuk: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
+  surat_keluar: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
+  invoices: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
   // Honor: Admin kelola semua; lainnya lihat milik sendiri (baris di modul F).
-  honor_tim: { admin: 'CRUD', advokat: 'R', paralegal: 'R', viewer: 'R' },
+  honor_tim: { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
   // Kas: Admin selalu boleh; non-Admin hanya lewat setting `kas_viewers`
   // (dicek modul F via canViewKas(), bukan di tabel ini).
-  kas: { admin: 'R', advokat: '', paralegal: '', viewer: '' },
-  reports: { admin: 'R', advokat: '', paralegal: '', viewer: '' },
-  audit_log: { admin: 'R', advokat: '', paralegal: '', viewer: '' },
+  kas: { superadmin: 'R', admin: 'R', advokat: '', paralegal: '', viewer: '' },
+  reports: { superadmin: 'R', admin: 'R', advokat: '', paralegal: '', viewer: '' },
+  audit_log: { superadmin: 'R', admin: 'R', advokat: '', paralegal: '', viewer: '' },
   // Template: semua staf boleh melihat/mengunduh; unggah Admin saja.
-  templates: { admin: 'CRUD', advokat: 'R', paralegal: 'R', viewer: 'R' },
+  templates: { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
 };
 
 export interface PolicyUser {

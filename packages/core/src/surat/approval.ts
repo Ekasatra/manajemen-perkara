@@ -3,7 +3,7 @@
  * Fungsi MURNI: tanpa DB/IO/waktu. Service (`keluar.ts`) memuat data,
  * memanggil fungsi di sini, lalu menyimpan hasilnya.
  */
-import { normalizeRole } from '../kernel/policy';
+import { isAdminRole, normalizeRole } from '../kernel/policy';
 
 export const SURAT_KELUAR_STATUS = [
   'Draft',
@@ -54,7 +54,7 @@ export function resolveRouting(input: RoutingInput): RoutingResult {
   const role = normalizeRole(input.creatorRole);
   const reviewerId =
     input.explicitReviewerId ||
-    (role === 'advokat' || role === 'admin' ? input.creatorId : null);
+    (role === 'advokat' || role === 'admin' || role === 'superadmin' ? input.creatorId : null);
   if (!reviewerId) return { ok: false, message: 'Reviewer surat instansi wajib dipilih' };
 
   const signerId = input.pimpinanUserId || input.firstAdminId;
@@ -89,7 +89,7 @@ export type TransitionResult =
     }
   | { ok: false; code: 'INVALID_STATE' | 'FORBIDDEN' | 'VALIDATION_ERROR'; message: string };
 
-const isAdmin = (a: Actor) => normalizeRole(a.role) === 'admin';
+const isAdmin = (a: Actor) => isAdminRole(a.role);
 
 /** Tahap review dilewati bila reviewer = pembuat atau = penandatangan. */
 export function reviewSkipped(s: Pick<SuratRef, 'createdBy' | 'reviewerId' | 'signerId'>): boolean {

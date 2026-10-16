@@ -4,13 +4,14 @@
 import { count, desc } from 'drizzle-orm';
 import { createDb, clients } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { requireUser, ensureCan } from '@ekasatra/core';
+import { requireUser, ensureCan, can } from '@ekasatra/core';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
 import { formatDate } from '@/lib/format';
 import { CreateClientDialog } from '@/modules/clients/create-client-dialog';
+import { PartyActions } from '@/modules/parties/party-actions';
 
 type ClientRow = {
   id: string;
@@ -19,6 +20,8 @@ type ClientRow = {
   type: string | null;
   phone: string | null;
   email: string | null;
+  address: string | null;
+  contacts: unknown;
   portalEnabled: boolean;
   createdAt: Date;
 };
@@ -45,6 +48,8 @@ export default async function ClientsPage({
         type: clients.type,
         phone: clients.phone,
         email: clients.email,
+        address: clients.address,
+        contacts: clients.contacts,
         portalEnabled: clients.portalEnabled,
         createdAt: clients.createdAt,
       })
@@ -56,6 +61,8 @@ export default async function ClientsPage({
   ]);
 
   const total = countRows[0]?.value ?? 0;
+  const canEdit = can(user, 'U', 'clients');
+  const canDelete = can(user, 'D', 'clients');
 
   const columns: Column<ClientRow>[] = [
     { key: 'clientCode', header: 'Kode', cell: (r) => r.clientCode },
@@ -69,6 +76,17 @@ export default async function ClientsPage({
       cell: (r) => (r.portalEnabled ? 'Aktif' : 'Nonaktif'),
     },
     { key: 'createdAt', header: 'Dibuat', cell: (r) => formatDate(r.createdAt) },
+    ...(canEdit || canDelete
+      ? [
+          {
+            key: 'aksi',
+            header: 'Aksi',
+            cell: (r: ClientRow) => (
+              <PartyActions entity="clients" row={r} canEdit={canEdit} canDelete={canDelete} />
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (

@@ -22,6 +22,7 @@ import {
   profiles,
 } from '@ekasatra/db';
 import type { DbExecutor } from '../kernel/db-helpers';
+import { isAdminRole } from '../kernel/policy';
 import type {
   CaseForUser,
   CaseTeamMember,
@@ -57,7 +58,7 @@ export async function listVisibleCaseIds(
   const normalized = role.toLowerCase();
 
   // Admin selalu melihat semua.
-  if (normalized === 'admin') return 'all';
+  if (isAdminRole(normalized)) return 'all';
 
   // Baca setting bila pemanggil tidak menyediakannya.
   const scope =
@@ -99,7 +100,7 @@ export async function getCaseForUser(
   const scope =
     scopeAssignedOnly ?? (await getSetting<boolean>(db, 'scope_assigned_only', true));
 
-  const visible = normalized === 'admin' || !scope;
+  const visible = isAdminRole(normalized) || !scope;
 
   // Bila visible (tidak dibatasi), ambil langsung.
   if (visible) {

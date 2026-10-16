@@ -8,7 +8,7 @@ import { notFound, validationError } from '@ekasatra/shared';
 import type { AuthContext } from '../kernel/auth';
 import { withTx, nextCounter, type DbExecutor } from '../kernel/db-helpers';
 import { logActivity } from '../kernel/activity';
-import { ensureCan, normalizeRole } from '../kernel/policy';
+import { ensureCan, isAdminRole } from '../kernel/policy';
 import { defaultDeps, type SuratDeps } from './deps';
 import type { CreateSuratMasukInput, UpdateSuratMasukInput } from './schemas';
 import { assertUploaded, removeFile, signedDownloadUrl } from './storage';
@@ -18,7 +18,7 @@ const PREFIX = 'masuk';
 const WIB_MS = 7 * 3600 * 1000;
 
 type Row = typeof suratMasuk.$inferSelect;
-const isAdmin = (u: AuthContext) => normalizeRole(u.role) === 'admin';
+const isAdmin = (u: AuthContext) => isAdminRole(u.role);
 
 /** Tanggal & tahun menurut WIB (server berjalan UTC). */
 export function wibToday(now: Date = new Date()): { date: string; year: number } {

@@ -3,7 +3,7 @@
  * PRD §5 — aturan bisnis umum.
  */
 
-export const ROLES = ['admin', 'advokat', 'paralegal', 'viewer'] as const;
+export const ROLES = ['superadmin', 'admin', 'advokat', 'paralegal', 'viewer'] as const;
 
 export type Role = (typeof ROLES)[number];
 
