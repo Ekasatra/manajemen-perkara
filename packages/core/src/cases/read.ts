@@ -510,6 +510,67 @@ export async function listCasesDetailed(
   return { rows, total: countRows[0]?.value ?? 0 };
 }
 
+/** Jumlah perkara per klien, hanya dari perkara yang terlihat oleh user. */
+export async function countCasesByClient(
+  db: DbExecutor,
+  user: { userId: string; role: string },
+  clientIds: string[],
+): Promise<Record<string, number>> {
+  if (clientIds.length === 0) return {};
+  const visibleIds = await listVisibleCaseIds(db, user.userId, user.role);
+  if (visibleIds !== 'all' && visibleIds.length === 0) return {};
+  const conditions = [inArray(cases.clientId, clientIds)];
+  if (visibleIds !== 'all') conditions.push(inArray(cases.id, visibleIds));
+  const rows = await db
+    .select({ clientId: cases.clientId, n: count() })
+    .from(cases)
+    .where(and(...conditions))
+    .groupBy(cases.clientId);
+  return Object.fromEntries(rows.map((r) => [r.clientId, r.n]));
+}
+
+/** Jumlah perkara per pihak lawan, hanya dari perkara yang terlihat oleh user. */
+export async function countCasesByOpponent(
+  db: DbExecutor,
+  user: { userId: string; role: string },
+  opponentIds: string[],
+): Promise<Record<string, number>> {
+  if (opponentIds.length === 0) return {};
+  const visibleIds = await listVisibleCaseIds(db, user.userId, user.role);
+  if (visibleIds !== 'all' && visibleIds.length === 0) return {};
+  const conditions = [inArray(cases.opponentId, opponentIds)];
+  if (visibleIds !== 'all') conditions.push(inArray(cases.id, visibleIds));
+  const rows = await db
+    .select({ opponentId: cases.opponentId, n: count() })
+    .from(cases)
+    .where(and(...conditions))
+    .groupBy(cases.opponentId);
+  return Object.fromEntries(rows.flatMap((r) => (r.opponentId ? [[r.opponentId, r.n]] : [])));
+}
+
+/** Perkara milik satu klien yang terlihat oleh user (tab Perkara Klien). */
+export async function listCasesOfClient(
+  db: DbExecutor,
+  user: { userId: string; role: string },
+  clientId: string,
+): Promise<{ id: string; regNo: string; title: string; status: string; court: string | null }[]> {
+  const visibleIds = await listVisibleCaseIds(db, user.userId, user.role);
+  if (visibleIds !== 'all' && visibleIds.length === 0) return [];
+  const conditions = [eq(cases.clientId, clientId)];
+  if (visibleIds !== 'all') conditions.push(inArray(cases.id, visibleIds));
+  return db
+    .select({
+      id: cases.id,
+      regNo: cases.regNo,
+      title: cases.title,
+      status: cases.status,
+      court: cases.court,
+    })
+    .from(cases)
+    .where(and(...conditions))
+    .orderBy(desc(cases.createdAt));
+}
+
 /**
  * Tenggat 14 hari: Upaya Hukum & Jadwal Sidang (PRD §5.10).
  */

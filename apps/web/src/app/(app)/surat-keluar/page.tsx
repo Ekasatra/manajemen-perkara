@@ -17,7 +17,7 @@ import { parsePageQuery, type SearchParams } from '@/lib/pagination';
 import { pageCtx } from '@/modules/surat/page-ctx';
 import { Avatar } from '@/components/ui/avatar';
 import { buttonClass } from '@/components/ui/styles';
-import { SuratFilters } from '@/modules/surat/surat-filters';
+import { FilterBar } from '@/components/ui/filter-bar';
 import { JenisBadge, SuratKeluarStatusBadge } from '@/modules/surat/surat-badges';
 import { CreateSuratKeluarDialog } from '@/modules/surat-keluar/create-surat-keluar-dialog';
 
@@ -183,7 +183,7 @@ export default async function SuratKeluarPage({
             })}
           </nav>
         </div>
-        <SuratFilters
+        <FilterBar
           q={str('q') ?? ''}
           placeholder="Cari nomor, tujuan, perihal…"
           hidden={{ tab: tab === 'all' ? '' : tab }}

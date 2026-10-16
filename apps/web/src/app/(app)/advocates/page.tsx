@@ -6,13 +6,21 @@ import { count, desc, eq } from 'drizzle-orm';
 import { createDb, advocates } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, ensureCan, can } from '@ekasatra/core';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
-import { formatDate } from '@/lib/format';
 import { CreateAdvocateDialog } from '@/modules/advocates/create-advocate-dialog';
 import { AdvocateActions } from '@/modules/advocates/advocate-actions';
+
+/** Pendidikan terakhir = entri paling akhir dalam daftar pendidikan. */
+function latestEducation(value: unknown): string {
+  if (!Array.isArray(value) || value.length === 0) return '—';
+  const e = value[value.length - 1] as { level?: string; institution?: string };
+  return [e.level, e.institution].filter(Boolean).join(' · ') || '—';
+}
 
 type AdvocateRow = {
   id: string;
@@ -72,15 +80,38 @@ export default async function AdvocatesPage({
   const canDelete = can(user, 'D', 'advocates');
 
   const columns: Column<AdvocateRow>[] = [
-    { key: 'fullName', header: 'Nama', cell: (r) => r.fullName },
-    { key: 'phone', header: 'Telepon', cell: (r) => r.phone },
-    { key: 'licenseNumber', header: 'Lisensi', cell: (r) => r.licenseNumber ?? '-' },
-    { key: 'createdAt', header: 'Dibuat', cell: (r) => formatDate(r.createdAt) },
+    {
+      key: 'fullName',
+      header: 'Advokat',
+      cell: (r) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={r.fullName} size={9} />
+          <div>
+            <div className="font-semibold text-navy-800">{r.fullName}</div>
+            <div className="text-xs text-navy-400">
+              {r.userId ? 'Terhubung ke akun pengguna' : 'Belum terhubung ke akun'}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'phone', header: 'Kontak', cell: (r) => r.phone },
+    { key: 'edu', header: 'Pendidikan Terakhir', cell: (r) => latestEducation(r.education) },
+    {
+      key: 'licenseNumber',
+      header: 'No. KTA',
+      cell: (r) =>
+        r.licenseNumber ? (
+          <Badge tone="neutral">{r.licenseNumber}</Badge>
+        ) : (
+          <span className="text-navy-300">—</span>
+        ),
+    },
     ...(canEdit || canDelete
       ? [
           {
             key: 'aksi',
-            header: 'Aksi',
+            header: '',
             cell: (r: AdvocateRow) => (
               <AdvocateActions row={r} canEdit={canEdit} canDelete={canDelete} />
             ),
@@ -92,8 +123,12 @@ export default async function AdvocatesPage({
   return (
     <div>
       <PageHeader
-        title="Data Advokat"
-        description="Advokat kantor yang dapat ditugaskan pada perkara."
+        title={isAdmin ? 'Data Advokat' : 'Data Diri Saya'}
+        description={
+          isAdmin
+            ? 'Data profesi, pendidikan, dan rekening advokat kantor.'
+            : 'Data profesi, pendidikan, dan rekening untuk keperluan kantor.'
+        }
         actions={<CreateAdvocateDialog />}
       />
       <DataTable<AdvocateRow>

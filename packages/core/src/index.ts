@@ -83,6 +83,9 @@ export {
   listSchedulesInRange,
   listDocumentCatalog,
   listCasesDetailed,
+  countCasesByClient,
+  countCasesByOpponent,
+  listCasesOfClient,
   getTenggat14HariCases,
   // Baca laporan (G2)
   listCasesForReport,

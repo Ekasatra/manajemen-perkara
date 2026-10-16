@@ -9,7 +9,7 @@ import { formatDate } from '@/lib/format';
 import { parsePageQuery, type SearchParams } from '@/lib/pagination';
 import { pageCtx } from '@/modules/surat/page-ctx';
 import { Avatar } from '@/components/ui/avatar';
-import { SuratFilters } from '@/modules/surat/surat-filters';
+import { FilterBar } from '@/components/ui/filter-bar';
 import { SifatBadge, SuratMasukStatusBadge } from '@/modules/surat/surat-badges';
 import { CreateSuratMasukDialog } from '@/modules/surat-masuk/create-surat-masuk-dialog';
 
@@ -138,7 +138,7 @@ export default async function SuratMasukPage({
         actions={create}
       />
       <div className="card-surface mb-4">
-        <SuratFilters
+        <FilterBar
           q={str('q') ?? ''}
           placeholder="Cari pengirim, perihal, nomor…"
           selects={[

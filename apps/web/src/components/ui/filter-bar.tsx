@@ -12,10 +12,10 @@ type Select = {
 };
 
 /**
- * Filter daftar surat gaya GAS: pencarian + beberapa select (langsung diterapkan saat dipilih)
+ * Filter daftar gaya GAS: pencarian + beberapa select (langsung diterapkan saat dipilih)
  * + rentang tanggal opsional. `hidden` meneruskan parameter lain (mis. tab) lewat form GET.
  */
-export function SuratFilters({
+export function FilterBar({
   q,
   placeholder,
   selects,
