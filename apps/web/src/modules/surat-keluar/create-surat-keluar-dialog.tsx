@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { callApi, uploadFile } from '@/modules/surat/upload';
 
 type Option = { id: string; label: string };
@@ -55,17 +56,18 @@ export function CreateSuratKeluarDialog({
         submitLabel="Simpan Draft"
         onSubmit={onSubmit}
       >
+        <RequiredNote />
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="sk-no" className={labelClass}>
+            <Label htmlFor="sk-no" required>
               Nomor surat
-            </label>
+            </Label>
             <input id="sk-no" name="noSurat" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="sk-tgl" className={labelClass}>
+            <Label htmlFor="sk-tgl" required>
               Tanggal surat
-            </label>
+            </Label>
             <input
               id="sk-tgl"
               name="tglSurat"
@@ -78,12 +80,13 @@ export function CreateSuratKeluarDialog({
         </div>
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="sk-jenis" className={labelClass}>
+            <Label htmlFor="sk-jenis" required>
               Jenis
-            </label>
+            </Label>
             <select
               id="sk-jenis"
               value={jenis}
+              required
               onChange={(e) => setJenis(e.target.value as 'Perkara' | 'Instansi')}
               className={inputClass}
             >
@@ -93,9 +96,9 @@ export function CreateSuratKeluarDialog({
           </div>
           {jenis === 'Perkara' ? (
             <div>
-              <label htmlFor="sk-case" className={labelClass}>
+              <Label htmlFor="sk-case" required>
                 Perkara
-              </label>
+              </Label>
               <select id="sk-case" name="caseId" required className={inputClass}>
                 <option value="">Pilih perkara</option>
                 {cases.map((c) => (
@@ -107,9 +110,9 @@ export function CreateSuratKeluarDialog({
             </div>
           ) : (
             <div>
-              <label htmlFor="sk-rev" className={labelClass}>
+              <Label htmlFor="sk-rev" optional>
                 Reviewer (advokat)
-              </label>
+              </Label>
               <select id="sk-rev" name="reviewerId" className={inputClass}>
                 <option value="">Saya sendiri (bila Advokat/Admin)</option>
                 {reviewers.map((r) => (
@@ -122,27 +125,27 @@ export function CreateSuratKeluarDialog({
           )}
         </div>
         <div>
-          <label htmlFor="sk-kepada" className={labelClass}>
+          <Label htmlFor="sk-kepada" required>
             Kepada
-          </label>
+          </Label>
           <input id="sk-kepada" name="kepada" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="sk-perihal" className={labelClass}>
+          <Label htmlFor="sk-perihal" required>
             Perihal
-          </label>
+          </Label>
           <input id="sk-perihal" name="perihal" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="sk-file" className={labelClass}>
+          <Label htmlFor="sk-file" required>
             File surat (maks 25 MB)
-          </label>
+          </Label>
           <input id="sk-file" name="file" type="file" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="sk-notes" className={labelClass}>
+          <Label htmlFor="sk-notes" optional>
             Catatan
-          </label>
+          </Label>
           <textarea id="sk-notes" name="notes" rows={2} className={inputClass} />
         </div>
       </FormDialog>

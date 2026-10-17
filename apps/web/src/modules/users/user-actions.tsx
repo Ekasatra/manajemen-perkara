@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { FieldError, Label } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { useToast } from '@/shell/toast';
+import { resetPasswordSchema } from '@ekasatra/shared';
 
 /** Password acak 12 karakter tanpa huruf yang mudah tertukar (I, l, O, 0, 1). */
 function generatePassword(): string {
@@ -63,7 +65,7 @@ export function UserActions({
   }
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-[12px]">
       {canEdit ? (
         <button type="button" onClick={() => setMode('edit')} className={buttonClass.ghost}>
           Ubah
@@ -87,21 +89,20 @@ export function UserActions({
       {canEdit && mode === 'edit' ? (
         <FormDialog open onClose={() => setMode(null)} title="Ubah pengguna" onSubmit={save}>
           <div>
-            <label htmlFor={`${id}-name`} className={labelClass}>
+            <Label htmlFor={`${id}-name`} optional>
               Nama lengkap
-            </label>
+            </Label>
             <input
               id={`${id}-name`}
               name="fullName"
-              required
               defaultValue={row.fullName}
               className={inputClass}
             />
           </div>
           <div>
-            <label htmlFor={`${id}-role`} className={labelClass}>
+            <Label htmlFor={`${id}-role`} optional>
               Role
-            </label>
+            </Label>
             {row.role === 'SuperAdmin' ? (
               <input id={`${id}-role`} value="Super Admin" disabled className={inputClass} />
             ) : (
@@ -126,21 +127,24 @@ export function UserActions({
           title="Reset Password"
           description={row.fullName}
           submitLabel="Reset"
+          schema={resetPasswordSchema}
           onSubmit={resetPassword}
         >
           <div>
-            <label htmlFor={`${id}-pw`} className={labelClass}>
+            <Label htmlFor={`${id}-pw`} required>
               Password baru
-            </label>
+            </Label>
             <input
               id={`${id}-pw`}
               name="password"
               required
               minLength={8}
               autoComplete="off"
+              aria-describedby="err-password"
               defaultValue={generatePassword()}
               className={`${inputClass} font-mono`}
             />
+            <FieldError name="password" />
             <p className="mt-1.5 text-[11px] text-navy-400">
               Sampaikan password ini kepada pengguna secara pribadi. Tindakan tercatat di Audit Log.
             </p>

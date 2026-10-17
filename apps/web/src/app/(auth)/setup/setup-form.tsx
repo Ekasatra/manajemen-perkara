@@ -4,7 +4,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { APP_NAME } from '@/components/ui/brand';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 
 export function SetupForm() {
   const router = useRouter();
@@ -47,15 +48,15 @@ export function SetupForm() {
       </p>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         <div>
-          <label htmlFor="fullName" className={labelClass}>
+          <Label htmlFor="fullName" required>
             Nama Lengkap
-          </label>
+          </Label>
           <input id="fullName" name="fullName" type="text" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="email" className={labelClass}>
+          <Label htmlFor="email" required>
             Email
-          </label>
+          </Label>
           <input
             id="email"
             name="email"
@@ -66,9 +67,9 @@ export function SetupForm() {
           />
         </div>
         <div>
-          <label htmlFor="password" className={labelClass}>
+          <Label htmlFor="password" required>
             Password
-          </label>
+          </Label>
           <input
             id="password"
             name="password"

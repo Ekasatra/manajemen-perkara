@@ -42,7 +42,7 @@ export function FileHeader({
           ) : null}
           <h1 className="font-display text-2xl font-semibold text-navy-800">{title}</h1>
         </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        {actions ? <div className="flex flex-wrap items-center gap-[12px]">{actions}</div> : null}
       </div>
 
       {facts && facts.length > 0 ? (

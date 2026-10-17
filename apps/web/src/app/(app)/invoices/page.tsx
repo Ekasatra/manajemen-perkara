@@ -126,7 +126,7 @@ export default async function InvoicesPage({
           href={`/api/v1/invoices/${r.id}/pdf`}
           title={r.status === 'Lunas' ? 'Cetak tanda terima' : 'Cetak invoice'}
           aria-label={`Unduh PDF ${r.invoiceNo}`}
-          className={`inline-flex size-8 items-center justify-center rounded-control hover:bg-navy-100 ${
+          className={`inline-flex size-11 items-center justify-center rounded-control hover:bg-navy-100 ${
             r.status === 'Lunas' ? 'text-success-fg' : 'text-navy-500'
           }`}
         >

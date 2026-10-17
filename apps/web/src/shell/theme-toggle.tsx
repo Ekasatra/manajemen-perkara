@@ -21,7 +21,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
       onClick={toggle}
       aria-label="Ganti tema terang atau gelap"
       title="Ganti tema terang atau gelap"
-      className={`inline-flex size-10 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800 md:size-9 print:hidden ${className}`}
+      className={`inline-flex size-11 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800 print:hidden ${className}`}
     >
       <Moon aria-hidden="true" size={18} className="dark:hidden" />
       <Sun aria-hidden="true" size={18} className="hidden dark:block" />

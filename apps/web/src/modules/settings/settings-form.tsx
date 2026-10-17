@@ -5,7 +5,8 @@ import type { FormEvent, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, ImageIcon, Save, ShieldCheck, Tags, Upload, Workflow, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { useToast } from '@/shell/toast';
 
 export type MatrixRow = { label: string; cells: string[] };
@@ -49,6 +50,7 @@ function Section({
   );
 }
 
+/** Bungkusan isian pengaturan. Semua field bersifat opsional (lihat updateSettingsSchema). */
 function Field({
   id,
   label,
@@ -64,9 +66,9 @@ function Field({
 }) {
   return (
     <div className={full ? 'sm:col-span-2' : ''}>
-      <label htmlFor={id} className={labelClass}>
+      <Label htmlFor={id} optional>
         {label}
-      </label>
+      </Label>
       {children}
       {help ? <p className="mt-1.5 text-[11px] text-navy-400">{help}</p> : null}
     </div>
@@ -372,7 +374,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
                 : 'Kop surat hanya memuat nama dan alamat kantor.'}
             </p>
             {canEdit ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-[12px]">
                 <input
                   ref={fileRef}
                   id="logo-in"
@@ -386,7 +388,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
                 />
                 <label
                   htmlFor="logo-in"
-                  className={`${buttonClass.secondary} min-h-9 cursor-pointer px-3 py-1.5 text-xs ${logoBusy ? 'pointer-events-none opacity-60' : ''}`}
+                  className={`${buttonClass.secondary} cursor-pointer px-3 text-xs ${logoBusy ? 'pointer-events-none opacity-60' : ''}`}
                 >
                   <Upload aria-hidden="true" size={14} /> Unggah
                 </label>
@@ -397,7 +399,7 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
                     disabled={logoBusy}
                     aria-label="Hapus logo"
                     title="Kembali tanpa logo"
-                    className="inline-flex size-9 items-center justify-center rounded-control text-navy-500 hover:bg-danger-bg hover:text-danger-fg"
+                    className="inline-flex size-11 items-center justify-center rounded-control text-navy-500 hover:bg-danger-bg hover:text-danger-fg"
                   >
                     <X aria-hidden="true" size={15} />
                   </button>

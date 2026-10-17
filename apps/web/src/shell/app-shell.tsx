@@ -121,7 +121,7 @@ export function AppShell({
     <Link
       href="/#pemberitahuan"
       aria-label={counts.notif ? `Pemberitahuan, ${counts.notif} baru` : 'Pemberitahuan'}
-      className="relative inline-flex size-10 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800 md:size-9"
+      className="relative inline-flex size-11 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800"
     >
       <Bell aria-hidden="true" size={18} />
       {counts.notif ? (
@@ -161,7 +161,7 @@ export function AppShell({
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Tutup menu"
-            className="inline-flex size-10 items-center justify-center rounded-control text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-gold-300 lg:hidden"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-control text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-gold-300 lg:hidden"
           >
             <X aria-hidden="true" size={18} />
           </button>
@@ -226,7 +226,7 @@ export function AppShell({
                 onClick={logout}
                 title="Keluar"
                 aria-label="Keluar"
-                className="inline-flex size-9 items-center justify-center rounded-control text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-gold-300"
+                className="inline-flex size-11 items-center justify-center rounded-control text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-gold-300"
               >
                 <LogOut aria-hidden="true" size={18} />
               </button>
@@ -244,7 +244,7 @@ export function AppShell({
               aria-controls="sidebar"
               aria-label="Buka menu"
               onClick={() => setOpen(true)}
-              className="inline-flex size-10 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100 lg:hidden"
+              className="inline-flex size-11 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100 lg:hidden"
             >
               <Menu aria-hidden="true" size={18} />
             </button>
@@ -263,7 +263,7 @@ export function AppShell({
               href="/profil"
               aria-label="Profil Saya"
               title="Profil Saya"
-              className="inline-flex size-10 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800 md:size-9"
+              className="inline-flex size-11 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800"
             >
               <CircleUser aria-hidden="true" size={18} />
             </Link>

@@ -132,7 +132,7 @@ export default async function HonorTimPage({
   ];
 
   const tabClass = (active: boolean) =>
-    `flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition ${
+    `flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition md:min-h-9 ${
       active
         ? 'bg-surface text-navy-800 shadow-soft'
         : 'text-navy-500 hover:bg-surface/70 hover:text-navy-800'
@@ -197,7 +197,7 @@ export default async function HonorTimPage({
       {isAdmin ? (
         <nav
           aria-label="Tampilan honor"
-          className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
+          className="mb-4 flex w-full gap-[12px] overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
         >
           <Link
             href="/honor-tim"

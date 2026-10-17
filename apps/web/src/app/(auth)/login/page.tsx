@@ -4,7 +4,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, LogIn, Mail, ShieldCheck } from 'lucide-react';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,9 +49,9 @@ export default function LoginPage() {
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label htmlFor="email" className={labelClass}>
+          <Label htmlFor="email" required>
             Email
-          </label>
+          </Label>
           <div className="relative">
             <Mail aria-hidden="true" size={15} className={iconClass} />
             <input
@@ -65,9 +66,9 @@ export default function LoginPage() {
           </div>
         </div>
         <div>
-          <label htmlFor="password" className={labelClass}>
+          <Label htmlFor="password" required>
             Password
-          </label>
+          </Label>
           <div className="relative">
             <Lock aria-hidden="true" size={15} className={iconClass} />
             <input
@@ -78,13 +79,13 @@ export default function LoginPage() {
               minLength={8}
               autoComplete="current-password"
               placeholder="••••••••"
-              className={`${inputClass} pl-10 pr-11`}
+              className={`${inputClass} pl-10 pr-12`}
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? 'Sembunyikan sandi' : 'Lihat sandi'}
-              className="absolute right-1.5 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-control text-navy-400 hover:bg-navy-100 hover:text-navy-700"
+              className="absolute right-1 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-control text-navy-400 hover:bg-navy-100 hover:text-navy-700"
             >
               {showPassword ? (
                 <EyeOff aria-hidden="true" size={16} />

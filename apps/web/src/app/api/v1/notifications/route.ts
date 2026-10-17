@@ -20,10 +20,9 @@ export async function GET(req: Request) {
 
     // `?ringkas=1` dipakai lencana di topbar/sidebar: hanya surat, tanpa 11 query dashboard.
     if (new URL(req.url).searchParams.get('ringkas') === '1') {
-      const [approval, notifications] = await Promise.all([
-        getApprovalMenungguSaya(db, user.userId),
-        getSuratPersonalNotifications(db, user.userId),
-      ]);
+      // Approval dijalankan sekali, hasilnya dipakai ulang oleh notifikasi personal.
+      const approval = await getApprovalMenungguSaya(db, user.userId);
+      const notifications = await getSuratPersonalNotifications(db, user.userId, approval);
       return ok({ notifications, approvalCount: approval.count });
     }
 

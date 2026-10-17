@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 
 type Contact = { type: string; value: string };
 
@@ -79,7 +80,7 @@ export function PartyActions({
   const id = `ep-${entity}-${row.id}`;
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-[12px]">
       {canEdit ? (
         <button type="button" onClick={() => setMode('edit')} className={buttonClass.ghost}>
           Ubah
@@ -97,23 +98,23 @@ export function PartyActions({
 
       {canEdit && mode === 'edit' ? (
         <FormDialog open onClose={() => setMode(null)} title={`Ubah ${noun}`} onSubmit={save}>
+          <RequiredNote />
           <div>
-            <label htmlFor={`${id}-name`} className={labelClass}>
+            <Label htmlFor={`${id}-name`} optional>
               Nama
-            </label>
+            </Label>
             <input
               id={`${id}-name`}
               name="name"
               type="text"
-              required
               defaultValue={row.name}
               className={inputClass}
             />
           </div>
           <div>
-            <label htmlFor={`${id}-type`} className={labelClass}>
+            <Label htmlFor={`${id}-type`} optional>
               Tipe
-            </label>
+            </Label>
             <select
               id={`${id}-type`}
               name="type"
@@ -127,9 +128,9 @@ export function PartyActions({
             </select>
           </div>
           <div>
-            <label htmlFor={`${id}-phone`} className={labelClass}>
+            <Label htmlFor={`${id}-phone`} optional>
               Telepon
-            </label>
+            </Label>
             <input
               id={`${id}-phone`}
               name="phone"
@@ -140,9 +141,9 @@ export function PartyActions({
           </div>
           {isClient ? (
             <div>
-              <label htmlFor={`${id}-email`} className={labelClass}>
+              <Label htmlFor={`${id}-email`} optional>
                 Email
-              </label>
+              </Label>
               <input
                 id={`${id}-email`}
                 name="email"
@@ -153,9 +154,9 @@ export function PartyActions({
             </div>
           ) : null}
           <div>
-            <label htmlFor={`${id}-address`} className={labelClass}>
+            <Label htmlFor={`${id}-address`} optional>
               Alamat
-            </label>
+            </Label>
             <textarea
               id={`${id}-address`}
               name="address"

@@ -7,6 +7,7 @@ import {
   getCaseSummaryForDashboard,
   getUpcomingSchedulesForDashboard,
   getTenggat14HariCases,
+  listVisibleCaseIds,
 } from '../cases/read';
 import {
   getSuratSummaryForDashboard,
@@ -14,10 +15,7 @@ import {
   getApprovalMenungguSaya,
   getSuratPersonalNotifications,
 } from '../surat/read';
-import {
-  outstandingSummary,
-  getTenggat14HariInvoices,
-} from '../finance/read';
+import { outstandingSummary, getTenggat14HariInvoices } from '../finance/read';
 import { getNewClientsCountThisMonth } from '../clients/read';
 import { getRecentActivitiesForDashboard } from '../audit/read';
 
@@ -45,11 +43,21 @@ export async function getDashboardData(
 
   const startOfMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
-  // 2. Baca aturan bisnis scope_assigned_only dari settings
-  const scopeAssignedOnly = await getSetting<boolean>(db, 'scope_assigned_only', true);
-
-  // 3. Hak lihat keuangan / piutang
+  // 2. Hak lihat keuangan / piutang
   const canViewInvoices = can(user, 'R', 'invoices');
+
+  // 3. Prasyarat bersama: setting cakupan, ID perkara terlihat, dan approval
+  //    menunggu saya — masing-masing cukup SEKALI, lalu dipakai ulang semua cabang.
+  const scopeAssignedOnly = await getSetting<boolean>(db, 'scope_assigned_only', true);
+  const visibleIds = await listVisibleCaseIds(db, user.userId, user.role, scopeAssignedOnly);
+  const approvalMenungguSaya = await getApprovalMenungguSaya(db, user.userId);
+
+  const scopeOptions = {
+    userId: user.userId,
+    role: user.role,
+    scopeAssignedOnly,
+    preloadedVisibleIds: visibleIds,
+  };
 
   // 4. Eksekusi fungsi baca modul-modul lain secara paralel
   const [
@@ -57,7 +65,6 @@ export async function getDashboardData(
     sidang7Hari,
     suratSummary,
     suratTrend6Bulan,
-    approvalMenungguSaya,
     piutangData,
     klienBaruBulanIni,
     tenggatCases,
@@ -65,27 +72,16 @@ export async function getDashboardData(
     aktivitasTerbaru,
     suratPersonalNotifs,
   ] = await Promise.all([
-    getCaseSummaryForDashboard(db, {
-      userId: user.userId,
-      role: user.role,
-      scopeAssignedOnly,
-    }),
-    getUpcomingSchedulesForDashboard(db, todayStr, in7DaysStr, {
-      userId: user.userId,
-      role: user.role,
-    }),
+    getCaseSummaryForDashboard(db, scopeOptions),
+    getUpcomingSchedulesForDashboard(db, todayStr, in7DaysStr, scopeOptions),
     getSuratSummaryForDashboard(db, todayStr),
     getSuratTrend6Bulan(db),
-    getApprovalMenungguSaya(db, user.userId),
     outstandingSummary(db, canViewInvoices),
     getNewClientsCountThisMonth(db, startOfMonthStr),
-    getTenggat14HariCases(db, todayStr, in14DaysStr, {
-      userId: user.userId,
-      role: user.role,
-    }),
+    getTenggat14HariCases(db, todayStr, in14DaysStr, scopeOptions),
     getTenggat14HariInvoices(db, todayStr, in14DaysStr, canViewInvoices),
     getRecentActivitiesForDashboard(db, 10),
-    getSuratPersonalNotifications(db, user.userId),
+    getSuratPersonalNotifications(db, user.userId, approvalMenungguSaya),
   ]);
 
   // Gabungkan tenggat 14 hari
@@ -130,4 +126,3 @@ export async function getDashboardData(
     notifikasiPersonal,
   };
 }
-

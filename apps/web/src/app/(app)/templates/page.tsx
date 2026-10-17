@@ -66,14 +66,14 @@ export default async function TemplatesPage({
         <div className="border-b border-navy-50 p-3">
           <nav
             aria-label="Kategori template"
-            className="flex w-full gap-1 overflow-x-auto rounded-control bg-navy-50/70 p-1 sm:w-fit"
+            className="flex w-full gap-[12px] overflow-x-auto rounded-control bg-navy-50/70 p-1 sm:w-fit"
           >
             {['', ...groups.map((g) => g.category)].map((c) => (
               <Link
                 key={c || 'all'}
                 href={catHref(c)}
                 aria-current={cat === c ? 'page' : undefined}
-                className={`shrink-0 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition ${
+                className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition md:min-h-9 ${
                   cat === c
                     ? 'bg-surface text-navy-800 shadow-soft'
                     : 'text-navy-500 hover:bg-surface/70 hover:text-navy-800'
@@ -121,10 +121,10 @@ export default async function TemplatesPage({
                   {t.description ? (
                     <p className="mt-1 line-clamp-2 text-xs text-navy-500">{t.description}</p>
                   ) : null}
-                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                  <div className="mt-auto flex flex-wrap gap-[12px] pt-4">
                     <a
                       href={`/api/v1/templates/${t.id}/file`}
-                      className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}
+                      className={`${buttonClass.secondary} px-3 text-xs`}
                     >
                       <Download aria-hidden="true" size={14} /> Unduh
                     </a>
@@ -133,7 +133,7 @@ export default async function TemplatesPage({
                         href="/surat-keluar"
                         title="Unggah surat yang dibuat dari template ini"
                         aria-label={`Unggah surat dari template ${t.name}`}
-                        className={`${buttonClass.primary} min-h-9 px-3 py-1.5 text-xs`}
+                        className={`${buttonClass.primary}`}
                       >
                         <Send aria-hidden="true" size={14} />
                       </Link>

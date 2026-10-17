@@ -62,16 +62,12 @@ export async function listVisibleCaseIds(
   if (isAdminRole(normalized)) return 'all';
 
   // Baca setting bila pemanggil tidak menyediakannya.
-  const scope =
-    scopeAssignedOnly ?? (await getSetting<boolean>(db, 'scope_assigned_only', true));
+  const scope = scopeAssignedOnly ?? (await getSetting<boolean>(db, 'scope_assigned_only', true));
 
   if (!scope) return 'all';
 
   // (a) dibuat olehnya ATAU (b) anggota tim — gabung unik.
-  const owned = db
-    .select({ id: cases.id })
-    .from(cases)
-    .where(eq(cases.createdBy, userId));
+  const owned = db.select({ id: cases.id }).from(cases).where(eq(cases.createdBy, userId));
 
   const member = db
     .select({ id: caseMembers.caseId })
@@ -98,8 +94,7 @@ export async function getCaseForUser(
   scopeAssignedOnly?: boolean,
 ): Promise<CaseForUser | null> {
   const normalized = role.toLowerCase();
-  const scope =
-    scopeAssignedOnly ?? (await getSetting<boolean>(db, 'scope_assigned_only', true));
+  const scope = scopeAssignedOnly ?? (await getSetting<boolean>(db, 'scope_assigned_only', true));
 
   const visible = isAdminRole(normalized) || !scope;
 
@@ -190,16 +185,22 @@ export async function getCaseTeamMembers(
  */
 export async function getCaseSummaryForDashboard(
   db: DbExecutor,
-  options?: { userId?: string; role?: string; scopeAssignedOnly?: boolean },
+  options?: {
+    userId?: string;
+    role?: string;
+    scopeAssignedOnly?: boolean;
+    preloadedVisibleIds?: string[] | 'all';
+  },
 ): Promise<{
   activeCount: number;
   completedCount: number;
   byStatus: { status: string; count: number }[];
 }> {
   const visibleIds =
-    options?.userId && options?.role
+    options?.preloadedVisibleIds ??
+    (options?.userId && options?.role
       ? await listVisibleCaseIds(db, options.userId, options.role, options?.scopeAssignedOnly)
-      : 'all';
+      : 'all');
 
   let query = db
     .select({
@@ -240,12 +241,18 @@ export async function getUpcomingSchedulesForDashboard(
   db: DbExecutor,
   startDateStr: string,
   endDateStr: string,
-  options?: { userId?: string; role?: string; scopeAssignedOnly?: boolean },
+  options?: {
+    userId?: string;
+    role?: string;
+    scopeAssignedOnly?: boolean;
+    preloadedVisibleIds?: string[] | 'all';
+  },
 ): Promise<DashboardScheduleItem[]> {
   const visibleIds =
-    options?.userId && options?.role
+    options?.preloadedVisibleIds ??
+    (options?.userId && options?.role
       ? await listVisibleCaseIds(db, options.userId, options.role, options?.scopeAssignedOnly)
-      : 'all';
+      : 'all');
 
   const conditions = [
     gte(caseSchedules.scheduleDate, startDateStr),
@@ -462,7 +469,11 @@ export async function listCasesDetailed(
       .orderBy(desc(cases.createdAt))
       .limit(opts.pageSize)
       .offset(opts.offset),
-    db.select({ value: count() }).from(cases).leftJoin(clients, eq(cases.clientId, clients.id)).where(where),
+    db
+      .select({ value: count() })
+      .from(cases)
+      .leftJoin(clients, eq(cases.clientId, clients.id))
+      .where(where),
   ]);
 
   const ids = base.map((r) => r.id);
@@ -578,12 +589,18 @@ export async function getTenggat14HariCases(
   db: DbExecutor,
   todayStr: string,
   deadline14Str: string,
-  options?: { userId?: string; role?: string; scopeAssignedOnly?: boolean },
+  options?: {
+    userId?: string;
+    role?: string;
+    scopeAssignedOnly?: boolean;
+    preloadedVisibleIds?: string[] | 'all';
+  },
 ): Promise<DashboardTenggatItem[]> {
   const visibleIds =
-    options?.userId && options?.role
+    options?.preloadedVisibleIds ??
+    (options?.userId && options?.role
       ? await listVisibleCaseIds(db, options.userId, options.role, options?.scopeAssignedOnly)
-      : 'all';
+      : 'all');
 
   const items: DashboardTenggatItem[] = [];
 
@@ -1056,10 +1073,7 @@ export async function getUpayaDeadlineReminders(
       .select({ userId: caseMembers.userId, peran: caseMembers.peran })
       .from(caseMembers)
       .where(
-        and(
-          eq(caseMembers.caseId, c.caseId),
-          inArray(caseMembers.peran, ['Advokat', 'Manager']),
-        ),
+        and(eq(caseMembers.caseId, c.caseId), inArray(caseMembers.peran, ['Advokat', 'Manager'])),
       );
     results.push({
       caseId: c.caseId,

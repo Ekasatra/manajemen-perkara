@@ -18,7 +18,8 @@ import { StatTile } from '@/components/ui/stat-tile';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { ResponsiveTable } from '@/components/ui/responsive-table';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { formatDate, formatRupiah } from '@/lib/format';
 import { EmptyState, LoadingState } from '@/shell/states';
 
@@ -248,7 +249,7 @@ export function ReportsView({
       <div
         role="tablist"
         aria-label="Jenis laporan"
-        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit print:hidden"
+        className="mb-4 flex w-full gap-[12px] overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit print:hidden"
       >
         {TABS.map((t) => (
           <button
@@ -282,9 +283,9 @@ export function ReportsView({
         className="card-surface mb-4 grid grid-cols-2 items-end gap-x-4 gap-y-5 p-4 md:grid-cols-3 xl:grid-cols-6 print:hidden"
       >
         <div>
-          <label htmlFor="r-start" className={labelClass}>
+          <Label htmlFor="r-start" optional>
             Dari tanggal
-          </label>
+          </Label>
           <input
             id="r-start"
             type="date"
@@ -294,9 +295,9 @@ export function ReportsView({
           />
         </div>
         <div>
-          <label htmlFor="r-end" className={labelClass}>
+          <Label htmlFor="r-end" optional>
             Sampai tanggal
-          </label>
+          </Label>
           <input
             id="r-end"
             type="date"
@@ -307,9 +308,9 @@ export function ReportsView({
         </div>
         {tab === 'cases' ? (
           <div>
-            <label htmlFor="r-client" className={labelClass}>
+            <Label htmlFor="r-client" optional>
               Klien
-            </label>
+            </Label>
             <select
               id="r-client"
               value={clientId}
@@ -326,9 +327,9 @@ export function ReportsView({
           </div>
         ) : null}
         <div>
-          <label htmlFor="r-status" className={labelClass}>
+          <Label htmlFor="r-status" optional>
             Status
-          </label>
+          </Label>
           <select
             id="r-status"
             value={status}
@@ -345,9 +346,9 @@ export function ReportsView({
         </div>
         {active.extra ? (
           <div>
-            <label htmlFor="r-extra" className={labelClass}>
+            <Label htmlFor="r-extra" optional>
               {active.extra.label}
-            </label>
+            </Label>
             <select
               id="r-extra"
               value={extra}

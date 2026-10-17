@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 
 export function CreateClientDialog() {
   const router = useRouter();
@@ -38,11 +39,7 @@ export function CreateClientDialog() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={buttonClass.primary}
-      >
+      <button type="button" onClick={() => setOpen(true)} className={buttonClass.primary}>
         Tambah Klien
       </button>
       <FormDialog
@@ -53,16 +50,17 @@ export function CreateClientDialog() {
         submitLabel="Buat"
         onSubmit={handleSubmit}
       >
+        <RequiredNote />
         <div>
-          <label htmlFor="cc-name" className={labelClass}>
+          <Label htmlFor="cc-name" required>
             Nama
-          </label>
+          </Label>
           <input id="cc-name" name="name" type="text" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="cc-type" className={labelClass}>
+          <Label htmlFor="cc-type" optional>
             Tipe
-          </label>
+          </Label>
           <select id="cc-type" name="type" className={inputClass}>
             <option value="">Belum dipilih</option>
             <option value="Perorangan">Perorangan</option>
@@ -71,21 +69,21 @@ export function CreateClientDialog() {
           </select>
         </div>
         <div>
-          <label htmlFor="cc-phone" className={labelClass}>
+          <Label htmlFor="cc-phone" optional>
             Telepon
-          </label>
+          </Label>
           <input id="cc-phone" name="phone" type="tel" className={inputClass} />
         </div>
         <div>
-          <label htmlFor="cc-email" className={labelClass}>
+          <Label htmlFor="cc-email" optional>
             Email
-          </label>
+          </Label>
           <input id="cc-email" name="email" type="email" className={inputClass} />
         </div>
         <div>
-          <label htmlFor="cc-address" className={labelClass}>
+          <Label htmlFor="cc-address" optional>
             Alamat
-          </label>
+          </Label>
           <textarea id="cc-address" name="address" rows={2} className={inputClass} />
         </div>
       </FormDialog>

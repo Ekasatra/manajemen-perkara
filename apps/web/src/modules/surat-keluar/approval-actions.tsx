@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { FieldError, Label } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { callApi, uploadFile } from '@/modules/surat/upload';
 
 type Action = 'Submit' | 'Approve' | 'Reject' | 'Sign' | 'Send';
@@ -59,7 +60,7 @@ export function ApprovalActions({ id, actions }: { id: string; actions: Action[]
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-[12px]">
         {actions.map((a) =>
           a === 'Submit' || a === 'Approve' ? (
             <button
@@ -97,31 +98,43 @@ export function ApprovalActions({ id, actions }: { id: string; actions: Action[]
         onSubmit={submitDialog}
       >
         <div>
-          <label htmlFor="ap-note" className={labelClass}>
+          <Label htmlFor="ap-note" required={dialog === 'Reject'}>
             Catatan{dialog === 'Reject' ? ' (wajib)' : ' (opsional)'}
-          </label>
+          </Label>
           <textarea
             id="ap-note"
             name="note"
             rows={3}
             required={dialog === 'Reject'}
+            aria-describedby="err-note"
             className={inputClass}
           />
+          <FieldError name="note" />
         </div>
         {dialog === 'Sign' ? (
           <div>
-            <label htmlFor="ap-signed" className={labelClass}>
-              File bertanda tangan (opsional)
-            </label>
-            <input id="ap-signed" name="signedFile" type="file" className={inputClass} />
+            <Label htmlFor="ap-signed">File bertanda tangan (opsional)</Label>
+            <input
+              id="ap-signed"
+              name="signedFile"
+              type="file"
+              aria-describedby="err-signedFilePath"
+              className={inputClass}
+            />
+            <FieldError name="signedFilePath" />
           </div>
         ) : null}
         {dialog === 'Send' ? (
           <div>
-            <label htmlFor="ap-email" className={labelClass}>
-              Kirim via email ke (opsional)
-            </label>
-            <input id="ap-email" name="sendToEmail" type="email" className={inputClass} />
+            <Label htmlFor="ap-email">Kirim via email ke (opsional)</Label>
+            <input
+              id="ap-email"
+              name="sendToEmail"
+              type="email"
+              aria-describedby="err-sendToEmail"
+              className={inputClass}
+            />
+            <FieldError name="sendToEmail" />
           </div>
         ) : null}
       </FormDialog>

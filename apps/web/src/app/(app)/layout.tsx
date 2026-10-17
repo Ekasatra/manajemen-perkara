@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
-import { can, requireUser } from '@ekasatra/core';
+import { can } from '@ekasatra/core';
 import type { PolicyUser, Resource } from '@ekasatra/core';
-import { createDb } from '@ekasatra/db';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ROLE_LABEL } from '@/lib/role-label';
+import { getAuthContext } from '@/lib/session';
 import { AppShell } from '@/shell/app-shell';
 import type { NavItem, Viewer } from '@/shell/app-shell';
 
@@ -107,11 +106,10 @@ const NAV: NavEntry[] = [
   { label: 'Profil Saya', href: '/profil', icon: 'profile', group: 'Sistem' },
 ];
 
-
 /** Sesi tidak valid tidak dilempar dari sini: tiap halaman sudah mengarahkan ke /login sendiri. */
 async function loadViewer() {
   try {
-    return await requireUser(createDb(), await createSupabaseServerClient());
+    return await getAuthContext();
   } catch {
     return null;
   }

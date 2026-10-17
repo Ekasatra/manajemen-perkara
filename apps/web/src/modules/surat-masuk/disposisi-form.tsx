@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { callApi } from '@/modules/surat/upload';
 
 type Option = { id: string; label: string };
@@ -51,9 +52,9 @@ export function DisposisiForm({
       }}
     >
       <div>
-        <label htmlFor="ds-to" className={labelClass}>
+        <Label htmlFor="ds-to" optional>
           Diteruskan kepada
-        </label>
+        </Label>
         <select id="ds-to" name="assignedTo" defaultValue={assignedTo ?? ''} className={inputClass}>
           <option value="">— Pilih —</option>
           {staff.map((s) => (
@@ -64,9 +65,9 @@ export function DisposisiForm({
         </select>
       </div>
       <div>
-        <label htmlFor="ds-note" className={labelClass}>
+        <Label htmlFor="ds-note" optional>
           Instruksi
-        </label>
+        </Label>
         <textarea
           id="ds-note"
           name="disposisiNote"
@@ -76,7 +77,7 @@ export function DisposisiForm({
           className={inputClass}
         />
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-[12px]">
         <button type="submit" disabled={busy} className={buttonClass.primary}>
           Simpan Disposisi
         </button>

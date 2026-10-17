@@ -115,7 +115,7 @@ export default async function SuratMasukPage({
             href={`/api/v1/surat-masuk/${r.id}/file`}
             title="Lampiran"
             aria-label={`Lampiran ${r.noAgenda}`}
-            className="inline-flex size-8 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100"
+            className="inline-flex size-11 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100"
           >
             <Paperclip aria-hidden="true" size={15} />
           </a>
@@ -132,10 +132,7 @@ export default async function SuratMasukPage({
 
   return (
     <div>
-      <PageHeader
-        title="Surat Masuk"
-        actions={create}
-      />
+      <PageHeader title="Surat Masuk" actions={create} />
       <div className="card-surface mb-4">
         <FilterBar
           q={str('q') ?? ''}

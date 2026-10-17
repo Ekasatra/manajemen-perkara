@@ -7,11 +7,17 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FactList } from '@/components/ui/fact-list';
 import { FormDialog } from '@/components/ui/form-dialog';
+import { FieldError, Label, RequiredNote } from '@/components/ui/field';
 import { ResponsiveTable } from '@/components/ui/responsive-table';
 import type { Column } from '@/components/ui/responsive-table';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 import { formatDate, formatRupiah } from '@/lib/format';
 import { StatusBadge as InvoiceStatusBadge } from '@/modules/invoices/status-badge';
+import {
+  createCaseMemberSchema,
+  createScheduleSchema,
+  createTimelineSchema,
+} from '@ekasatra/shared';
 import type { InvoiceStatus } from '@ekasatra/shared/invoices';
 
 type CaseRow = {
@@ -170,7 +176,7 @@ export function CaseTabs(props: Props) {
       <div
         role="tablist"
         aria-label="Bagian perkara"
-        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
+        className="mb-4 flex w-full gap-[12px] overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
       >
         {TABS.filter((t) => t !== 'Biaya' || props.canViewBiaya).map((t) => {
           const count = TAB_COUNT[t]?.(props);
@@ -281,19 +287,35 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
           onClose={() => setOpen(false)}
           title="Tambah entri timeline"
           submitLabel="Tambah"
+          schema={createTimelineSchema}
           onSubmit={handleSubmit}
         >
+          <RequiredNote />
           <div>
-            <label htmlFor="tl-title" className={labelClass}>
+            <Label htmlFor="tl-title" required>
               Judul
-            </label>
-            <input id="tl-title" name="title" type="text" required className={inputClass} />
+            </Label>
+            <input
+              id="tl-title"
+              name="title"
+              type="text"
+              required
+              aria-describedby="err-title"
+              className={inputClass}
+            />
+            <FieldError name="title" />
           </div>
           <div>
-            <label htmlFor="tl-type" className={labelClass}>
+            <Label htmlFor="tl-type" optional>
               Tipe
-            </label>
-            <select id="tl-type" name="eventType" className={inputClass} defaultValue="Catatan">
+            </Label>
+            <select
+              id="tl-type"
+              name="eventType"
+              aria-describedby="err-eventType"
+              className={inputClass}
+              defaultValue="Catatan"
+            >
               <option value="Catatan">Catatan</option>
               <option value="Putusan">Putusan</option>
               <option value="Banding">Banding</option>
@@ -303,18 +325,33 @@ function TimelineTab({ caseId, timeline, canUpdate }: Props) {
               <option value="Surat">Surat</option>
               <option value="Lainnya">Lainnya</option>
             </select>
+            <FieldError name="eventType" />
           </div>
           <div>
-            <label htmlFor="tl-date" className={labelClass}>
+            <Label htmlFor="tl-date" optional>
               Tanggal
-            </label>
-            <input id="tl-date" name="eventDate" type="date" className={inputClass} />
+            </Label>
+            <input
+              id="tl-date"
+              name="eventDate"
+              type="date"
+              aria-describedby="err-eventDate"
+              className={inputClass}
+            />
+            <FieldError name="eventDate" />
           </div>
           <div>
-            <label htmlFor="tl-desc" className={labelClass}>
+            <Label htmlFor="tl-desc" optional>
               Keterangan
-            </label>
-            <textarea id="tl-desc" name="description" rows={2} className={inputClass} />
+            </Label>
+            <textarea
+              id="tl-desc"
+              name="description"
+              rows={2}
+              aria-describedby="err-description"
+              className={inputClass}
+            />
+            <FieldError name="description" />
           </div>
         </FormDialog>
       ) : null}
@@ -415,43 +452,76 @@ function JadwalTab({ caseId, schedules, canUpdate }: Props) {
           onClose={() => setOpen(false)}
           title="Tambah jadwal"
           submitLabel="Buat"
+          schema={createScheduleSchema}
           onSubmit={handleSubmit}
         >
+          <RequiredNote />
           <div>
-            <label htmlFor="sc-date" className={labelClass}>
+            <Label htmlFor="sc-date" required>
               Tanggal
-            </label>
-            <input id="sc-date" name="scheduleDate" type="date" required className={inputClass} />
+            </Label>
+            <input
+              id="sc-date"
+              name="scheduleDate"
+              type="date"
+              required
+              aria-describedby="err-scheduleDate"
+              className={inputClass}
+            />
+            <FieldError name="scheduleDate" />
           </div>
           <div>
-            <label htmlFor="sc-time" className={labelClass}>
+            <Label htmlFor="sc-time" optional>
               Jam
-            </label>
-            <input id="sc-time" name="scheduleTime" type="time" className={inputClass} />
+            </Label>
+            <input
+              id="sc-time"
+              name="scheduleTime"
+              type="time"
+              aria-describedby="err-scheduleTime"
+              className={inputClass}
+            />
+            <FieldError name="scheduleTime" />
           </div>
           <div>
-            <label htmlFor="sc-kind" className={labelClass}>
+            <Label htmlFor="sc-kind" optional>
               Jenis
-            </label>
+            </Label>
             <input
               id="sc-kind"
               name="kind"
               type="text"
+              aria-describedby="err-kind"
               defaultValue="Sidang"
               className={inputClass}
             />
+            <FieldError name="kind" />
           </div>
           <div>
-            <label htmlFor="sc-loc" className={labelClass}>
+            <Label htmlFor="sc-loc" optional>
               Lokasi
-            </label>
-            <input id="sc-loc" name="location" type="text" className={inputClass} />
+            </Label>
+            <input
+              id="sc-loc"
+              name="location"
+              type="text"
+              aria-describedby="err-location"
+              className={inputClass}
+            />
+            <FieldError name="location" />
           </div>
           <div>
-            <label htmlFor="sc-notes" className={labelClass}>
+            <Label htmlFor="sc-notes" optional>
               Catatan
-            </label>
-            <textarea id="sc-notes" name="notes" rows={2} className={inputClass} />
+            </Label>
+            <textarea
+              id="sc-notes"
+              name="notes"
+              rows={2}
+              aria-describedby="err-notes"
+              className={inputClass}
+            />
+            <FieldError name="notes" />
           </div>
         </FormDialog>
       ) : null}
@@ -543,6 +613,7 @@ function DokumenTab({ caseId, documents, canUpdate }: Props) {
             <label className="flex min-h-11 items-center gap-2 text-sm text-navy-800">
               <input type="checkbox" name="sharedWithClient" value="true" className="size-4" />
               Bagikan ke klien (portal)
+              <span className="ml-1.5 text-[11px] font-normal text-navy-400">(opsional)</span>
             </label>
           </div>
         </FormDialog>
@@ -758,13 +829,21 @@ function TimTab({ caseId, members, canManageTeam, staffOptions }: Props) {
           title="Tambah anggota tim"
           description="Advokat dan Paralegal boleh lebih dari satu; Manajer Kasus hanya satu orang."
           submitLabel="Tambah"
+          schema={createCaseMemberSchema}
           onSubmit={add}
         >
           <div>
-            <label htmlFor="tm-user" className={labelClass}>
+            <Label htmlFor="tm-user" required>
               Anggota
-            </label>
-            <select id="tm-user" name="userId" required defaultValue="" className={inputClass}>
+            </Label>
+            <select
+              id="tm-user"
+              name="userId"
+              required
+              aria-describedby="err-userId"
+              defaultValue=""
+              className={inputClass}
+            >
               <option value="" disabled>
                 Pilih anggota
               </option>
@@ -774,16 +853,25 @@ function TimTab({ caseId, members, canManageTeam, staffOptions }: Props) {
                 </option>
               ))}
             </select>
+            <FieldError name="userId" />
           </div>
           <div>
-            <label htmlFor="tm-peran" className={labelClass}>
+            <Label htmlFor="tm-peran" required>
               Peran
-            </label>
-            <select id="tm-peran" name="peran" defaultValue="Advokat" className={inputClass}>
+            </Label>
+            <select
+              id="tm-peran"
+              name="peran"
+              required
+              aria-describedby="err-peran"
+              defaultValue="Advokat"
+              className={inputClass}
+            >
               <option value="Advokat">Advokat</option>
               <option value="Paralegal">Paralegal</option>
               <option value="Manager">Manajer Kasus</option>
             </select>
+            <FieldError name="peran" />
           </div>
         </FormDialog>
       )}
