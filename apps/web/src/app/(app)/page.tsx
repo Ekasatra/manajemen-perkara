@@ -1,6 +1,6 @@
+import { can, getDashboardData } from '@ekasatra/core';
 import { createDb } from '@ekasatra/db';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { can, requireUser, getDashboardData } from '@ekasatra/core';
+import { getAuthContext } from '@/lib/session';
 import { ROLE_LABEL } from '@/lib/role-label';
 import { DashboardView } from '@/modules/dashboard/dashboard-view';
 import type { DashboardViewer } from '@/modules/dashboard/dashboard-view';
@@ -13,9 +13,7 @@ export default async function HomePage() {
   let data;
   let viewer: DashboardViewer;
   try {
-    const db = createDb();
-    const supabase = await createSupabaseServerClient();
-    const user = await requireUser(db, supabase);
+    const [user, db] = await Promise.all([getAuthContext(), createDb()]);
     data = await getDashboardData(db, user);
     viewer = {
       name: user.fullName,

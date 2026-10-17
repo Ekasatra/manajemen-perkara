@@ -22,23 +22,21 @@ export async function getSuratSummaryForDashboard(
   keluarHariIni: number;
   masukBelumSelesai: number;
 }> {
-  // 1. Surat Masuk hari ini
-  const smHariIni = await db
-    .select({ count: sql<number>`cast(count(*) as int)` })
-    .from(suratMasuk)
-    .where(eq(suratMasuk.tglTerima, todayStr));
-
-  // 2. Surat Masuk belum selesai (status 'Belum' atau 'Didisposisi')
-  const smBelumSelesai = await db
-    .select({ count: sql<number>`cast(count(*) as int)` })
-    .from(suratMasuk)
-    .where(inArray(suratMasuk.status, ['Belum', 'Didisposisi']));
-
-  // 3. Surat Keluar hari ini
-  const skHariIni = await db
-    .select({ count: sql<number>`cast(count(*) as int)` })
-    .from(suratKeluar)
-    .where(eq(suratKeluar.tglSurat, todayStr));
+  // Tiga hitungan independen dijalankan paralel (hemat RTT saat jauh dari DB).
+  const [smHariIni, smBelumSelesai, skHariIni] = await Promise.all([
+    db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(suratMasuk)
+      .where(eq(suratMasuk.tglTerima, todayStr)),
+    db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(suratMasuk)
+      .where(inArray(suratMasuk.status, ['Belum', 'Didisposisi'])),
+    db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(suratKeluar)
+      .where(eq(suratKeluar.tglSurat, todayStr)),
+  ]);
 
   return {
     masukHariIni: smHariIni[0]?.count ?? 0,
@@ -47,16 +45,34 @@ export async function getSuratSummaryForDashboard(
   };
 }
 
+/** Tanggal terakhir (angka, 2 digit) untuk tahun-bulan berbasis 0 (0 = Januari). */
+function lastDayOfMonth(year: number, monthIndex: number): string {
+  return String(new Date(year, monthIndex + 1, 0).getDate()).padStart(2, '0');
+}
+
 /**
  * Tren surat 6 bulan terakhir untuk grafik Recharts / SVG (PRD §5.10).
  */
 export async function getSuratTrend6Bulan(
   db: DbExecutor,
 ): Promise<{ month: string; suratMasuk: number; suratKeluar: number }[]> {
-  const result: { month: string; suratMasuk: number; suratKeluar: number }[] = [];
-
   const now = new Date();
   const months: { label: string; start: string; end: string }[] = [];
+
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
 
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -64,51 +80,56 @@ export async function getSuratTrend6Bulan(
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const monthKey = `${year}-${month}`;
 
-    const nextD = new Date(year, d.getMonth() + 1, 0);
-    const endDay = String(nextD.getDate()).padStart(2, '0');
-
-    const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
-    ];
     const label = `${monthNames[d.getMonth()]} ${year}`;
 
     months.push({
       label,
       start: `${monthKey}-01`,
-      end: `${monthKey}-${endDay}`,
+      end: `${monthKey}-${lastDayOfMonth(year, d.getMonth())}`,
     });
   }
 
-  for (const m of months) {
-    const smCount = await db
-      .select({ count: sql<number>`cast(count(*) as int)` })
+  // Dua query agregasi GROUP BY menggantikan 12 query berurutan (hemat ~10 RTT).
+  const [smRows, skRows] = await Promise.all([
+    db
+      .select({
+        month: sql<string>`to_char(${suratMasuk.tglTerima}, 'YYYY-MM')`,
+        count: sql<number>`cast(count(*) as int)`,
+      })
       .from(suratMasuk)
-      .where(and(gte(suratMasuk.tglTerima, m.start), lte(suratMasuk.tglTerima, m.end)));
-
-    const skCount = await db
-      .select({ count: sql<number>`cast(count(*) as int)` })
+      .where(
+        and(
+          gte(suratMasuk.tglTerima, months[0]!.start),
+          lte(suratMasuk.tglTerima, months[months.length - 1]!.end),
+        ),
+      )
+      .groupBy(sql`to_char(${suratMasuk.tglTerima}, 'YYYY-MM')`),
+    db
+      .select({
+        month: sql<string>`to_char(${suratKeluar.tglSurat}, 'YYYY-MM')`,
+        count: sql<number>`cast(count(*) as int)`,
+      })
       .from(suratKeluar)
-      .where(and(gte(suratKeluar.tglSurat, m.start), lte(suratKeluar.tglSurat, m.end)));
+      .where(
+        and(
+          gte(suratKeluar.tglSurat, months[0]!.start),
+          lte(suratKeluar.tglSurat, months[months.length - 1]!.end),
+        ),
+      )
+      .groupBy(sql`to_char(${suratKeluar.tglSurat}, 'YYYY-MM')`),
+  ]);
 
-    result.push({
+  const smByMonth = new Map(smRows.map((r) => [r.month, r.count]));
+  const skByMonth = new Map(skRows.map((r) => [r.month, r.count]));
+
+  return months.map((m) => {
+    const monthKey = m.start.slice(0, 7);
+    return {
       month: m.label,
-      suratMasuk: smCount[0]?.count ?? 0,
-      suratKeluar: skCount[0]?.count ?? 0,
-    });
-  }
-
-  return result;
+      suratMasuk: smByMonth.get(monthKey) ?? 0,
+      suratKeluar: skByMonth.get(monthKey) ?? 0,
+    };
+  });
 }
 
 /**
@@ -152,11 +173,13 @@ export async function getApprovalMenungguSaya(
 export async function getSuratPersonalNotifications(
   db: DbExecutor,
   userId: string,
+  preloadedApproval?: { count: number; items: DashboardApprovalItem[] },
 ): Promise<PersonalNotificationItem[]> {
   const notifs: PersonalNotificationItem[] = [];
 
-  // 1. Approval menunggu saya
-  const { items: pendingApprovals } = await getApprovalMenungguSaya(db, userId);
+  // 1. Approval menunggu saya (boleh dilewatkan pemanggil agar tidak query ulang)
+  const { items: pendingApprovals } =
+    preloadedApproval ?? (await getApprovalMenungguSaya(db, userId));
   for (const item of pendingApprovals) {
     notifs.push({
       id: `approval-${item.id}`,
@@ -207,12 +230,7 @@ export async function getSuratPersonalNotifications(
     })
     .from(suratApprovalLogs)
     .innerJoin(suratKeluar, eq(suratApprovalLogs.suratId, suratKeluar.id))
-    .where(
-      and(
-        eq(suratApprovalLogs.action, 'Reject'),
-        eq(suratKeluar.createdBy, userId),
-      ),
-    )
+    .where(and(eq(suratApprovalLogs.action, 'Reject'), eq(suratKeluar.createdBy, userId)))
     .orderBy(desc(suratApprovalLogs.createdAt))
     .limit(5);
 
@@ -247,7 +265,9 @@ export async function listSuratMasukForReport(
     conditions.push(lte(suratMasuk.tglTerima, filter.endDate));
   }
   if (filter?.status) {
-    conditions.push(eq(suratMasuk.status, filter.status as (typeof suratMasuk.status.enumValues)[number]));
+    conditions.push(
+      eq(suratMasuk.status, filter.status as (typeof suratMasuk.status.enumValues)[number]),
+    );
   }
   if (filter?.sifat) {
     conditions.push(eq(suratMasuk.sifat, filter.sifat));
@@ -296,10 +316,14 @@ export async function listSuratKeluarForReport(
     conditions.push(lte(suratKeluar.tglSurat, filter.endDate));
   }
   if (filter?.status) {
-    conditions.push(eq(suratKeluar.status, filter.status as (typeof suratKeluar.status.enumValues)[number]));
+    conditions.push(
+      eq(suratKeluar.status, filter.status as (typeof suratKeluar.status.enumValues)[number]),
+    );
   }
   if (filter?.jenis) {
-    conditions.push(eq(suratKeluar.jenis, filter.jenis as (typeof suratKeluar.jenis.enumValues)[number]));
+    conditions.push(
+      eq(suratKeluar.jenis, filter.jenis as (typeof suratKeluar.jenis.enumValues)[number]),
+    );
   }
   if (filter?.caseId) {
     conditions.push(eq(suratKeluar.caseId, filter.caseId));
@@ -314,9 +338,15 @@ export async function listSuratKeluarForReport(
       jenis: suratKeluar.jenis,
       tglSurat: suratKeluar.tglSurat,
       status: suratKeluar.status,
-      creatorName: sql<string | null>`(select full_name from profiles where id = ${suratKeluar.createdBy})`,
-      reviewerName: sql<string | null>`(select full_name from profiles where id = ${suratKeluar.reviewerId})`,
-      signerName: sql<string | null>`(select full_name from profiles where id = ${suratKeluar.signerId})`,
+      creatorName: sql<
+        string | null
+      >`(select full_name from profiles where id = ${suratKeluar.createdBy})`,
+      reviewerName: sql<
+        string | null
+      >`(select full_name from profiles where id = ${suratKeluar.reviewerId})`,
+      signerName: sql<
+        string | null
+      >`(select full_name from profiles where id = ${suratKeluar.signerId})`,
       caseTitle: cases.title,
     })
     .from(suratKeluar)
