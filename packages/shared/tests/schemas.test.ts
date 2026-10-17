@@ -15,9 +15,9 @@ describe('C1 Auth — loginSchema', () => {
     const r = loginSchema.safeParse({ email: 'a@b.com', password: '12345678' });
     expect(r.success).toBe(true);
   });
-  it('menolak password < 8 karakter', () => {
-    const r = loginSchema.safeParse({ email: 'a@b.com', password: '1234567' });
-    expect(r.success).toBe(false);
+  it('menerima password pendek (akun lama) dan menolak yang kosong', () => {
+    expect(loginSchema.safeParse({ email: 'a@b.com', password: 'qwerty' }).success).toBe(true);
+    expect(loginSchema.safeParse({ email: 'a@b.com', password: '' }).success).toBe(false);
   });
   it('menolak email tidak valid', () => {
     const r = loginSchema.safeParse({ email: 'bukan-email', password: '12345678' });
