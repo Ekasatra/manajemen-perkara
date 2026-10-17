@@ -76,7 +76,6 @@ export default function LoginPage() {
               name="password"
               type={showPassword ? 'text' : 'password'}
               required
-              minLength={8}
               autoComplete="current-password"
               placeholder="••••••••"
               className={`${inputClass} pl-10 pr-12`}
