@@ -1,4 +1,6 @@
 /** Kas kantor (Agent F · F5). Hanya Admin + user di setting `kas_viewers`. */
+import { forbidden } from 'next/navigation';
+import { isAppError } from '@ekasatra/core';
 import { getKasSummary } from '@ekasatra/core/honor-tim';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { FileHeader } from '@/components/ui/file-header';
@@ -11,7 +13,15 @@ type Row = Awaited<ReturnType<typeof getKasSummary>>['cases'][number];
 
 export default async function KasPage() {
   const { db, user } = await pageContext();
-  const kas = await getKasSummary(db, user); // FORBIDDEN bila bukan Admin/kas_viewers
+
+  let kas: Awaited<ReturnType<typeof getKasSummary>>;
+  try {
+    kas = await getKasSummary(db, user);
+  } catch (e) {
+    // Bukan Admin/kas_viewers → halaman "Tidak punya akses" (403), bukan error 500.
+    if (isAppError(e) && e.code === 'FORBIDDEN') forbidden();
+    throw e;
+  }
 
   const columns: Column<Row>[] = [
     { key: 'case', header: 'Perkara', cell: (r) => `${r.regNo} · ${r.title}` },

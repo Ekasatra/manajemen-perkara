@@ -1,6 +1,7 @@
 /** Kelola honor satu perkara (Admin): draft, distribusi, status Dibayar. */
 import { notFound } from 'next/navigation';
-import { ensureCan, isAppError } from '@ekasatra/core';
+import { isAppError } from '@ekasatra/core';
+import { requireCan } from '@/lib/guard';
 import { uuidParam } from '@ekasatra/core/finance';
 import { getHonorOverview } from '@ekasatra/core/honor-tim';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,7 @@ import { pageContext } from '@/modules/invoices/route-ctx';
 export default async function HonorCasePage({ params }: { params: Promise<{ caseId: string }> }) {
   const { caseId } = await params;
   const { db, user } = await pageContext();
-  ensureCan(user, 'U', 'honor_tim');
+  requireCan(user, 'U', 'honor_tim');
 
   let o;
   try {
