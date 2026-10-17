@@ -60,7 +60,7 @@ export default function LoginPage() {
               type="email"
               required
               autoComplete="email"
-              placeholder="nama@ekasatra.id"
+              placeholder="nama@ekasatra.com"
               className={`${inputClass} pl-10`}
             />
           </div>

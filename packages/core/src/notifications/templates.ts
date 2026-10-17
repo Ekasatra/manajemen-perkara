@@ -76,7 +76,7 @@ function renderTemplateRaw(
   event: NotificationEvent,
   recipientName: string,
   officeName: string = 'EKASATRA Law & Policy Advisory',
-  appUrl: string = process.env.NEXT_PUBLIC_APP_URL || 'https://app.ekasatra.id',
+  appUrl: string = process.env.NEXT_PUBLIC_APP_URL || 'https://app.ekasatra.com',
 ): EmailContent {
   switch (event.type) {
     case 'surat_submit': {
@@ -305,7 +305,7 @@ export function renderEmailTemplate(
   event: NotificationEvent,
   recipientName: string,
   officeName: string = 'EKASATRA Law & Policy Advisory',
-  appUrl: string = process.env.NEXT_PUBLIC_APP_URL || 'https://app.ekasatra.id',
+  appUrl: string = process.env.NEXT_PUBLIC_APP_URL || 'https://app.ekasatra.com',
 ): EmailContent {
   const safeData = Object.fromEntries(
     Object.entries(event.data as unknown as Record<string, unknown>).map(([k, v]) => [
