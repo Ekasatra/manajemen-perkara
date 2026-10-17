@@ -26,7 +26,8 @@ export function createSupabaseServiceClient(
 
 function buildDb(databaseUrl: string) {
   // idle_timeout: koneksi menganggur ditutup (default postgres.js: tidak pernah).
-  const client = postgres(databaseUrl, { prepare: false, idle_timeout: 20 });
+  // max: session pooler Supabase hanya 15 koneksi total (EMAXCONNSESSION); 1 per instance serverless.
+  const client = postgres(databaseUrl, { prepare: false, idle_timeout: 20, max: 1 });
   return drizzle(client, { schema });
 }
 
