@@ -3,7 +3,7 @@
  * POST /api/v1/clients — buat klien dengan kode KL- otomatis
  */
 import { count, desc, ilike } from 'drizzle-orm';
-import { createDb, clients } from '@ekasatra/db';
+import { createDb, clients, clientContacts } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import {
   ok,
@@ -18,6 +18,8 @@ import {
 import { createClientSchema } from '@ekasatra/shared';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
+
+const PHONE_KINDS = ['HP', 'WhatsApp', 'Telepon'];
 
 export async function GET(req: Request) {
   return runRoute(async () => {
@@ -79,31 +81,47 @@ export async function POST(req: Request) {
     const body = await parseBody(req, createClientSchema);
 
     // Buat kode KL- dalam transaksi (counter + insert atomik).
-    const [client] = await withTx(db, async (tx) => {
+    const client = await withTx(db, async (tx) => {
       const counter = await nextCounter(tx, 'KL');
       const clientCode = `KL-${String(counter).padStart(4, '0')}`;
 
-      // Turunkan phone/email dari kontak.
-      const phoneContact = body.contacts.find((c) =>
-        ['HP', 'WhatsApp', 'Telepon'].includes(c.type),
+      // Simpan kontak ke tabel client_contacts (kanonis) dan mirror ke phone/email.
+      const phoneContacts = body.contacts.filter((c) =>
+        PHONE_KINDS.includes(c.label ?? c.kind),
       );
-      const emailContact = body.contacts.find((c) => c.type === 'Email');
+      const emailContacts = body.contacts.filter((c) => c.kind === 'email');
 
-      return tx
+      const [inserted] = await tx
         .insert(clients)
         .values({
           clientCode,
           name: body.name,
           type: body.type ?? null,
           contacts: body.contacts,
-          phone: phoneContact?.value ?? null,
-          email: emailContact?.value ?? null,
+          phone: phoneContacts[0]?.value ?? null,
+          email: emailContacts[0]?.value ?? null,
           address: body.address ?? null,
           notes: body.notes ?? null,
           portalEnabled: body.portalEnabled,
           createdBy: user.userId,
         })
         .returning();
+
+      if (!inserted) throw new Error('Gagal membuat klien');
+
+      // Tulis ke client_contacts.
+      await tx.insert(clientContacts).values(
+        body.contacts.map((c, i) => ({
+          clientId: inserted.id,
+          kind: c.kind,
+          value: c.value,
+          label: c.label ?? null,
+          isPrimary: c.isPrimary === true,
+          position: c.position ?? i,
+        })),
+      );
+
+      return inserted;
     });
 
     if (!client) throw new Error('Gagal membuat klien');

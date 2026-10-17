@@ -1,10 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, jsonb, pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, uuid } from 'drizzle-orm/pg-core';
 import { timestamps } from './_helpers';
 import { profiles } from './identity';
 
 // Token portal: 64 hex acak (2 × uuid v4, CSPRNG) — memenuhi syarat ≥32 karakter, tanpa extension.
 const randomToken = sql`replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '')`;
+
+export const clientContactKind = pgEnum('client_contact_kind', ['phone', 'email']);
 
 export const clients = pgTable(
   'clients',
@@ -15,11 +17,11 @@ export const clients = pgTable(
     name: text('name').notNull(),
     /** Dari daftar `client_types` di settings. */
     type: text('type'),
-    /** [{ type, value }] maks 20. */
+    /** [{ type, value }] maks 20. Dipertahankan untuk kompatibilitas baca selama transisi. */
     contacts: jsonb('contacts')
       .notNull()
       .default(sql`'[]'::jsonb`),
-    /** Diturunkan dari contacts oleh aplikasi. */
+    /** Diturunkan dari client_contacts oleh aplikasi (mirror untuk kompatibilitas lama). */
     phone: text('phone'),
     email: text('email'),
     address: text('address'),
@@ -36,6 +38,28 @@ export const clients = pgTable(
     ),
     index('clients_name_idx').on(t.name),
     index('clients_created_at_idx').on(t.createdAt),
+  ],
+);
+
+export const clientContacts = pgTable(
+  'client_contacts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    clientId: uuid('client_id')
+      .notNull()
+      .references(() => clients.id, { onDelete: 'cascade' }),
+    kind: clientContactKind('kind').notNull(),
+    value: text('value').notNull(),
+    label: text('label'),
+    isPrimary: boolean('is_primary').notNull().default(false),
+    position: integer('position').notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [
+    index('client_contacts_client_idx').on(t.clientId),
+    index('client_contacts_kind_idx').on(t.kind),
+    // Tepat satu primary per kind per client.
+    index('client_contacts_one_primary_per_kind_idx').on(t.clientId, t.kind).where(sql`${t.isPrimary} = true`),
   ],
 );
 

@@ -54,22 +54,72 @@ describe('C2 Users — createUserSchema', () => {
 });
 
 describe('C3 Clients — contactSchema & contactsSchema', () => {
-  it('menerima kontak dengan tipe valid', () => {
-    const r = contactSchema.safeParse({ type: 'HP', value: '08123456789' });
+  it('menerima kontak telepon valid', () => {
+    const r = contactSchema.safeParse({ kind: 'phone', value: '08123456789', isPrimary: true });
     expect(r.success).toBe(true);
   });
-  it('menolak tipe tidak valid', () => {
-    const r = contactSchema.safeParse({ type: 'Twitter', value: '@user' });
+  it('menerima kontak email valid', () => {
+    const r = contactSchema.safeParse({ kind: 'email', value: 'a@b.com', isPrimary: true });
+    expect(r.success).toBe(true);
+  });
+  it('menolak email tidak valid', () => {
+    const r = contactSchema.safeParse({ kind: 'email', value: 'bukan-email', isPrimary: true });
+    expect(r.success).toBe(false);
+  });
+  it('menolak telepon tidak valid', () => {
+    const r = contactSchema.safeParse({ kind: 'phone', value: 'abc', isPrimary: true });
+    expect(r.success).toBe(false);
+  });
+  it('menolak kind tidak valid', () => {
+    const r = contactSchema.safeParse({ kind: 'fax', value: '08123456789', isPrimary: true });
     expect(r.success).toBe(false);
   });
   it('contactsSchema menolak lebih dari 20 kontak', () => {
-    const contacts = Array.from({ length: 21 }, (_, i) => ({ type: 'HP', value: String(i) }));
+    const contacts = Array.from({ length: 21 }, (_, i) => ({
+      kind: 'phone' as const,
+      value: `081234567${String(i).padStart(2, '0')}`,
+      isPrimary: i === 0,
+    }));
     const r = contactsSchema.safeParse(contacts);
     expect(r.success).toBe(false);
   });
-  it('contactsSchema menerima tepat 20 kontak', () => {
-    const contacts = Array.from({ length: 20 }, (_, i) => ({ type: 'HP', value: String(i) }));
-    const r = contactsSchema.safeParse(contacts);
+  it('contactsSchema menerima tepat 20 kontak (1 primary per jenis)', () => {
+    const phones = Array.from({ length: 10 }, (_, i) => ({
+      kind: 'phone' as const,
+      value: `081234567${String(i).padStart(2, '0')}`,
+      isPrimary: i === 0,
+    }));
+    const emails = Array.from({ length: 10 }, (_, i) => ({
+      kind: 'email' as const,
+      value: `user${i}@example.com`,
+      isPrimary: i === 0,
+    }));
+    const r = contactsSchema.safeParse([...phones, ...emails]);
+    expect(r.success).toBe(true);
+  });
+  it('menolak duplikat kind+value', () => {
+    const r = contactsSchema.safeParse([
+      { kind: 'phone', value: '08123456789', isPrimary: true },
+      { kind: 'phone', value: '08123456789', isPrimary: false },
+    ]);
+    expect(r.success).toBe(false);
+  });
+  it('menolak lebih dari satu primary per jenis', () => {
+    const r = contactsSchema.safeParse([
+      { kind: 'phone', value: '08123456789', isPrimary: true },
+      { kind: 'phone', value: '08123456790', isPrimary: true },
+    ]);
+    expect(r.success).toBe(false);
+  });
+  it('menolak nol primary bila ada kontak jenis tersebut', () => {
+    const r = contactsSchema.safeParse([
+      { kind: 'phone', value: '08123456789', isPrimary: false },
+      { kind: 'phone', value: '08123456790', isPrimary: false },
+    ]);
+    expect(r.success).toBe(false);
+  });
+  it('menerima kontak kosong', () => {
+    const r = contactsSchema.safeParse([]);
     expect(r.success).toBe(true);
   });
 });

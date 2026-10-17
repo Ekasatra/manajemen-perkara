@@ -42,8 +42,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           contacts: asContacts(c.contacts).length
             ? asContacts(c.contacts)
             : [
-                ...(c.phone ? [{ type: 'Telepon', value: c.phone }] : []),
-                ...(c.email ? [{ type: 'Email', value: c.email }] : []),
+                ...(c.phone ? [{ kind: 'phone', label: 'Telepon', value: c.phone }] : []),
+                ...(c.email ? [{ kind: 'email', label: 'Email', value: c.email }] : []),
               ],
         }}
         cases={caseRows}

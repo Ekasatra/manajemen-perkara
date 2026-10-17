@@ -97,8 +97,8 @@ export function ClientDetailTabs({
               profile.contacts.length ? (
                 <ul key="c" className="space-y-0.5">
                   {profile.contacts.map((c, i) => (
-                    <li key={i}>
-                      <span className="text-navy-400">{c.type}:</span> {c.value}
+                    <li key={`${c.kind}-${i}`}>
+                      <span className="text-navy-400">{c.label ?? c.kind}:</span> {c.value}
                     </li>
                   ))}
                 </ul>
