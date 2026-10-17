@@ -48,13 +48,15 @@ export default async function SuratKeluarDetailPage({
         actions={
           <>
             {canEdit ? <EditSuratKeluarDialog surat={surat} /> : null}
-            <DownloadLink endpoint={`/api/v1/surat-keluar/${surat.id}/file`} label="Unduh surat" />
-            {surat.signedFilePath ? (
-              <DownloadLink
-                endpoint={`/api/v1/surat-keluar/${surat.id}/file?which=signed`}
-                label="Unduh bertanda tangan"
-              />
-            ) : null}
+            <DownloadLink
+              endpoint={`/api/v1/surat-keluar/${surat.id}/file?which=file`}
+              label="Unduh surat"
+            />
+            <DownloadLink
+              endpoint={`/api/v1/surat-keluar/${surat.id}/file?which=signed`}
+              label="Unduh bertanda tangan"
+              disabled={!surat.signedFilePath}
+            />
           </>
         }
       />

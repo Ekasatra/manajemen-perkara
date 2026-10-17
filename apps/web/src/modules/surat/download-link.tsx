@@ -4,10 +4,19 @@ import { useState } from 'react';
 import { buttonClass } from '@/components/ui/styles';
 
 /** Minta signed URL (berlaku 5 menit) lalu buka; berkas privat tidak punya URL tetap. */
-export function DownloadLink({ endpoint, label }: { endpoint: string; label: string }) {
+export function DownloadLink({
+  endpoint,
+  label,
+  disabled = false,
+}: {
+  endpoint: string;
+  label: string;
+  disabled?: boolean;
+}) {
   const [error, setError] = useState<string | null>(null);
 
   async function open() {
+    if (disabled) return;
     setError(null);
     const res = await fetch(endpoint);
     const json = await res.json();
@@ -17,7 +26,12 @@ export function DownloadLink({ endpoint, label }: { endpoint: string; label: str
 
   return (
     <span>
-      <button type="button" onClick={() => void open()} className={buttonClass.secondary}>
+      <button
+        type="button"
+        onClick={() => void open()}
+        disabled={disabled}
+        className={buttonClass.secondary}
+      >
         {label}
       </button>
       {error ? <span role="alert" className="ml-2 text-sm text-danger-fg">{error}</span> : null}
