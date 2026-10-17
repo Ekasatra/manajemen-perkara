@@ -239,15 +239,18 @@ export function DashboardView({
           </h1>
           <p className="mt-1 text-sm text-navy-400">{formatDate(now)}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-[12px]">
           {viewer.canCreateSuratMasuk ? (
             <Link href="/surat-masuk" className={buttonClass.secondary}>
-              <Inbox aria-hidden="true" size={15} /> <span className="sm:hidden">Surat Masuk</span><span className="hidden sm:inline">Catat Surat Masuk</span>
+              <Inbox aria-hidden="true" size={15} /> <span className="sm:hidden">Surat Masuk</span>
+              <span className="hidden sm:inline">Catat Surat Masuk</span>
             </Link>
           ) : null}
           {viewer.canCreateSuratKeluar ? (
             <Link href="/surat-keluar" className={buttonClass.secondary}>
-              <Upload aria-hidden="true" size={15} /> <span className="sm:hidden">Surat Keluar</span><span className="hidden sm:inline">Unggah Surat Keluar</span>
+              <Upload aria-hidden="true" size={15} />{' '}
+              <span className="sm:hidden">Surat Keluar</span>
+              <span className="hidden sm:inline">Unggah Surat Keluar</span>
             </Link>
           ) : null}
           {viewer.canCreateCase ? <CreateCaseDialog /> : null}
@@ -265,10 +268,7 @@ export function DashboardView({
           <SectionTitle
             icon={<Gavel size={16} />}
             action={
-              <Link
-                href="/jadwal"
-                className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}
-              >
+              <Link href="/jadwal" className={`${buttonClass.secondary} px-3 text-xs`}>
                 Kalender <ArrowRight aria-hidden="true" size={15} />
               </Link>
             }
@@ -401,10 +401,7 @@ export function DashboardView({
           icon={<Activity size={16} />}
           action={
             viewer.canReadAudit ? (
-              <Link
-                href="/audit"
-                className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}
-              >
+              <Link href="/audit" className={`${buttonClass.secondary} px-3 text-xs`}>
                 Audit log <ArrowRight aria-hidden="true" size={15} />
               </Link>
             ) : undefined

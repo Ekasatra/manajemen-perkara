@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { formatRupiah } from '@/lib/format';
 import { callApi, parseRupiah } from './api-client';
 
@@ -80,7 +81,7 @@ export function InvoiceActions({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-[12px]">
         <button type="button" className={buttonClass.primary} onClick={() => setDialog('payment')}>
           Catat Pembayaran
         </button>
@@ -155,9 +156,9 @@ export function InvoiceActions({
         onSubmit={pay}
       >
         <div>
-          <label htmlFor="pay-amount" className={labelClass}>
+          <Label htmlFor="pay-amount" required>
             Jumlah dibayar (Rp)
-          </label>
+          </Label>
           <input
             id="pay-amount"
             name="amount"
@@ -170,9 +171,9 @@ export function InvoiceActions({
           />
         </div>
         <div>
-          <label htmlFor="pay-date" className={labelClass}>
+          <Label htmlFor="pay-date" optional>
             Tanggal bayar
-          </label>
+          </Label>
           <input id="pay-date" name="paidDate" type="date" className={inputClass} />
         </div>
       </FormDialog>
@@ -185,9 +186,9 @@ export function InvoiceActions({
         onSubmit={edit}
       >
         <div>
-          <label htmlFor="edit-amount" className={labelClass}>
+          <Label htmlFor="edit-amount" optional>
             Jumlah (Rp)
-          </label>
+          </Label>
           <input
             id="edit-amount"
             name="amount"
@@ -195,15 +196,14 @@ export function InvoiceActions({
             inputMode="numeric"
             min={1}
             step={1}
-            required
             defaultValue={amount}
             className={inputClass}
           />
         </div>
         <div>
-          <label htmlFor="edit-due" className={labelClass}>
+          <Label htmlFor="edit-due" optional>
             Jatuh tempo
-          </label>
+          </Label>
           <input
             id="edit-due"
             name="dueDate"
@@ -213,9 +213,9 @@ export function InvoiceActions({
           />
         </div>
         <div>
-          <label htmlFor="edit-desc" className={labelClass}>
+          <Label htmlFor="edit-desc" optional>
             Keterangan
-          </label>
+          </Label>
           <textarea
             id="edit-desc"
             name="description"

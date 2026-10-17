@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
+import { Label, RequiredNote } from '@/components/ui/field';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 
 type Education = { level: string; institution: string; year?: string };
@@ -66,7 +67,7 @@ export function AdvocateActions({
   }
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-[12px]">
       {canEdit ? (
         <button type="button" onClick={() => setMode('edit')} className={buttonClass.ghost}>
           Ubah
@@ -84,48 +85,46 @@ export function AdvocateActions({
 
       {canEdit && mode === 'edit' ? (
         <FormDialog open onClose={() => setMode(null)} title="Ubah data advokat" onSubmit={save}>
+          <RequiredNote />
           <div>
-            <label htmlFor={`${id}-name`} className={labelClass}>
+            <Label htmlFor={`${id}-name`} optional>
               Nama lengkap
-            </label>
+            </Label>
             <input
               id={`${id}-name`}
               name="fullName"
-              required
               defaultValue={row.fullName}
               className={inputClass}
             />
           </div>
           <div>
-            <label htmlFor={`${id}-address`} className={labelClass}>
+            <Label htmlFor={`${id}-address`} optional>
               Alamat
-            </label>
+            </Label>
             <textarea
               id={`${id}-address`}
               name="address"
               rows={2}
-              required
               defaultValue={row.address}
               className={inputClass}
             />
           </div>
           <div>
-            <label htmlFor={`${id}-phone`} className={labelClass}>
+            <Label htmlFor={`${id}-phone`} optional>
               Telepon
-            </label>
+            </Label>
             <input
               id={`${id}-phone`}
               name="phone"
               type="tel"
-              required
               defaultValue={row.phone}
               className={inputClass}
             />
           </div>
           <div>
-            <label htmlFor={`${id}-bankName`} className={labelClass}>
+            <Label htmlFor={`${id}-bankName`} optional>
               Nama bank
-            </label>
+            </Label>
             <input
               id={`${id}-bankName`}
               name="bankName"
@@ -134,21 +133,20 @@ export function AdvocateActions({
             />
           </div>
           <div>
-            <label htmlFor={`${id}-bankAccount`} className={labelClass}>
+            <Label htmlFor={`${id}-bankAccount`} optional>
               Nomor rekening
-            </label>
+            </Label>
             <input
               id={`${id}-bankAccount`}
               name="bankAccount"
-              required
               defaultValue={row.bankAccount}
               className={inputClass}
             />
           </div>
           <div>
-            <label htmlFor={`${id}-license`} className={labelClass}>
+            <Label htmlFor={`${id}-license`} optional>
               Nomor lisensi
-            </label>
+            </Label>
             <input
               id={`${id}-license`}
               name="licenseNumber"
@@ -162,7 +160,6 @@ export function AdvocateActions({
               <input
                 name="eduLevel"
                 placeholder="Jenjang (S1, S2, dll)"
-                required
                 defaultValue={first?.level ?? ''}
                 aria-label="Jenjang"
                 className={inputClass}
@@ -170,7 +167,6 @@ export function AdvocateActions({
               <input
                 name="eduInstitution"
                 placeholder="Institusi"
-                required
                 defaultValue={first?.institution ?? ''}
                 aria-label="Institusi"
                 className={inputClass}

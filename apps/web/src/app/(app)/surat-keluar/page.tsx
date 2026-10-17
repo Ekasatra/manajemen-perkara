@@ -123,7 +123,7 @@ export default async function SuratKeluarPage({
           href={`/api/v1/surat-keluar/${r.id}/file`}
           title="File surat"
           aria-label={`File surat ${r.noSurat}`}
-          className="inline-flex size-8 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100"
+          className="inline-flex size-11 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100"
         >
           <Paperclip aria-hidden="true" size={15} />
         </a>
@@ -159,7 +159,7 @@ export default async function SuratKeluarPage({
         <div className="border-b border-navy-50 p-3">
           <nav
             aria-label="Kategori surat keluar"
-            className="flex w-full gap-1 overflow-x-auto rounded-control bg-navy-50/70 p-1 sm:w-fit"
+            className="flex w-full gap-[12px] overflow-x-auto rounded-control bg-navy-50/70 p-1 sm:w-fit"
           >
             {TABS.map(([key, label]) => {
               const qs = new URLSearchParams();
@@ -171,7 +171,7 @@ export default async function SuratKeluarPage({
                   key={key}
                   href={`/surat-keluar${qs.size ? `?${qs}` : ''}`}
                   aria-current={tab === key ? 'page' : undefined}
-                  className={`shrink-0 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition ${
+                  className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition md:min-h-9 ${
                     tab === key
                       ? 'bg-surface text-navy-800 shadow-soft'
                       : 'text-navy-500 hover:bg-surface/70 hover:text-navy-800'

@@ -68,7 +68,7 @@ export function ClientDetailTabs({
       <div
         role="tablist"
         aria-label="Rincian klien"
-        className="mb-4 flex w-full gap-1 overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
+        className="mb-4 flex w-full gap-[12px] overflow-x-auto rounded-control border border-navy-100 bg-surface/60 p-1 sm:w-fit"
       >
         {TABS.map((t) => (
           <button
@@ -146,10 +146,7 @@ export function ClientDetailTabs({
             </ul>
           )}
           {canCreateCase ? (
-            <Link
-              href="/cases"
-              className={`${buttonClass.secondary} mt-4 min-h-9 px-3 py-1.5 text-xs`}
-            >
+            <Link href="/cases" className={`${buttonClass.secondary} mt-4 px-3 text-xs`}>
               <Plus aria-hidden="true" size={14} /> Registrasi perkara untuk klien ini
             </Link>
           ) : null}
@@ -167,7 +164,7 @@ export function ClientDetailTabs({
               Portal sedang dinonaktifkan untuk klien ini.
             </p>
           ) : null}
-          <div className="flex gap-2">
+          <div className="flex gap-[12px]">
             <label htmlFor="portal-url" className="sr-only">
               Tautan portal
             </label>
@@ -175,7 +172,7 @@ export function ClientDetailTabs({
               id="portal-url"
               readOnly
               value={url}
-              className="block min-h-11 w-full rounded-control border border-navy-200 bg-surface/80 px-3.5 py-2.5 font-mono text-xs text-navy-800 md:min-h-10"
+              className="block min-h-[44px] w-full rounded-control border border-navy-200 bg-surface/80 px-3.5 py-2.5 font-mono text-xs text-navy-800 md:min-h-[40px]"
             />
             <button
               type="button"
@@ -186,12 +183,12 @@ export function ClientDetailTabs({
               <Copy aria-hidden="true" size={15} />
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-[12px]">
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}
+              className={`${buttonClass.secondary} px-3 text-xs`}
             >
               <ExternalLink aria-hidden="true" size={14} /> Buka portal
             </a>
@@ -200,7 +197,7 @@ export function ClientDetailTabs({
                 href={wa}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`${buttonClass.secondary} min-h-9 px-3 py-1.5 text-xs`}
+                className={`${buttonClass.secondary} px-3 text-xs`}
               >
                 <MessageCircle aria-hidden="true" size={14} /> Kirim via WhatsApp
               </a>
@@ -209,7 +206,7 @@ export function ClientDetailTabs({
               <button
                 type="button"
                 onClick={() => setConfirm(true)}
-                className={`${buttonClass.softDanger} min-h-9 px-3 py-1.5 text-xs`}
+                className={`${buttonClass.softDanger} px-3 text-xs`}
               >
                 <RefreshCw aria-hidden="true" size={14} /> Buat ulang tautan
               </button>

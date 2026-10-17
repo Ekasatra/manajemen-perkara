@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 
 export function CreateAdvocateDialog() {
   const router = useRouter();
@@ -63,41 +64,42 @@ export function CreateAdvocateDialog() {
         submitLabel="Buat"
         onSubmit={handleSubmit}
       >
+        <RequiredNote />
         <div>
-          <label htmlFor="ca-name" className={labelClass}>
+          <Label htmlFor="ca-name" required>
             Nama Lengkap
-          </label>
+          </Label>
           <input id="ca-name" name="fullName" type="text" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="ca-address" className={labelClass}>
+          <Label htmlFor="ca-address" required>
             Alamat
-          </label>
+          </Label>
           <textarea id="ca-address" name="address" rows={2} required className={inputClass} />
         </div>
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="ca-phone" className={labelClass}>
+            <Label htmlFor="ca-phone" required>
               Telepon
-            </label>
+            </Label>
             <input id="ca-phone" name="phone" type="tel" required className={inputClass} />
           </div>
           <div>
-            <label htmlFor="ca-license" className={labelClass}>
+            <Label htmlFor="ca-license" optional>
               Nomor Lisensi
-            </label>
+            </Label>
             <input id="ca-license" name="licenseNumber" type="text" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="ca-bankName" className={labelClass}>
+            <Label htmlFor="ca-bankName" optional>
               Nama Bank
-            </label>
+            </Label>
             <input id="ca-bankName" name="bankName" type="text" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="ca-bankAccount" className={labelClass}>
+            <Label htmlFor="ca-bankAccount" required>
               Nomor Rekening
-            </label>
+            </Label>
             <input
               id="ca-bankAccount"
               name="bankAccount"
@@ -111,9 +113,9 @@ export function CreateAdvocateDialog() {
           <legend className="px-2 text-sm font-bold text-navy-800">Pendidikan (minimal 1)</legend>
           <div className="grid gap-x-4 gap-y-5 sm:grid-cols-3">
             <div>
-              <label htmlFor="ca-edu-level" className={labelClass}>
+              <Label htmlFor="ca-edu-level" required>
                 Jenjang
-              </label>
+              </Label>
               <input
                 id="ca-edu-level"
                 name="eduLevel"
@@ -124,9 +126,9 @@ export function CreateAdvocateDialog() {
               />
             </div>
             <div>
-              <label htmlFor="ca-edu-inst" className={labelClass}>
+              <Label htmlFor="ca-edu-inst" required>
                 Institusi
-              </label>
+              </Label>
               <input
                 id="ca-edu-inst"
                 name="eduInstitution"
@@ -136,9 +138,8 @@ export function CreateAdvocateDialog() {
               />
             </div>
             <div>
-              <label htmlFor="ca-edu-year" className={labelClass}>
-                Tahun (opsional)
-              </label>
+              {/* Teks label sudah memuat "(opsional)" — penanda Label tidak ditambah agar tidak ganda. */}
+              <Label htmlFor="ca-edu-year">Tahun (opsional)</Label>
               <input id="ca-edu-year" name="eduYear" type="text" className={inputClass} />
             </div>
           </div>

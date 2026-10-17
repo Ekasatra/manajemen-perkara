@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { callApi, parseRupiah } from './api-client';
 
 type Option = { id: string; label: string };
@@ -52,10 +53,11 @@ export function CreateInvoiceDialog({
         submitLabel="Buat"
         onSubmit={submit}
       >
+        <RequiredNote />
         <div>
-          <label htmlFor="inv-case" className={labelClass}>
+          <Label htmlFor="inv-case" optional>
             Perkara
-          </label>
+          </Label>
           <select id="inv-case" name="caseId" className={inputClass} defaultValue="">
             <option value="">Tanpa perkara</option>
             {cases.map((c) => (
@@ -66,10 +68,10 @@ export function CreateInvoiceDialog({
           </select>
         </div>
         <div>
-          <label htmlFor="inv-client" className={labelClass}>
+          <Label htmlFor="inv-client" optional>
             Klien{' '}
             <span className="font-normal text-navy-500">(diabaikan bila perkara dipilih)</span>
-          </label>
+          </Label>
           <select id="inv-client" name="clientId" className={inputClass} defaultValue="">
             <option value="">Pilih klien</option>
             {clients.map((c) => (
@@ -80,9 +82,9 @@ export function CreateInvoiceDialog({
           </select>
         </div>
         <div>
-          <label htmlFor="inv-amount" className={labelClass}>
+          <Label htmlFor="inv-amount" required>
             Jumlah (Rp)
-          </label>
+          </Label>
           <input
             id="inv-amount"
             name="amount"
@@ -96,22 +98,22 @@ export function CreateInvoiceDialog({
         </div>
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="inv-date" className={labelClass}>
+            <Label htmlFor="inv-date" optional>
               Tanggal invoice
-            </label>
+            </Label>
             <input id="inv-date" name="invoiceDate" type="date" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="inv-due" className={labelClass}>
+            <Label htmlFor="inv-due" optional>
               Jatuh tempo
-            </label>
+            </Label>
             <input id="inv-due" name="dueDate" type="date" className={inputClass} />
           </div>
         </div>
         <div>
-          <label htmlFor="inv-desc" className={labelClass}>
+          <Label htmlFor="inv-desc" optional>
             Keterangan
-          </label>
+          </Label>
           <textarea id="inv-desc" name="description" rows={2} className={inputClass} />
         </div>
       </FormDialog>

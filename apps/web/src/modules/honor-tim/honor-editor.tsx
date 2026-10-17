@@ -183,7 +183,7 @@ export function HonorEditor({
         {over ? `, melebihi ${rp(total - fund)}` : `, sisa ${rp(fund - total)}`}
       </p>
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+      <div className="mt-4 flex flex-col gap-[12px] sm:flex-row">
         <button type="button" className={buttonClass.secondary} disabled={busy} onClick={save}>
           Simpan Draft
         </button>

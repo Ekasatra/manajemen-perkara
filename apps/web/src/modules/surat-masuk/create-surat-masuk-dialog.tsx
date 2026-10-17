@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { FieldError, Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { callApi, uploadFile } from '@/modules/surat/upload';
 
 type Option = { id: string; label: string };
@@ -46,58 +47,134 @@ export function CreateSuratMasukDialog({ cases, staff }: { cases: Option[]; staf
         submitLabel="Simpan"
         onSubmit={onSubmit}
       >
+        <RequiredNote />
         <div>
-          <label htmlFor="sm-sender" className={labelClass}>Pengirim</label>
-          <input id="sm-sender" name="sender" required className={inputClass} />
+          <Label htmlFor="sm-sender" required>
+            Pengirim
+          </Label>
+          <input
+            id="sm-sender"
+            name="sender"
+            required
+            aria-describedby="err-sender"
+            className={inputClass}
+          />
+          <FieldError name="sender" />
         </div>
         <div>
-          <label htmlFor="sm-subject" className={labelClass}>Perihal</label>
-          <input id="sm-subject" name="subject" required className={inputClass} />
+          <Label htmlFor="sm-subject" required>
+            Perihal
+          </Label>
+          <input
+            id="sm-subject"
+            name="subject"
+            required
+            aria-describedby="err-subject"
+            className={inputClass}
+          />
+          <FieldError name="subject" />
         </div>
         <div>
-          <label htmlFor="sm-no" className={labelClass}>Nomor surat asal</label>
-          <input id="sm-no" name="noSurat" className={inputClass} />
+          <Label htmlFor="sm-no" optional>
+            Nomor surat asal
+          </Label>
+          <input id="sm-no" name="noSurat" aria-describedby="err-noSurat" className={inputClass} />
+          <FieldError name="noSurat" />
         </div>
         <div>
-          <label htmlFor="sm-tgl" className={labelClass}>Tanggal surat</label>
-          <input id="sm-tgl" name="tglSurat" type="date" className={inputClass} />
+          <Label htmlFor="sm-tgl" optional>
+            Tanggal surat
+          </Label>
+          <input
+            id="sm-tgl"
+            name="tglSurat"
+            type="date"
+            aria-describedby="err-tglSurat"
+            className={inputClass}
+          />
+          <FieldError name="tglSurat" />
         </div>
         <div>
-          <label htmlFor="sm-terima" className={labelClass}>Tanggal terima (default hari ini)</label>
-          <input id="sm-terima" name="tglTerima" type="date" className={inputClass} />
+          <Label htmlFor="sm-terima" optional>
+            Tanggal terima (default hari ini)
+          </Label>
+          <input
+            id="sm-terima"
+            name="tglTerima"
+            type="date"
+            aria-describedby="err-tglTerima"
+            className={inputClass}
+          />
+          <FieldError name="tglTerima" />
         </div>
         <div>
-          <label htmlFor="sm-sifat" className={labelClass}>Sifat</label>
-          <select id="sm-sifat" name="sifat" defaultValue="Biasa" className={inputClass}>
+          <Label htmlFor="sm-sifat" required>
+            Sifat
+          </Label>
+          <select
+            id="sm-sifat"
+            name="sifat"
+            required
+            aria-describedby="err-sifat"
+            defaultValue="Biasa"
+            className={inputClass}
+          >
             {['Biasa', 'Segera', 'Penting', 'Rahasia'].map((s) => (
               <option key={s}>{s}</option>
             ))}
           </select>
+          <FieldError name="sifat" />
         </div>
         <div>
-          <label htmlFor="sm-case" className={labelClass}>Perkara terkait</label>
-          <select id="sm-case" name="caseId" className={inputClass}>
+          <Label htmlFor="sm-case" optional>
+            Perkara terkait
+          </Label>
+          <select id="sm-case" name="caseId" aria-describedby="err-caseId" className={inputClass}>
             <option value="">Tanpa perkara</option>
             {cases.map((c) => (
-              <option key={c.id} value={c.id}>{c.label}</option>
+              <option key={c.id} value={c.id}>
+                {c.label}
+              </option>
             ))}
           </select>
+          <FieldError name="caseId" />
         </div>
         <div>
-          <label htmlFor="sm-assign" className={labelClass}>Disposisi kepada</label>
-          <select id="sm-assign" name="assignedTo" className={inputClass}>
+          <Label htmlFor="sm-assign" optional>
+            Disposisi kepada
+          </Label>
+          <select
+            id="sm-assign"
+            name="assignedTo"
+            aria-describedby="err-assignedTo"
+            className={inputClass}
+          >
             <option value="">Belum didisposisi</option>
             {staff.map((s) => (
-              <option key={s.id} value={s.id}>{s.label}</option>
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
             ))}
           </select>
+          <FieldError name="assignedTo" />
         </div>
         <div>
-          <label htmlFor="sm-note" className={labelClass}>Catatan disposisi</label>
-          <textarea id="sm-note" name="disposisiNote" rows={2} className={inputClass} />
+          <Label htmlFor="sm-note" optional>
+            Catatan disposisi
+          </Label>
+          <textarea
+            id="sm-note"
+            name="disposisiNote"
+            rows={2}
+            aria-describedby="err-disposisiNote"
+            className={inputClass}
+          />
+          <FieldError name="disposisiNote" />
         </div>
         <div>
-          <label htmlFor="sm-file" className={labelClass}>Lampiran (maks 25 MB)</label>
+          <Label htmlFor="sm-file" optional>
+            Lampiran (maks 25 MB)
+          </Label>
           <input id="sm-file" name="file" type="file" className={inputClass} />
         </div>
       </FormDialog>

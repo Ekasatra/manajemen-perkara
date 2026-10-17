@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { FieldError, Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 import { callApi } from '@/modules/surat/upload';
 
 type Surat = {
@@ -37,26 +38,79 @@ export function EditSuratKeluarDialog({ surat }: { surat: Surat }) {
       <button type="button" onClick={() => setOpen(true)} className={buttonClass.secondary}>
         Ubah
       </button>
-      <FormDialog open={open} onClose={() => setOpen(false)} title="Ubah Surat Keluar" onSubmit={onSubmit}>
+      <FormDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Ubah Surat Keluar"
+        onSubmit={onSubmit}
+      >
+        <RequiredNote />
         <div>
-          <label htmlFor="ek-no" className={labelClass}>Nomor surat</label>
-          <input id="ek-no" name="noSurat" required defaultValue={surat.noSurat} className={inputClass} />
+          <Label htmlFor="ek-no" optional>
+            Nomor surat
+          </Label>
+          <input
+            id="ek-no"
+            name="noSurat"
+            aria-describedby="err-noSurat"
+            defaultValue={surat.noSurat}
+            className={inputClass}
+          />
+          <FieldError name="noSurat" />
         </div>
         <div>
-          <label htmlFor="ek-tgl" className={labelClass}>Tanggal surat</label>
-          <input id="ek-tgl" name="tglSurat" type="date" required defaultValue={surat.tglSurat} className={inputClass} />
+          <Label htmlFor="ek-tgl" optional>
+            Tanggal surat
+          </Label>
+          <input
+            id="ek-tgl"
+            name="tglSurat"
+            type="date"
+            aria-describedby="err-tglSurat"
+            defaultValue={surat.tglSurat}
+            className={inputClass}
+          />
+          <FieldError name="tglSurat" />
         </div>
         <div>
-          <label htmlFor="ek-kepada" className={labelClass}>Kepada</label>
-          <input id="ek-kepada" name="kepada" required defaultValue={surat.kepada} className={inputClass} />
+          <Label htmlFor="ek-kepada" optional>
+            Kepada
+          </Label>
+          <input
+            id="ek-kepada"
+            name="kepada"
+            aria-describedby="err-kepada"
+            defaultValue={surat.kepada}
+            className={inputClass}
+          />
+          <FieldError name="kepada" />
         </div>
         <div>
-          <label htmlFor="ek-perihal" className={labelClass}>Perihal</label>
-          <input id="ek-perihal" name="perihal" required defaultValue={surat.perihal} className={inputClass} />
+          <Label htmlFor="ek-perihal" optional>
+            Perihal
+          </Label>
+          <input
+            id="ek-perihal"
+            name="perihal"
+            aria-describedby="err-perihal"
+            defaultValue={surat.perihal}
+            className={inputClass}
+          />
+          <FieldError name="perihal" />
         </div>
         <div>
-          <label htmlFor="ek-notes" className={labelClass}>Catatan</label>
-          <textarea id="ek-notes" name="notes" rows={2} defaultValue={surat.notes ?? ''} className={inputClass} />
+          <Label htmlFor="ek-notes" optional>
+            Catatan
+          </Label>
+          <textarea
+            id="ek-notes"
+            name="notes"
+            rows={2}
+            aria-describedby="err-notes"
+            defaultValue={surat.notes ?? ''}
+            className={inputClass}
+          />
+          <FieldError name="notes" />
         </div>
       </FormDialog>
     </>

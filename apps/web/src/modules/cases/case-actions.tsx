@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
-import { CASE_STATUS } from '@ekasatra/shared';
+import { FieldError, Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
+import { CASE_STATUS, changeCaseStatusSchema, updateCaseSchema } from '@ekasatra/shared';
 import { CASE_TYPES } from './constants';
 
 export type PartyOption = { id: string; label: string };
@@ -121,44 +122,61 @@ export function CaseActions({
           title="Ubah Status Perkara"
           description="Aktif → Putus → Banding → Kasasi → PK → Selesai. Tanggal putus, batas upaya hukum, dan entri timeline diperbarui otomatis."
           submitLabel="Simpan Status"
+          schema={changeCaseStatusSchema}
           onSubmit={changeStatus}
         >
           <div>
-            <label htmlFor="st-status" className={labelClass}>
+            <Label htmlFor="st-status" required>
               Status Baru
-            </label>
-            <select id="st-status" name="status" defaultValue={row.status} className={inputClass}>
+            </Label>
+            <select
+              id="st-status"
+              name="status"
+              required
+              aria-describedby="err-status"
+              defaultValue={row.status}
+              className={inputClass}
+            >
               {CASE_STATUS.map((st) => (
                 <option key={st}>{st}</option>
               ))}
             </select>
+            <FieldError name="status" />
           </div>
         </FormDialog>
       ) : null}
 
       {canEdit && mode === 'edit' ? (
-        <FormDialog open onClose={() => setMode(null)} title="Ubah perkara" onSubmit={save}>
+        <FormDialog
+          open
+          onClose={() => setMode(null)}
+          title="Ubah perkara"
+          schema={updateCaseSchema}
+          onSubmit={save}
+        >
+          <RequiredNote />
           <div>
-            <label htmlFor="ec-title" className={labelClass}>
+            <Label htmlFor="ec-title" optional>
               Judul
-            </label>
+            </Label>
             <input
               id="ec-title"
               name="title"
-              required
+              aria-describedby="err-title"
               defaultValue={row.title}
               className={inputClass}
             />
+            <FieldError name="title" />
           </div>
           {clientOptions ? (
             <div>
-              <label htmlFor="ec-client" className={labelClass}>
+              <Label htmlFor="ec-client" optional>
                 Klien
-              </label>
+              </Label>
               <select
                 id="ec-client"
                 name="clientId"
-                required
+                aria-describedby="err-clientId"
                 defaultValue={row.clientId}
                 className={inputClass}
               >
@@ -168,16 +186,18 @@ export function CaseActions({
                   </option>
                 ))}
               </select>
+              <FieldError name="clientId" />
             </div>
           ) : null}
           {opponentOptions ? (
             <div>
-              <label htmlFor="ec-opponent" className={labelClass}>
+              <Label htmlFor="ec-opponent" optional>
                 Pihak lawan
-              </label>
+              </Label>
               <select
                 id="ec-opponent"
                 name="opponentId"
+                aria-describedby="err-opponentId"
                 defaultValue={row.opponentId ?? ''}
                 className={inputClass}
               >
@@ -188,37 +208,43 @@ export function CaseActions({
                   </option>
                 ))}
               </select>
+              <FieldError name="opponentId" />
             </div>
           ) : null}
           <div>
-            <label htmlFor="ec-number" className={labelClass}>
+            <Label htmlFor="ec-number" optional>
               No. perkara (pengadilan)
-            </label>
+            </Label>
             <input
               id="ec-number"
               name="caseNumber"
+              aria-describedby="err-caseNumber"
               defaultValue={row.caseNumber ?? ''}
               className={inputClass}
             />
+            <FieldError name="caseNumber" />
           </div>
           <div>
-            <label htmlFor="ec-court" className={labelClass}>
+            <Label htmlFor="ec-court" optional>
               Pengadilan
-            </label>
+            </Label>
             <input
               id="ec-court"
               name="court"
+              aria-describedby="err-court"
               defaultValue={row.court ?? ''}
               className={inputClass}
             />
+            <FieldError name="court" />
           </div>
           <div>
-            <label htmlFor="ec-type" className={labelClass}>
+            <Label htmlFor="ec-type" optional>
               Jenis perkara
-            </label>
+            </Label>
             <select
               id="ec-type"
               name="caseType"
+              aria-describedby="err-caseType"
               defaultValue={row.caseType ?? ''}
               className={inputClass}
             >
@@ -230,30 +256,35 @@ export function CaseActions({
                 <option key={t}>{t}</option>
               ))}
             </select>
+            <FieldError name="caseType" />
           </div>
           <div>
-            <label htmlFor="ec-start" className={labelClass}>
+            <Label htmlFor="ec-start" optional>
               Tanggal mulai
-            </label>
+            </Label>
             <input
               id="ec-start"
               name="startDate"
               type="date"
+              aria-describedby="err-startDate"
               defaultValue={row.startDate ?? ''}
               className={inputClass}
             />
+            <FieldError name="startDate" />
           </div>
           <div>
-            <label htmlFor="ec-desc" className={labelClass}>
+            <Label htmlFor="ec-desc" optional>
               Keterangan
-            </label>
+            </Label>
             <textarea
               id="ec-desc"
               name="description"
               rows={2}
+              aria-describedby="err-description"
               defaultValue={row.description ?? ''}
               className={inputClass}
             />
+            <FieldError name="description" />
           </div>
         </FormDialog>
       ) : null}

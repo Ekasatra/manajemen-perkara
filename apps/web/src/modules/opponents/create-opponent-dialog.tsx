@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 
 export function CreateOpponentDialog() {
   const router = useRouter();
@@ -36,11 +37,7 @@ export function CreateOpponentDialog() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={buttonClass.primary}
-      >
+      <button type="button" onClick={() => setOpen(true)} className={buttonClass.primary}>
         Tambah Pihak Lawan
       </button>
       <FormDialog
@@ -50,16 +47,17 @@ export function CreateOpponentDialog() {
         submitLabel="Buat"
         onSubmit={handleSubmit}
       >
+        <RequiredNote />
         <div>
-          <label htmlFor="co-name" className={labelClass}>
+          <Label htmlFor="co-name" required>
             Nama
-          </label>
+          </Label>
           <input id="co-name" name="name" type="text" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="co-type" className={labelClass}>
+          <Label htmlFor="co-type" optional>
             Tipe
-          </label>
+          </Label>
           <select id="co-type" name="type" className={inputClass}>
             <option value="">Belum dipilih</option>
             <option value="Perorangan">Perorangan</option>
@@ -68,15 +66,15 @@ export function CreateOpponentDialog() {
           </select>
         </div>
         <div>
-          <label htmlFor="co-phone" className={labelClass}>
+          <Label htmlFor="co-phone" optional>
             Telepon
-          </label>
+          </Label>
           <input id="co-phone" name="phone" type="tel" className={inputClass} />
         </div>
         <div>
-          <label htmlFor="co-address" className={labelClass}>
+          <Label htmlFor="co-address" optional>
             Alamat
-          </label>
+          </Label>
           <textarea id="co-address" name="address" rows={2} className={inputClass} />
         </div>
       </FormDialog>

@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { FormDialog } from '@/components/ui/form-dialog';
+import { FieldError, Label, RequiredNote } from '@/components/ui/field';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 import { useToast } from '@/shell/toast';
+import { createCaseSchema } from '@ekasatra/shared';
 import { CASE_TYPES, INITIAL_TIMELINE_TYPES } from './constants';
 
 type ClientOption = { id: string; name: string; clientCode: string };
@@ -162,48 +164,68 @@ export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: bo
         title="Registrasi Perkara Baru"
         description="Nomor REG/{tahun}/ dibuat otomatis. Advokat pembuat otomatis menjadi anggota tim."
         submitLabel="Registrasi"
+        schema={createCaseSchema}
         onSubmit={handleSubmit}
       >
+        <RequiredNote />
         <div>
-          <label htmlFor="cc-title" className={labelClass}>
+          <Label htmlFor="cc-title" required>
             Pokok Perkara / Judul
-          </label>
+          </Label>
           <input
             id="cc-title"
             name="title"
             required
+            aria-describedby="err-title"
             placeholder="mis. Gugatan Wanprestasi PT A vs PT B"
             className={inputClass}
           />
+          <FieldError name="title" />
         </div>
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
           <div>
-            <label htmlFor="cc-casenumber" className={labelClass}>
+            <Label htmlFor="cc-casenumber" optional>
               Nomor Perkara
-            </label>
+            </Label>
             <input
               id="cc-casenumber"
               name="caseNumber"
+              aria-describedby="err-caseNumber"
               placeholder="Nomor register pengadilan bila sudah terbit"
               className={inputClass}
             />
+            <FieldError name="caseNumber" />
           </div>
           <div>
-            <label htmlFor="cc-casetype" className={labelClass}>
+            <Label htmlFor="cc-casetype" optional>
               Jenis Perkara
-            </label>
-            <select id="cc-casetype" name="caseType" defaultValue="" className={inputClass}>
+            </Label>
+            <select
+              id="cc-casetype"
+              name="caseType"
+              aria-describedby="err-caseType"
+              defaultValue=""
+              className={inputClass}
+            >
               <option value="">Pilih jenis</option>
               {CASE_TYPES.map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </select>
+            <FieldError name="caseType" />
           </div>
           <div>
-            <label htmlFor="cc-client" className={labelClass}>
+            <Label htmlFor="cc-client" required>
               Klien
-            </label>
-            <select id="cc-client" name="clientId" required defaultValue="" className={inputClass}>
+            </Label>
+            <select
+              id="cc-client"
+              name="clientId"
+              required
+              aria-describedby="err-clientId"
+              defaultValue=""
+              className={inputClass}
+            >
               <option value="">Pilih klien</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -211,6 +233,7 @@ export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: bo
                 </option>
               ))}
             </select>
+            <FieldError name="clientId" />
             {clients.length === 0 ? (
               <p className="mt-1 text-xs text-navy-400">
                 Belum ada klien. Tambahkan dulu di menu Klien.
@@ -218,10 +241,16 @@ export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: bo
             ) : null}
           </div>
           <div>
-            <label htmlFor="cc-opp" className={labelClass}>
+            <Label htmlFor="cc-opp" optional>
               Pihak Lawan
-            </label>
-            <select id="cc-opp" name="opponentId" defaultValue="" className={inputClass}>
+            </Label>
+            <select
+              id="cc-opp"
+              name="opponentId"
+              aria-describedby="err-opponentId"
+              defaultValue=""
+              className={inputClass}
+            >
               <option value="">Tanpa pihak lawan</option>
               {opponents.map((o) => (
                 <option key={o.id} value={o.id}>
@@ -229,29 +258,34 @@ export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: bo
                 </option>
               ))}
             </select>
+            <FieldError name="opponentId" />
           </div>
           <div>
-            <label htmlFor="cc-court" className={labelClass}>
+            <Label htmlFor="cc-court" optional>
               Pengadilan / Forum
-            </label>
+            </Label>
             <input
               id="cc-court"
               name="court"
+              aria-describedby="err-court"
               placeholder="Pengadilan Negeri Jakarta Selatan"
               className={inputClass}
             />
+            <FieldError name="court" />
           </div>
           <div>
-            <label htmlFor="cc-start" className={labelClass}>
+            <Label htmlFor="cc-start" optional>
               Tanggal Daftar
-            </label>
+            </Label>
             <input
               id="cc-start"
               name="startDate"
               type="date"
+              aria-describedby="err-startDate"
               defaultValue={todayIso()}
               className={inputClass}
             />
+            <FieldError name="startDate" />
           </div>
         </div>
 
@@ -295,10 +329,17 @@ export function CreateCaseDialog({ canAssignTeam = false }: { canAssignTeam?: bo
         )}
 
         <div>
-          <label htmlFor="cc-desc" className={labelClass}>
+          <Label htmlFor="cc-desc" optional>
             Catatan
-          </label>
-          <textarea id="cc-desc" name="description" rows={2} className={inputClass} />
+          </Label>
+          <textarea
+            id="cc-desc"
+            name="description"
+            rows={2}
+            aria-describedby="err-description"
+            className={inputClass}
+          />
+          <FieldError name="description" />
         </div>
 
         <fieldset className="rounded-control bg-navy-50/60 p-3">

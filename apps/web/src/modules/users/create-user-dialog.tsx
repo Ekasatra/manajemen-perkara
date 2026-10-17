@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
+import { Label, RequiredNote } from '@/components/ui/field';
+import { buttonClass, inputClass } from '@/components/ui/styles';
 
 export function CreateUserDialog() {
   const router = useRouter();
@@ -28,11 +29,7 @@ export function CreateUserDialog() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={buttonClass.primary}
-      >
+      <button type="button" onClick={() => setOpen(true)} className={buttonClass.primary}>
         Tambah Pengguna
       </button>
       <FormDialog
@@ -43,22 +40,30 @@ export function CreateUserDialog() {
         submitLabel="Buat"
         onSubmit={handleSubmit}
       >
+        <RequiredNote />
         <div>
-          <label htmlFor="cu-name" className={labelClass}>
+          <Label htmlFor="cu-name" required>
             Nama Lengkap
-          </label>
+          </Label>
           <input id="cu-name" name="fullName" type="text" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="cu-email" className={labelClass}>
+          <Label htmlFor="cu-email" required>
             Email
-          </label>
-          <input id="cu-email" name="email" type="email" autoComplete="off" required className={inputClass} />
+          </Label>
+          <input
+            id="cu-email"
+            name="email"
+            type="email"
+            autoComplete="off"
+            required
+            className={inputClass}
+          />
         </div>
         <div>
-          <label htmlFor="cu-role" className={labelClass}>
+          <Label htmlFor="cu-role" required>
             Role
-          </label>
+          </Label>
           <select id="cu-role" name="role" required defaultValue="Paralegal" className={inputClass}>
             <option value="Admin">Admin</option>
             <option value="Advokat">Advokat</option>
@@ -66,9 +71,9 @@ export function CreateUserDialog() {
           </select>
         </div>
         <div>
-          <label htmlFor="cu-pass" className={labelClass}>
+          <Label htmlFor="cu-pass" required>
             Password
-          </label>
+          </Label>
           <input
             id="cu-pass"
             name="password"
