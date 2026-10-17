@@ -1,12 +1,13 @@
 /**
  * Pengaturan Sistem gaya GAS: kartu bagian (profil kantor, tipe & kas, alur kerja, logo) dan
  * tabel matriks peran & hak akses yang dibaca langsung dari kebijakan server (POLICY).
- * Admin: baca/ubah semua; non-Admin: mode lihat.
+ * R7: hanya SuperAdmin/Admin; Advokat/Paralegal ditolak lewat `requireCan` (403).
  */
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { createDb, profiles, settings } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { requireUser, ensureCan, can, POLICY, RESOURCES } from '@ekasatra/core';
+import { requireUser, can, POLICY, RESOURCES } from '@ekasatra/core';
+import { requireCan } from '@/lib/guard';
 import { SettingsForm } from '@/modules/settings/settings-form';
 import type { MatrixRow } from '@/modules/settings/settings-form';
 
@@ -42,7 +43,8 @@ export default async function SettingsPage() {
   const db = createDb();
   const supabase = await createSupabaseServerClient();
   const user = await requireUser(db, supabase);
-  ensureCan(user, 'R', 'settings');
+  // PRD-MASUKAN §4 R7: Advokat/Paralegal tidak berhak membuka Pengaturan (§6).
+  requireCan(user, 'R', 'settings');
 
   const [rows, leaders] = await Promise.all([
     db.select().from(settings),

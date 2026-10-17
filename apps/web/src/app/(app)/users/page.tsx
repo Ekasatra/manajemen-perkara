@@ -5,7 +5,8 @@
 import { count, desc } from 'drizzle-orm';
 import { createDb, profiles } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { requireUser, ensureCan, can } from '@ekasatra/core';
+import { requireUser, can } from '@ekasatra/core';
+import { requireCan } from '@/lib/guard';
 import { ShieldCheck } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +33,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const db = createDb();
   const supabase = await createSupabaseServerClient();
   const user = await requireUser(db, supabase);
-  ensureCan(user, 'R', 'users');
+  requireCan(user, 'R', 'users');
 
   const params = await searchParams;
   const { page, pageSize, offset } = parsePageQuery(params);

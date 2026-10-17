@@ -3,7 +3,16 @@
  * Juga mencakup bagian dari H2 (tes policy otomatis).
  */
 import { describe, expect, it } from 'vitest';
-import { can, canViewKas, ensureCan, normalizeRole, POLICY, RESOURCES } from '../src';
+import {
+  can,
+  canViewKas,
+  ensureCan,
+  isAppError,
+  normalizeRole,
+  POLICY,
+  RESOURCES,
+} from '../src';
+import type { Action, Resource } from '../src';
 
 describe('normalizeRole', () => {
   it('menerima kapitalisasi DB (Admin/Advokat/Paralegal)', () => {
@@ -36,13 +45,13 @@ describe('POLICY — matriks PRD §4', () => {
     ['opponents', '', { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' }],
     [
       'advocates',
-      'Data Advokat: non-Admin hanya milik sendiri',
-      { superadmin: 'CRUD', admin: 'CRU', advokat: 'RU', paralegal: 'RU', viewer: 'R' },
+      'Data Advokat (R7): lihat semua peran, tambah/ubah hanya SuperAdmin/Admin',
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
     ],
     [
       'settings',
-      'Pengaturan: Admin CRUD, lainnya R',
-      { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
+      'Pengaturan (R7): menu + API hanya SuperAdmin/Admin',
+      { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
     ],
     [
       'cases',
@@ -109,6 +118,64 @@ describe('POLICY — matriks PRD §4', () => {
         expect(typeof POLICY[r][role], `${r}/${role}`).toBe('string');
         expect(POLICY[r][role], `${r}/${role}`).toMatch(/^[CRUD]*$/);
       }
+    }
+  });
+});
+
+/**
+ * PRD-MASUKAN §4 R7 — setiap sel ✘ harus ditolak server (403), bukan sekadar menu disembunyikan.
+ * Sel ✘: Biaya Perkara (`invoices`), Manajemen User (`users`), Pengaturan (`settings`) untuk
+ * Advokat/Paralegal; Data Advokat (`advocates`) tambah/ubah (C/U) untuk Advokat/Paralegal.
+ */
+describe('matriks R7 — setiap sel ✘ → FORBIDDEN 403', () => {
+  const denied: { role: string; action: Action; resource: Resource; menu: string }[] = [];
+  for (const role of ['advokat', 'paralegal'] as const) {
+    for (const action of ['C', 'R', 'U', 'D'] as const) {
+      denied.push({ role, action, resource: 'invoices', menu: 'Biaya Perkara' });
+      denied.push({ role, action, resource: 'users', menu: 'Manajemen User' });
+      denied.push({ role, action, resource: 'settings', menu: 'Pengaturan' });
+    }
+    for (const action of ['C', 'U'] as const) {
+      denied.push({ role, action, resource: 'advocates', menu: 'Data Advokat tambah/ubah' });
+    }
+  }
+
+  for (const { role, action, resource, menu } of denied) {
+    it(`${role} ${action} ${resource} (${menu}) → 403`, () => {
+      expect(can({ role }, action, resource), `${role}/${action}/${resource}`).toBe(false);
+      let thrown: unknown = null;
+      try {
+        ensureCan({ role }, action, resource);
+      } catch (e) {
+        thrown = e;
+      }
+      expect(isAppError(thrown), `${role}/${action}/${resource} harus melempar AppError`).toBe(true);
+      expect(thrown).toMatchObject({ code: 'FORBIDDEN', status: 403 });
+    });
+  }
+
+  it('SuperAdmin & Admin tetap boleh: Biaya Perkara, Manajemen User, Pengaturan', () => {
+    for (const role of ['superadmin', 'admin'] as const) {
+      for (const resource of ['invoices', 'users', 'settings'] as const) {
+        expect(() => ensureCan({ role }, 'R', resource)).not.toThrow();
+      }
+      expect(() => ensureCan({ role }, 'C', 'advocates')).not.toThrow();
+      expect(() => ensureCan({ role }, 'U', 'advocates')).not.toThrow();
+    }
+  });
+
+  it('Advokat/Paralegal tetap boleh melihat Data Advokat (R6/R7)', () => {
+    for (const role of ['advokat', 'paralegal'] as const) {
+      expect(can({ role }, 'R', 'advocates')).toBe(true);
+      expect(() => ensureCan({ role }, 'R', 'advocates')).not.toThrow();
+    }
+  });
+
+  it('Honor Tim: non-Admin hanya R (baca milik sendiri), tanpa U admin-only', () => {
+    for (const role of ['advokat', 'paralegal'] as const) {
+      expect(can({ role }, 'R', 'honor_tim')).toBe(true);
+      expect(can({ role }, 'U', 'honor_tim')).toBe(false);
+      expect(() => ensureCan({ role }, 'U', 'honor_tim')).toThrow();
     }
   });
 });

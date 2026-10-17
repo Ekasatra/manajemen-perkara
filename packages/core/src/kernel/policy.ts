@@ -1,5 +1,5 @@
 /**
- * Kernel policy (milik Agent A) — matriks hak akses PRD §4.
+ * Kernel policy (milik Agent A) — matriks hak akses PRD §4 + matriks menu PRD-MASUKAN §4 R7.
  * `can()` murni (tanpa DB/IO) sehingga matriks role × resource × aksi
  * bisa diuji otomatis (mencakup H2).
  *
@@ -68,9 +68,11 @@ export const POLICY: Record<Resource, Record<Role, string>> = {
   users: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
   clients: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
   opponents: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
-  // Data advokat: non-Admin hanya milik sendiri (pembatasan baris di modul C).
-  advocates: { superadmin: 'CRUD', admin: 'CRU', advokat: 'RU', paralegal: 'RU', viewer: 'R' },
-  settings: { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
+  // Data advokat (R7): semua peran boleh lihat; tambah/ubah hanya SuperAdmin/Admin.
+  // Pembatasan baris "hanya milik sendiri" untuk non-Admin tetap di modul C (baca).
+  advocates: { superadmin: 'CRUD', admin: 'CRU', advokat: 'R', paralegal: 'R', viewer: 'R' },
+  // Pengaturan (R7): menu + API hanya untuk SuperAdmin/Admin; Advokat/Paralegal tanpa akses.
+  settings: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
   // "R U + C (tim hanya dirinya)" — pembatasan baris di modul D.
   cases: { superadmin: 'CRUD', admin: 'CRU', advokat: 'RUC', paralegal: 'RU', viewer: 'R' },
   timeline: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },

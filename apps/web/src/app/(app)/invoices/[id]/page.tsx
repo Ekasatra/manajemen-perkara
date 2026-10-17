@@ -2,7 +2,8 @@
  * Detail invoice + pembayaran (Agent F · F1–F2). Status dihitung dari paid_amount.
  */
 import { notFound } from 'next/navigation';
-import { can, ensureCan, isAppError } from '@ekasatra/core';
+import { can, isAppError } from '@ekasatra/core';
+import { requireCan } from '@/lib/guard';
 import { uuidParam } from '@ekasatra/core/finance';
 import { getInvoice } from '@ekasatra/core/invoices';
 import { FactList } from '@/components/ui/fact-list';
@@ -15,7 +16,7 @@ import { StatusBadge } from '@/modules/invoices/status-badge';
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { db, user } = await pageContext();
-  ensureCan(user, 'R', 'invoices');
+  requireCan(user, 'R', 'invoices');
 
   let invoice;
   try {
