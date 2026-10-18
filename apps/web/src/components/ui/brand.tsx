@@ -8,14 +8,32 @@ export const APP_NAME = 'eKaSatra';
 export const FIRM_NAME = 'EKASATRA Law & Policy Advisory';
 
 /** Huruf E mengikuti `currentColor` (putih di panel gelap, navy di latar terang); bintang selalu emas. */
+export const LOGO_MARK_VIEWBOX = '0 0 100 100';
+
+/**
+ * Geometri penanda merek — satu sumber untuk shell (SVG DOM) dan kop PDF.
+ * `currentColor` berarti "ikut warna teks induk". Jangan digambar ulang di tempat lain.
+ */
+export const LOGO_MARK_PATHS = [
+  { d: 'M10 6H90V27H33V73H90V94H10Z', fill: 'currentColor' },
+  {
+    d: 'M61 29C62.6 44.5 65.5 47.4 81 49.9C65.5 52.4 62.6 55.4 61 71C59.4 55.4 56.5 52.4 41 49.9C56.5 47.4 59.4 44.5 61 29Z',
+    fill: '#B38B4D',
+  },
+] as const;
+
 export function LogoMark({ size = 34, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" className={className}>
-      <path d="M10 6H90V27H33V73H90V94H10Z" fill="currentColor" />
-      <path
-        d="M61 29C62.6 44.5 65.5 47.4 81 49.9C65.5 52.4 62.6 55.4 61 71C59.4 55.4 56.5 52.4 41 49.9C56.5 47.4 59.4 44.5 61 29Z"
-        fill="#B38B4D"
-      />
+    <svg
+      width={size}
+      height={size}
+      viewBox={LOGO_MARK_VIEWBOX}
+      aria-hidden="true"
+      className={className}
+    >
+      {LOGO_MARK_PATHS.map((path) => (
+        <path key={path.d} d={path.d} fill={path.fill} />
+      ))}
     </svg>
   );
 }

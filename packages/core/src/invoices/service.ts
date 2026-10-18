@@ -413,7 +413,11 @@ export async function outstandingSummary(
       .limit(10),
   ]);
 
-  const byStatus: Record<InvoiceStatus, number> = { 'Belum Bayar': 0, Sebagian: 0, Lunas: 0 };
+  const byStatus: Record<InvoiceStatus, number> = {
+    'Belum Bayar': 0,
+    'Sudah Bayar Sebagian': 0,
+    Lunas: 0,
+  };
   for (const r of statusRows) byStatus[r.status] = r.value;
 
   return {

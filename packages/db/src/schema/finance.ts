@@ -38,10 +38,10 @@ export const invoices = pgTable(
     paidDate: date('paid_date', { mode: 'string' }),
     // Turunan dari paid_amount, tidak bisa diisi manual. text, bukan enum: cast ke enum tidak IMMUTABLE.
     status: text('status')
-      .$type<'Belum Bayar' | 'Sebagian' | 'Lunas'>()
+      .$type<'Belum Bayar' | 'Sudah Bayar Sebagian' | 'Lunas'>()
       .notNull()
       .generatedAlwaysAs(
-        sql`(case when paid_amount <= 0 then 'Belum Bayar' when paid_amount < amount then 'Sebagian' else 'Lunas' end)`,
+        sql`(case when paid_amount <= 0 then 'Belum Bayar' when paid_amount < amount then 'Sudah Bayar Sebagian' else 'Lunas' end)`,
       ),
     createdBy: uuid('created_by').references(() => profiles.id, { onDelete: 'set null' }),
     ...timestamps,

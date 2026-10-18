@@ -3,7 +3,7 @@ import {
   applyAmountChange,
   applyMarkPaid,
   applyPayment,
-  invoiceStatus,
+  deriveInvoiceStatus,
   type PaidState,
 } from '../src/invoices';
 
@@ -14,21 +14,30 @@ const base = (over: Partial<PaidState> = {}): PaidState => ({
   ...over,
 });
 
-describe('invoiceStatus (PRD §5.8)', () => {
-  it('0 → Belum Bayar; 0<x<jumlah → Sebagian; ≥jumlah → Lunas', () => {
-    expect(invoiceStatus(1000, 0)).toBe('Belum Bayar');
-    expect(invoiceStatus(1000, 1)).toBe('Sebagian');
-    expect(invoiceStatus(1000, 999)).toBe('Sebagian');
-    expect(invoiceStatus(1000, 1000)).toBe('Lunas');
-    expect(invoiceStatus(1000, 1001)).toBe('Lunas');
+describe('deriveInvoiceStatus (PRD masukan §4 R4)', () => {
+  it('tiga status: 0 → Belum Bayar; 0<x<jumlah → Sudah Bayar Sebagian; ≥jumlah → Lunas', () => {
+    expect(deriveInvoiceStatus(1000, 0)).toBe('Belum Bayar');
+    expect(deriveInvoiceStatus(1000, 1)).toBe('Sudah Bayar Sebagian');
+    expect(deriveInvoiceStatus(1000, 999)).toBe('Sudah Bayar Sebagian');
+    expect(deriveInvoiceStatus(1000, 1000)).toBe('Lunas');
+  });
+
+  it('pembayaran melebihi total tetap Lunas', () => {
+    expect(deriveInvoiceStatus(1000, 1001)).toBe('Lunas');
+    expect(deriveInvoiceStatus(1000, 5_000_000)).toBe('Lunas');
+  });
+
+  it('tepat di batas: jumlah kecil tidak punya status antara', () => {
+    expect(deriveInvoiceStatus(1, 1)).toBe('Lunas');
+    expect(deriveInvoiceStatus(1_000_000, 999_999)).toBe('Sudah Bayar Sebagian');
   });
 });
 
 describe('applyPayment', () => {
-  it('cicilan: Sebagian, paid_date tetap kosong', () => {
+  it('cicilan: Sudah Bayar Sebagian, paid_date tetap kosong', () => {
     const s = applyPayment(base(), 400_000, '2026-10-15');
     expect(s).toEqual({ amount: 1_000_000, paidAmount: 400_000, paidDate: null });
-    expect(invoiceStatus(s.amount, s.paidAmount)).toBe('Sebagian');
+    expect(deriveInvoiceStatus(s.amount, s.paidAmount)).toBe('Sudah Bayar Sebagian');
   });
 
   it('pelunasan lewat cicilan terakhir mengisi paid_date = tanggal bayar', () => {
@@ -69,19 +78,19 @@ describe('applyMarkPaid', () => {
 });
 
 describe('applyAmountChange', () => {
-  it('menaikkan jumlah pada invoice Lunas membuatnya Sebagian dan mengosongkan paid_date', () => {
+  it('menaikkan jumlah pada invoice Lunas membuatnya Sudah Bayar Sebagian dan mengosongkan paid_date', () => {
     const s = applyAmountChange(
       base({ paidAmount: 1_000_000, paidDate: '2026-10-01' }),
       1_500_000,
       '2026-10-15',
     );
-    expect(invoiceStatus(s.amount, s.paidAmount)).toBe('Sebagian');
+    expect(deriveInvoiceStatus(s.amount, s.paidAmount)).toBe('Sudah Bayar Sebagian');
     expect(s.paidDate).toBeNull();
   });
 
   it('menurunkan jumlah hingga ≤ paid_amount membuatnya Lunas dengan paid_date hari ini', () => {
     const s = applyAmountChange(base({ paidAmount: 600_000 }), 600_000, '2026-10-15');
-    expect(invoiceStatus(s.amount, s.paidAmount)).toBe('Lunas');
+    expect(deriveInvoiceStatus(s.amount, s.paidAmount)).toBe('Lunas');
     expect(s.paidDate).toBe('2026-10-15');
   });
 });

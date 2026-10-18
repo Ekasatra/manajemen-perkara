@@ -8,6 +8,7 @@ import { createUserSchema } from '../src/users';
 import { createClientSchema, contactsSchema, contactSchema } from '../src/clients';
 import { createOpponentSchema } from '../src/opponents';
 import { createAdvocateSchema, educationSchema } from '../src/advocates';
+import { INVOICE_STATUSES, listInvoicesQuerySchema } from '../src/invoices';
 import { updateSettingsSchema } from '../src/settings';
 
 describe('C1 Auth — loginSchema', () => {
@@ -39,16 +40,31 @@ describe('C1 Auth — setupSchema', () => {
 describe('C2 Users — createUserSchema', () => {
   it('menerima role Admin/Advokat/Paralegal', () => {
     for (const role of ['Admin', 'Advokat', 'Paralegal']) {
-      const r = createUserSchema.safeParse({ email: 'a@b.com', fullName: 'X', role, password: '12345678' });
+      const r = createUserSchema.safeParse({
+        email: 'a@b.com',
+        fullName: 'X',
+        role,
+        password: '12345678',
+      });
       expect(r.success).toBe(true);
     }
   });
   it('menolak role tidak valid', () => {
-    const r = createUserSchema.safeParse({ email: 'a@b.com', fullName: 'X', role: 'Hacker', password: '12345678' });
+    const r = createUserSchema.safeParse({
+      email: 'a@b.com',
+      fullName: 'X',
+      role: 'Hacker',
+      password: '12345678',
+    });
     expect(r.success).toBe(false);
   });
   it('menolak password < 8', () => {
-    const r = createUserSchema.safeParse({ email: 'a@b.com', fullName: 'X', role: 'Admin', password: '123' });
+    const r = createUserSchema.safeParse({
+      email: 'a@b.com',
+      fullName: 'X',
+      role: 'Admin',
+      password: '123',
+    });
     expect(r.success).toBe(false);
   });
 });
@@ -192,5 +208,17 @@ describe('C6 Settings — updateSettingsSchema', () => {
   it('menolak kas_kantor_persen < 0', () => {
     const r = updateSettingsSchema.safeParse({ kas_kantor_persen: -5 });
     expect(r.success).toBe(false);
+  });
+});
+
+describe('W5 Invoice — status turunan (PRD masukan §4 R4)', () => {
+  it('memuat tepat tiga status dengan label "Sudah Bayar Sebagian"', () => {
+    expect(INVOICE_STATUSES).toEqual(['Belum Bayar', 'Sudah Bayar Sebagian', 'Lunas']);
+  });
+  it('filter menerima label baru dan menolak nilai lama "Sebagian"', () => {
+    expect(listInvoicesQuerySchema.safeParse({ status: 'Sudah Bayar Sebagian' }).success).toBe(
+      true,
+    );
+    expect(listInvoicesQuerySchema.safeParse({ status: 'Sebagian' }).success).toBe(false);
   });
 });

@@ -103,7 +103,7 @@ BEGIN
   IF s <> 'Belum Bayar' THEN RAISE EXCEPTION 'status 0 paid = %', s; END IF;
   UPDATE invoices SET paid_amount = 400000000 WHERE invoice_no = 'INV/2026/0001';
   SELECT status::text INTO s FROM invoices WHERE invoice_no = 'INV/2026/0001';
-  IF s <> 'Sebagian' THEN RAISE EXCEPTION 'status partial = %', s; END IF;
+  IF s <> 'Sudah Bayar Sebagian' THEN RAISE EXCEPTION 'status partial = %', s; END IF;
   SELECT status::text INTO s FROM invoices WHERE invoice_no = 'INV/2026/0002';
   IF s <> 'Lunas' THEN RAISE EXCEPTION 'status lunas = %', s; END IF;
 

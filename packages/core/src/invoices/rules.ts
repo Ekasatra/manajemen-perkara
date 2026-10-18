@@ -1,13 +1,18 @@
 /**
- * Aturan murni invoice (Agent F · F1–F2, PRD §5.8). Tanpa DB agar bisa diuji penuh.
+ * Aturan murni invoice (Agent F · F1–F2, PRD §5.8; label R4/W5). Tanpa DB agar bisa diuji penuh.
  * Status adalah turunan paid_amount — kolom DB `status` generated, tidak pernah ditulis.
  */
 import { validationError } from '@ekasatra/shared';
 import type { InvoiceStatus } from '@ekasatra/shared/invoices';
 
-export function invoiceStatus(amount: number, paidAmount: number): InvoiceStatus {
-  if (paidAmount <= 0) return 'Belum Bayar';
-  return paidAmount < amount ? 'Sebagian' : 'Lunas';
+/**
+ * Satu-satunya sumber status invoice (PRD masukan §4 R4): `paid = 0` → Belum Bayar;
+ * `0 < paid < total` → Sudah Bayar Sebagian; `paid ≥ total` → Lunas. Dipanggil tiap
+ * pembayaran dicatat/diubah/dihapus lewat kolom generated DB; tidak ada input status manual.
+ */
+export function deriveInvoiceStatus(total: number, paid: number): InvoiceStatus {
+  if (paid <= 0) return 'Belum Bayar';
+  return paid < total ? 'Sudah Bayar Sebagian' : 'Lunas';
 }
 
 export interface PaidState {
