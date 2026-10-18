@@ -71,15 +71,6 @@ export type {
   EmailTransport,
 } from './notifications';
 
-// Notifikasi in-app (R8) — satu sumber hitungan "belum dibaca"
-export {
-  getNotificationsForUser,
-  buildSidangNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-} from './notifications';
-export type { NotificationUser, NotificationPreloaded } from './notifications';
-
 // Cases (Modul D · D1–D7)
 export {
   // D7 — kontrak baca untuk modul lain (E, F, G)
