@@ -30,6 +30,7 @@ export {
   ensureCan,
   canViewKas,
   normalizeRole,
+  ensureCanManageUser,
 } from './kernel/policy';
 export type { Action, Resource, PolicyUser } from './kernel/policy';
 
