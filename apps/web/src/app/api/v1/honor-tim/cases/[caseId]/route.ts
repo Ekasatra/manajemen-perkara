@@ -2,7 +2,7 @@
  * GET /api/v1/honor-tim/cases/:caseId — rincian honor (draft + published, kas, dana) — Admin
  * PUT /api/v1/honor-tim/cases/:caseId — simpan draft per anggota — Admin
  */
-import { parseBody } from '@ekasatra/core';
+import { ensureCan, parseBody } from '@ekasatra/core';
 import { uuidParam } from '@ekasatra/core/finance';
 import { getHonorOverview, saveHonorDraft } from '@ekasatra/core/honor-tim';
 import { saveHonorDraftSchema } from '@ekasatra/shared/honor-tim';
@@ -16,6 +16,7 @@ export async function GET(_req: Request, { params }: RouteParams<'caseId'>) {
 export async function PUT(req: Request, { params }: RouteParams<'caseId'>) {
   const caseId = uuidParam((await params).caseId, 'ID perkara');
   return route(async ({ db, user }) => {
+    ensureCan(user, 'U', 'honor_tim');
     const body = await parseBody(req, saveHonorDraftSchema);
     await saveHonorDraft(db, user, caseId, body.items);
     return getHonorOverview(db, user, caseId);

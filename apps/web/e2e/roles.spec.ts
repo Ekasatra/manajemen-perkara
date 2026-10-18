@@ -30,14 +30,22 @@ async function login(browser: Browser, email: string, password = PASSWORD): Prom
 }
 
 const api = (r: RoleKey) => sessions[r].request;
+type Body = { ok: boolean; data: any; error?: { code: string; message: string } }; // eslint-disable-line @typescript-eslint/no-explicit-any
 async function json(res: APIResponse) {
-  return (await res.json()) as { ok: boolean; data?: any; error?: { code: string; message: string } };
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as Body;
+  } catch {
+    throw new Error(`Respons bukan JSON (${res.status()} ${res.url()}): ${text.slice(0, 120)}`);
+  }
 }
 
 test.describe.configure({ mode: 'serial' });
 
 test.beforeAll(async ({ browser }) => {
-  expect(PASSWORD.length, 'SEED_DEMO_PASSWORD wajib (jalankan lewat e2e/run.sh)').toBeGreaterThan(7);
+  expect(PASSWORD.length, 'SEED_DEMO_PASSWORD wajib (jalankan lewat e2e/run.sh)').toBeGreaterThan(
+    7,
+  );
   for (const r of Object.keys(EMAIL) as RoleKey[]) sessions[r] = await login(browser, EMAIL[r]);
 });
 
@@ -60,8 +68,12 @@ for (const role of NON_ADMIN) {
       expect(res.status(), `${role} ${method} ${path} (${label})`).toBe(403);
     }
     for (const path of DENIED_PAGES) {
-      const res = await sessions[role].goto(path);
-      expect(res?.status(), `${role} halaman ${path}`).toBe(403);
+      // Catatan: loading.tsx membuat status HTTP 200 (streaming); isi halaman tetap "Tidak punya akses".
+      await sessions[role].goto(path);
+      await expect(
+        sessions[role].getByText('Tidak punya akses'),
+        `${role} halaman ${path}`,
+      ).toBeVisible();
     }
     const nav = sessions[role].getByRole('navigation').first();
     await sessions[role].goto('/');
@@ -77,15 +89,18 @@ for (const role of ADMINS) {
       expect((await api(role).get(path)).status(), `${role} ${path}`).toBe(200);
     }
     for (const path of DENIED_PAGES) {
-      expect((await sessions[role].goto(path))?.status(), `${role} ${path}`).toBe(200);
+      await sessions[role].goto(path);
+      await expect(sessions[role].getByText('Tidak punya akses'), `${role} ${path}`).toHaveCount(0);
     }
   });
 }
 
 test('R7 Honor Tim: non-admin hanya honor sendiri, tanpa kas/total biaya (anti-IDOR)', async () => {
-  const cases = await json(await api('admin').get('/api/v1/honor-tim?pageSize=5'));
+  // Perkara milik tim lain (admin melihat semua) — non-admin tidak boleh menyentuh honornya.
+  const cases = await json(await api('admin').get('/api/v1/cases?pageSize=5'));
   expect(cases.ok).toBe(true);
-  const anyCaseId: string = (cases.data.items ?? cases.data.rows ?? cases.data)[0].caseId ?? (cases.data.items ?? cases.data.rows ?? cases.data)[0].id;
+  const list = cases.data.items ?? cases.data.rows ?? cases.data;
+  const anyCaseId: string = list[0].id;
   expect(anyCaseId).toBeTruthy();
 
   for (const role of NON_ADMIN) {
@@ -97,7 +112,10 @@ test('R7 Honor Tim: non-admin hanya honor sendiri, tanpa kas/total biaya (anti-I
       ['post', `/api/v1/honor-tim/cases/${anyCaseId}/publish`],
       ['get', '/api/v1/kas'],
     ] as const) {
-      const res = await api(role)[method](path, method === 'get' ? undefined : { data: { items: [] } });
+      const res = await api(role)[method](
+        path,
+        method === 'get' ? undefined : { data: { items: [] } },
+      );
       expect(res.status(), `${role} ${method} ${path}`).toBe(403);
     }
     // Endpoint milik sendiri: tidak memuat total biaya / kas / draft.
@@ -120,7 +138,7 @@ for (const role of NON_ADMIN) {
     await page.goto('/advocates');
     await expect(page.getByRole('link', { name: /Tambah/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /^(Tambah|Ubah)/ })).toHaveCount(0);
-    const trigger = page.locator('button[aria-haspopup="dialog"]').first();
+    const trigger = page.locator('button[aria-haspopup="dialog"]:visible').first();
     await trigger.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
@@ -143,25 +161,38 @@ const NEW_PW = `Baru-${run}-Rahasia!`;
 let victimId = '';
 const victimEmail = `uji.reset.${run}@ekasatra.com`;
 
-test('R1 manual: Admin membuat user lalu reset; login dengan sandi baru; sandi tidak bocor ke respons/audit', async ({ browser }) => {
+test('R1 manual: Admin membuat user lalu reset; login dengan sandi baru; sandi tidak bocor ke respons/audit', async ({
+  browser,
+}) => {
   const created = await json(
     await api('admin').post('/api/v1/users', {
-      data: { email: victimEmail, fullName: `Uji Reset ${run}`, role: 'Paralegal', password: PASSWORD },
+      data: {
+        email: victimEmail,
+        fullName: `Uji Reset ${run}`,
+        role: 'Paralegal',
+        password: PASSWORD,
+      },
     }),
   );
   expect(created.ok, created.error?.message).toBe(true);
   victimId = created.data.id;
 
-  const short = await api('admin').post(`/api/v1/users/${victimId}/reset-password`, { data: { password: 'pendek' } });
+  const short = await api('admin').post(`/api/v1/users/${victimId}/reset-password`, {
+    data: { password: 'pendek' },
+  });
   expect(short.status()).toBeGreaterThanOrEqual(400);
   expect(short.status()).toBeLessThan(500);
 
-  const res = await api('admin').post(`/api/v1/users/${victimId}/reset-password`, { data: { password: NEW_PW } });
+  const res = await api('admin').post(`/api/v1/users/${victimId}/reset-password`, {
+    data: { password: NEW_PW },
+  });
   expect(res.status()).toBe(200);
   expect(await res.text()).not.toContain(NEW_PW);
 
   const ctx = await browser.newContext();
-  const bad = await ctx.request.post('/api/v1/auth/login', { data: { email: victimEmail, password: PASSWORD } });
+  const bad = await ctx.request.post('/api/v1/auth/login', {
+    data: { email: victimEmail, password: PASSWORD },
+  });
   expect(bad.ok()).toBe(false);
   const page = await login(browser, victimEmail, NEW_PW);
   await expect(page).toHaveURL(/\/$/);
@@ -177,15 +208,20 @@ test('R1: yang boleh reset hanya Admin/SuperAdmin; Admin tidak boleh reset Super
   const users = await json(await api('superadmin').get('/api/v1/users?pageSize=100'));
   const rows: { id: string; email: string }[] = users.data.rows;
   const superId = rows.find((u) => u.email === EMAIL.superadmin)!.id;
-  const adminId = rows.find((u) => u.email === EMAIL.admin)!.id;
   for (const role of NON_ADMIN) {
-    const r = await api(role).post(`/api/v1/users/${victimId}/reset-password`, { data: { password: NEW_PW } });
+    const r = await api(role).post(`/api/v1/users/${victimId}/reset-password`, {
+      data: { password: NEW_PW },
+    });
     expect(r.status(), `${role} reset`).toBe(403);
   }
-  const bySuperAttempt = await api('admin').post(`/api/v1/users/${superId}/reset-password`, { data: { password: NEW_PW } });
+  const bySuperAttempt = await api('admin').post(`/api/v1/users/${superId}/reset-password`, {
+    data: { password: NEW_PW },
+  });
   expect(bySuperAttempt.status()).toBe(403);
-  // SuperAdmin boleh mereset Admin; (sandi dikembalikan agar akun demo tetap bisa dipakai)
-  const ok = await api('superadmin').post(`/api/v1/users/${adminId}/reset-password`, { data: { password: PASSWORD } });
+  // SuperAdmin boleh mereset (pakai user uji; akun demo tidak disentuh agar sesinya tetap hidup)
+  const ok = await api('superadmin').post(`/api/v1/users/${victimId}/reset-password`, {
+    data: { password: PASSWORD },
+  });
   expect(ok.status()).toBe(200);
 });
 
@@ -198,12 +234,19 @@ test.fixme('R5 unduh: surat keluar demo dapat diunduh, tombol disabled bila tanp
 const phone = (value: string, isPrimary = false) => ({ kind: 'phone', value, isPrimary });
 const email = (value: string, isPrimary = false) => ({ kind: 'email', value, isPrimary });
 const newClient = (role: RoleKey, contacts: unknown[]) =>
-  api(role).post('/api/v1/clients', { data: { name: `Klien R3 ${run} ${Math.random()}`, contacts } });
+  api(role).post('/api/v1/clients', {
+    data: { name: `Klien R3 ${run} ${Math.random()}`, contacts },
+  });
 
 test('R3: Admin/SuperAdmin menyimpan banyak kontak; Advokat/Paralegal ditolak', async () => {
   for (const role of ADMINS) {
     const res = await json(
-      await newClient(role, [phone('0812-3456-7890', true), phone('021 555 0100'), email('a@klien.example', true), email('b@klien.example')]),
+      await newClient(role, [
+        phone('0812-3456-7890', true),
+        phone('021 555 0100'),
+        email('a@klien.example', true),
+        email('b@klien.example'),
+      ]),
     );
     expect(res.ok, `${role}: ${res.error?.message}`).toBe(true);
     const detail = await json(await api(role).get(`/api/v1/clients/${res.data.id}`));
@@ -222,11 +265,14 @@ test('R3: validasi — email/telepon salah, duplikat, 2 primary, tanpa primary, 
     ['duplikat', [phone('0812345678', true), phone('0812345678')]],
     ['dua primary', [phone('0812345678', true), phone('0899999999', true)]],
     ['tanpa primary', [phone('0812345678'), phone('0899999999')]],
-    ['11 telepon', Array.from({ length: 11 }, (_, i) => phone(`08123456${String(i).padStart(2, '0')}`, i === 0))],
+    [
+      '11 telepon',
+      Array.from({ length: 11 }, (_, i) => phone(`08123456${String(i).padStart(2, '0')}`, i === 0)),
+    ],
   ];
   for (const [label, contacts] of bad) {
     const res = await newClient('admin', contacts);
-    expect(res.status(), label).toBe(400);
+    expect(res.status(), label).toBe(422);
   }
 });
 
@@ -235,26 +281,44 @@ test('R3: validasi — email/telepon salah, duplikat, 2 primary, tanpa primary, 
 test('R4: Belum Bayar → Sebagian → Lunas; PDF tersedia; Advokat/Paralegal ditolak', async () => {
   const client = await json(await newClient('admin', []));
   const kase = await json(
-    await api('admin').post('/api/v1/cases', { data: { title: `Perkara R4 ${run}`, clientId: client.data.id } }),
+    await api('admin').post('/api/v1/cases', {
+      data: { title: `Perkara R4 ${run}`, clientId: client.data.id },
+    }),
   );
   expect(kase.ok, kase.error?.message).toBe(true);
   for (const role of ADMINS) {
     const inv = await json(
-      await api(role).post('/api/v1/invoices', { data: { caseId: kase.data.id, amount: 10_000_000, description: `R4 ${role}` } }),
+      await api(role).post('/api/v1/invoices', {
+        data: { caseId: kase.data.id, amount: 10_000_000, description: `R4 ${role}` },
+      }),
     );
     expect(inv.ok, inv.error?.message).toBe(true);
     expect(inv.data.status).toBe('Belum Bayar');
-    const part = await json(await api(role).post(`/api/v1/invoices/${inv.data.id}/payments`, { data: { amount: 4_000_000 } }));
+    const part = await json(
+      await api(role).post(`/api/v1/invoices/${inv.data.id}/payments`, {
+        data: { amount: 4_000_000 },
+      }),
+    );
     expect(part.data.status).toBe('Sudah Bayar Sebagian');
-    const full = await json(await api(role).post(`/api/v1/invoices/${inv.data.id}/payments`, { data: { amount: 6_000_000 } }));
+    const full = await json(
+      await api(role).post(`/api/v1/invoices/${inv.data.id}/payments`, {
+        data: { amount: 6_000_000 },
+      }),
+    );
     expect(full.data.status).toBe('Lunas');
     const pdf = await api(role).get(`/api/v1/invoices/${inv.data.id}/pdf?type=invoice`);
     expect(pdf.status()).toBe(200);
     expect((await pdf.body()).subarray(0, 4).toString()).toBe('%PDF');
     for (const nr of NON_ADMIN) {
       expect((await api(nr).get(`/api/v1/invoices/${inv.data.id}`)).status()).toBe(403);
-      expect((await api(nr).get(`/api/v1/invoices/${inv.data.id}/pdf?type=invoice`)).status()).toBe(403);
-      expect((await api(nr).post(`/api/v1/invoices/${inv.data.id}/payments`, { data: { amount: 1000 } })).status()).toBe(403);
+      expect((await api(nr).get(`/api/v1/invoices/${inv.data.id}/pdf?type=invoice`)).status()).toBe(
+        403,
+      );
+      expect(
+        (
+          await api(nr).post(`/api/v1/invoices/${inv.data.id}/payments`, { data: { amount: 1000 } })
+        ).status(),
+      ).toBe(403);
     }
   }
 });
