@@ -145,7 +145,7 @@ export function CaseActions({
                   key={st}
                   disabled={st === 'Selesai' && !canSelesai}
                 >
-                  {st === 'Selesai' && !canSelesai ? `${st} (Admin saja)` : st}
+                  {st === 'Selesai' && !canSelesai ? `${st} (Admin/Super Admin saja)` : st}
                 </option>
               ))}
             </select>
@@ -168,7 +168,7 @@ export function CaseActions({
             </div>
           ) : (
             <p className="text-xs text-navy-400">
-              Status &ldquo;Selesai&rdquo; hanya dapat diatur oleh Admin.
+              Status &ldquo;Selesai&rdquo; hanya dapat diatur oleh Admin atau Super Admin.
             </p>
           )}
         </FormDialog>

@@ -189,7 +189,7 @@ export async function updateCase(
 
   // PRD §4 R9: field perkara Selesai read-only bagi non-Admin.
   if (visible.status === 'Selesai' && !canManageSelesai(user.role)) {
-    throw forbidden('Perkara Selesai hanya dapat diubah oleh Admin');
+    throw forbidden('Perkara Selesai hanya dapat diubah oleh Admin atau Super Admin');
   }
 
   const [updated] = await db

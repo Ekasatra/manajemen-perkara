@@ -126,21 +126,23 @@ describe('canChangeStatus — PRD §4 R9 (Kunci status Selesai)', () => {
   // Semua status non-Selesai untuk transisi "lainnya".
   const NON_SELESAI = ['Aktif', 'Putus', 'Banding', 'Kasasi', 'PK'] as const;
 
-  describe('Admin — semua transisi bebas', () => {
-    for (const from of NON_SELESAI) {
-      it(`Admin: ${from} → Selesai = allowed`, () => {
-        expect(canChangeStatus('admin', from, 'Selesai')).toEqual({ allowed: true });
-      });
-    }
-    for (const to of NON_SELESAI) {
-      it(`Admin: Selesai → ${to} = allowed`, () => {
-        expect(canChangeStatus('admin', 'Selesai', to)).toEqual({ allowed: true });
-      });
+  describe('Admin & SuperAdmin — semua transisi bebas', () => {
+    for (const role of ['admin', 'superadmin']) {
+      for (const from of NON_SELESAI) {
+        it(`${role}: ${from} → Selesai = allowed`, () => {
+          expect(canChangeStatus(role, from, 'Selesai')).toEqual({ allowed: true });
+        });
+      }
+      for (const to of NON_SELESAI) {
+        it(`${role}: Selesai → ${to} = allowed`, () => {
+          expect(canChangeStatus(role, 'Selesai', to)).toEqual({ allowed: true });
+        });
+      }
     }
   });
 
-  // Selain Admin (termasuk SuperAdmin, sesuai instruksi 18 Okt): transisi Selesai diblokir, lainnya bebas.
-  for (const role of ['superadmin', 'advokat', 'paralegal'] as const) {
+  // Selain Admin/SuperAdmin: transisi Selesai diblokir, lainnya bebas.
+  for (const role of ['advokat', 'paralegal'] as const) {
     describe(`${role} — transisi Selesai diblokir, lainnya bebas`, () => {
       for (const from of NON_SELESAI) {
         it(`${role}: ${from} → Selesai = BLOCKED`, () => {
@@ -172,8 +174,8 @@ describe('canChangeStatus — PRD §4 R9 (Kunci status Selesai)', () => {
       expect(canChangeStatus('Admin', 'Aktif', 'Selesai')).toEqual({ allowed: true });
       expect(canChangeStatus('Admin', 'Selesai', 'Aktif')).toEqual({ allowed: true });
     });
-    it('SuperAdmin (kapital) tidak boleh ke Selesai', () => {
-      expect(canChangeStatus('SuperAdmin', 'Aktif', 'Selesai')).toEqual({ allowed: false });
+    it('SuperAdmin (kapital) boleh ke Selesai', () => {
+      expect(canChangeStatus('SuperAdmin', 'Aktif', 'Selesai')).toEqual({ allowed: true });
     });
     it('Advokat (kapital) tidak boleh dari Selesai', () => {
       expect(canChangeStatus('Advokat', 'Selesai', 'Aktif')).toEqual({ allowed: false });

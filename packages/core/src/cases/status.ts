@@ -8,7 +8,7 @@
  * Dipisah dari DB agar tabel keputusan (status × kondisi) bisa diuji otomatis tanpa IO.
  */
 import type { CaseStatus, TimelineEventType } from '@ekasatra/shared';
-import { normalizeRole } from '../kernel/policy';
+import { isAdminRole } from '../kernel/policy';
 
 export interface CaseStatusState {
   status: CaseStatus;
@@ -113,16 +113,16 @@ export function applyStatusChange(input: StatusChangeInput): StatusChangeResult 
   };
 }
 
-/** PRD §4 R9 (revisi 18 Okt): hanya Admin yang boleh menyelesaikan/membuka kembali/mengubah perkara Selesai. */
+/** PRD §4 R9 (revisi 18 Okt): hanya Admin dan SuperAdmin yang boleh menyelesaikan/membuka kembali/mengubah perkara Selesai. */
 export function canManageSelesai(role: string): boolean {
-  return normalizeRole(role) === 'admin';
+  return isAdminRole(role);
 }
 
 /**
  * Cek apakah user dengan role tertentu boleh mengubah status perkara
  * dari `currentStatus` ke `newStatus`. PRD §4 R9 (Kunci status Selesai):
- * - Transisi **ke** "Selesai" hanya Admin.
- * - Transisi **dari** "Selesai" (mengembalikan ke status lain) hanya Admin.
+ * - Transisi **ke** "Selesai" hanya Admin/SuperAdmin.
+ * - Transisi **dari** "Selesai" (mengembalikan ke status lain) hanya Admin/SuperAdmin.
  * - Transisi lain (Aktif→Putus→Banding→Kasasi→PK) bebas untuk yang berhak U cases.
  *
  * Fungsi murni — tidak menyentuh DB/IO; diuji otomatis (tabel keputusan role × transisi).
