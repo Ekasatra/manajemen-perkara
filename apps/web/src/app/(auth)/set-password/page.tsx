@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Lock, ShieldCheck } from 'lucide-react';
@@ -8,37 +8,24 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Label } from '@/components/ui/field';
 import { buttonClass, inputClass } from '@/components/ui/styles';
 
+const INVALID_LINK = 'Link tidak valid atau sudah kedaluwarsa. Minta link baru ke admin.';
+
 export default function SetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-  const [sessionOk, setSessionOk] = useState(false);
+  // Token sudah ditukar jadi sesi — percobaan ulang (mis. password ditolak) tidak verifikasi lagi.
+  const [verified, setVerified] = useState(false);
 
-  // Code recovery dari URL — dibaca saat render (bukan di effect) agar tidak setState sinkron.
-  const code = searchParams.get('code');
-
-  // Tukar code recovery → session Supabase (PKCE flow). Hanya berjalan bila code ada.
-  useEffect(() => {
-    if (!code) return;
-    const supabase = createSupabaseBrowserClient();
-    supabase.auth
-      .exchangeCodeForSession(code)
-      .then(({ error: exErr }) => {
-        if (exErr) setError(`Link tidak valid: ${exErr.message}`);
-        else setSessionOk(true);
-        setReady(true);
-      })
-      .catch(() => {
-        setError('Gagal memproses link. Coba minta link baru.');
-        setReady(true);
-      });
-  }, [searchParams, code]);
+  // Link email: /set-password?token_hash=…&type=recovery (lihat sendResetLink).
+  const tokenHash = searchParams.get('token_hash');
+  const linkOk = Boolean(tokenHash) && searchParams.get('type') === 'recovery';
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!tokenHash) return;
     setPending(true);
     setError(null);
     const formData = new FormData(e.currentTarget);
@@ -51,8 +38,19 @@ export default function SetPasswordPage() {
     }
     try {
       const supabase = createSupabaseBrowserClient();
+      // Token sekali pakai baru diverifikasi saat tombol ditekan, bukan saat halaman dimuat,
+      // agar pemindai email yang membuka link duluan tidak menghabiskannya.
+      if (!verified) {
+        const { error: otpErr } = await supabase.auth.verifyOtp({ type: 'recovery', token_hash: tokenHash });
+        if (otpErr) {
+          setError(INVALID_LINK);
+          return;
+        }
+        setVerified(true);
+      }
       const { error: pwErr } = await supabase.auth.updateUser({ password });
       if (pwErr) throw new Error(pwErr.message);
+      await supabase.auth.signOut();
       router.push('/login');
       router.refresh();
     } catch (err) {
@@ -62,16 +60,7 @@ export default function SetPasswordPage() {
     }
   }
 
-  // Bila code tidak ada, tampilkan error langsung (derived saat render, tanpa setState di effect).
-  const displayError = error ?? (code ? null : 'Link tidak valid atau sudah kedaluwarsa.');
-
-  if (!ready && code) {
-    return (
-      <div className="card-surface p-7 text-center text-sm text-navy-400 sm:p-8">
-        Memproses link…
-      </div>
-    );
-  }
+  const displayError = error ?? (linkOk ? null : INVALID_LINK);
 
   const iconClass = 'pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-300';
   return (
@@ -85,7 +74,7 @@ export default function SetPasswordPage() {
           {displayError}
         </p>
       ) : null}
-      {sessionOk ? (
+      {linkOk ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <Label htmlFor="password" required>
@@ -135,8 +124,6 @@ export default function SetPasswordPage() {
             {pending ? 'Menyimpan…' : 'Simpan Password Baru'}
           </button>
         </form>
-      ) : !displayError ? (
-        <p className="text-sm text-navy-400">Memverifikasi link…</p>
       ) : null}
       <p className="mt-6 flex items-center gap-2 border-t border-navy-50 pt-5 text-[11px] text-navy-400">
         <ShieldCheck aria-hidden="true" size={15} className="shrink-0 text-gold-500" />

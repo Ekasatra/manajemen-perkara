@@ -72,32 +72,44 @@ describe('sendResetLink (W4 R1)', () => {
     generateLinkMock.mockResolvedValue({ data: null, error: { message: 'rate limit exceeded' } });
     const result = await sendResetLink(db, 'u1');
     expect(result.ok).toBe(false);
-    expect(result.error).toContain('rate limit');
+    expect(result.error).not.toContain('rate limit');
+    expect(result.detail).toBe('rate limit exceeded');
   });
 
   it('berhasil kirim link reset, email tersamar di hasil, link asli tidak bocor', async () => {
     const db = mockDb({ id: 'u1', email: 'andi@ekasatra.com', fullName: 'Andi', isActive: true });
     generateLinkMock.mockResolvedValue({
       data: {
-        properties: { action_link: 'https://app.ekasatra.com/set-password?code=SECRET_TOKEN' },
+        properties: {
+          action_link: 'https://x.supabase.co/auth/v1/verify?token=ACTION_LINK',
+          hashed_token: 'SECRET+TOKEN/=',
+        },
         user: {},
       },
       error: null,
     });
-    const result = await sendResetLink(db, 'u1');
+    const result = await sendResetLink(db, 'u1', 'https://app.ekasatra.com');
     expect(result.ok).toBe(true);
     expect(result.maskedEmail).toBe('an***@ekasatra.com');
     expect(sendEmailViaResend).toHaveBeenCalledTimes(1);
+    // Email memuat link token_hash ke /set-password, bukan action_link Supabase
+    const { html } = vi.mocked(sendEmailViaResend).mock.calls[0]![0];
+    expect(html).toContain(
+      'https://app.ekasatra.com/set-password?token_hash=SECRET%2BTOKEN%2F%3D&type=recovery',
+    );
+    expect(html).not.toContain('ACTION_LINK');
     // Link asli / token tidak pernah dikembalikan ke pemanggil
-    expect(JSON.stringify(result)).not.toContain('SECRET_TOKEN');
-    expect(JSON.stringify(result)).not.toContain('code=');
+    expect(JSON.stringify(result)).not.toContain('SECRET');
   });
 
   it('ok=false bila pengiriman email gagal', async () => {
     const db = mockDb({ id: 'u1', email: 'andi@ekasatra.com', fullName: 'Andi', isActive: true });
     generateLinkMock.mockResolvedValue({
       data: {
-        properties: { action_link: 'https://app.ekasatra.com/set-password?code=SECRET_TOKEN' },
+        properties: {
+          action_link: 'https://x.supabase.co/auth/v1/verify?token=ACTION_LINK',
+          hashed_token: 'SECRET+TOKEN/=',
+        },
         user: {},
       },
       error: null,
@@ -105,6 +117,7 @@ describe('sendResetLink (W4 R1)', () => {
     vi.mocked(sendEmailViaResend).mockResolvedValueOnce({ success: false, error: 'SMTP down' });
     const result = await sendResetLink(db, 'u1');
     expect(result.ok).toBe(false);
-    expect(result.error).toBe('SMTP down');
+    expect(result.error).not.toContain('SMTP down');
+    expect(result.detail).toBe('SMTP down');
   });
 });

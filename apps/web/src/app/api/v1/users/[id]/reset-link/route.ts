@@ -43,6 +43,13 @@ export async function POST(
     const result = await sendResetLink(db, id, appUrl);
 
     if (!result.ok) {
+      // Detail Supabase/SMTP hanya ke log server, alamat email disamarkan.
+      if (result.detail) {
+        console.error(
+          `[users] reset-link gagal untuk user ${id}:`,
+          result.detail.replace(/[^\s@<>"']+@[^\s@<>"']+/g, '[email]'),
+        );
+      }
       throw badRequest(result.error ?? 'Gagal mengirim link reset');
     }
 

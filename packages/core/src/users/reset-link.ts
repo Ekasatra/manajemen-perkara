@@ -11,7 +11,10 @@ export interface ResetLinkResult {
   ok: boolean;
   /** Email tersamar (hanya 2 karakter pertama + ***). */
   maskedEmail?: string;
+  /** Pesan aman untuk ditampilkan ke admin. */
   error?: string;
+  /** Detail mentah Supabase/SMTP — hanya untuk log server, jangan dikirim ke klien. */
+  detail?: string;
 }
 
 /** Sembunyikan email: "an***@domain.com". */
@@ -22,8 +25,9 @@ export function maskEmail(email: string): string {
 }
 
 /**
- * Generate link reset password via Supabase `auth.admin.generateLink({type:'recovery'})`
- * dan kirim ke email terdaftar user. Link sekali pakai, kedaluwarsa ≤ 1 jam (aturan Supabase).
+ * Generate token recovery via Supabase `auth.admin.generateLink({type:'recovery'})` dan kirim
+ * link `/set-password?token_hash=…` ke email terdaftar user. Token sekali pakai; masa berlaku
+ * mengikuti setelan "Email OTP expiration" Supabase Auth (default 3600 dtk).
  * Tidak pernah mengembalikan link asli ke pemanggil (hanya email tersamar).
  */
 export async function sendResetLink(
@@ -47,18 +51,23 @@ export async function sendResetLink(
   const { data, error } = await supabase.auth.admin.generateLink({
     type: 'recovery',
     email: target.email,
-    options: {
-      redirectTo: `${appUrl}/set-password`,
-    },
   });
 
-  if (error || !data?.properties?.action_link) {
-    return { ok: false, error: `Gagal membuat link: ${error?.message ?? 'tidak ada link'}` };
+  const tokenHash = data?.properties?.hashed_token;
+  if (error || !tokenHash) {
+    return {
+      ok: false,
+      error: 'Gagal membuat link reset. Coba lagi nanti.',
+      detail: error?.message ?? 'hashed_token kosong',
+    };
   }
 
   // 3. Kirim email via mailer (best-effort)
   const officeName = await getSetting<string>(db, 'office_name', 'EKASATRA Law & Policy Advisory');
-  const resetUrl = data.properties.action_link;
+  // Bukan action_link: itu lewat /verify Supabase dan mengembalikan sesi di URL fragment.
+  // token_hash diverifikasi /set-password via verifyOtp saat user menekan Simpan,
+  // sehingga pemindai email yang membuka link tidak menghabiskan token sekali pakai.
+  const resetUrl = `${appUrl}/set-password?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`;
   const subject = 'Reset Password — EKASATRA';
   const contentHtml = `
     <p>Yth. <strong>${escapeHtml(target.fullName)}</strong>,</p>
@@ -77,9 +86,14 @@ export async function sendResetLink(
 
   const sendResult = await sendEmailViaResend({ to: target.email, subject, html });
 
-  return {
-    ok: sendResult.success,
-    maskedEmail: maskEmail(target.email),
-    error: sendResult.error,
-  };
+  const maskedEmail = maskEmail(target.email);
+  if (!sendResult.success) {
+    return {
+      ok: false,
+      maskedEmail,
+      error: 'Gagal mengirim email reset. Coba lagi nanti.',
+      detail: sendResult.error,
+    };
+  }
+  return { ok: true, maskedEmail };
 }
