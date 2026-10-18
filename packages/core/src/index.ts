@@ -112,7 +112,7 @@ export {
   getUpayaDeadlineReminders,
 } from './cases/read';
 // D3 — transisi status (fungsi murni)
-export { applyStatusChange, addDays, canChangeStatus } from './cases/status';
+export { applyStatusChange, addDays, canChangeStatus, canManageSelesai } from './cases/status';
 export type { CaseStatusState, StatusChangeInput, StatusChangeResult } from './cases/status';
 // D1/D2/D4 — service
 export {

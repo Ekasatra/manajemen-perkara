@@ -33,14 +33,14 @@ export function CaseActions({
   opponentOptions,
   canEdit,
   canDelete,
-  isSuperAdmin,
+  canSelesai,
 }: {
   row: CaseActionRow;
   clientOptions: PartyOption[] | null;
   opponentOptions: PartyOption[] | null;
   canEdit: boolean;
   canDelete: boolean;
-  isSuperAdmin: boolean;
+  canSelesai: boolean;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<'edit' | 'delete' | 'status' | null>(null);
@@ -143,15 +143,15 @@ export function CaseActions({
               {CASE_STATUS.map((st) => (
                 <option
                   key={st}
-                  disabled={st === 'Selesai' && !isSuperAdmin}
+                  disabled={st === 'Selesai' && !canSelesai}
                 >
-                  {st === 'Selesai' && !isSuperAdmin ? `${st} (Super Admin saja)` : st}
+                  {st === 'Selesai' && !canSelesai ? `${st} (Admin saja)` : st}
                 </option>
               ))}
             </select>
             <FieldError name="status" />
           </div>
-          {isSuperAdmin ? (
+          {canSelesai ? (
             <div>
               <Label htmlFor="st-reason" optional>
                 Alasan (opsional)
@@ -168,7 +168,7 @@ export function CaseActions({
             </div>
           ) : (
             <p className="text-xs text-navy-400">
-              Status &ldquo;Selesai&rdquo; hanya dapat diatur oleh Super Admin.
+              Status &ldquo;Selesai&rdquo; hanya dapat diatur oleh Admin.
             </p>
           )}
         </FormDialog>

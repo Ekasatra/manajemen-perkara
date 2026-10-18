@@ -29,9 +29,8 @@ import {
 import { withTx, nextCounter } from '../kernel/db-helpers';
 import { logActivity } from '../kernel/activity';
 import type { AuthContext } from '../kernel/auth';
-import { normalizeRole } from '../kernel/policy';
 import { getCaseForUser, getCaseTeamMembers, listVisibleCaseIds } from './read';
-import { applyStatusChange, canChangeStatus } from './status';
+import { applyStatusChange, canChangeStatus, canManageSelesai } from './status';
 import { getSetting } from '../settings/read';
 import type { Db } from '@ekasatra/db';
 
@@ -188,9 +187,9 @@ export async function updateCase(
 ): Promise<typeof cases.$inferSelect> {
   const visible = await requireVisibleCase(db, user, caseId);
 
-  // PRD §4 R9: field perkara Selesai read-only bagi non-SuperAdmin.
-  if (visible.status === 'Selesai' && normalizeRole(user.role) !== 'superadmin') {
-    throw forbidden('Perkara Selesai hanya dapat diubah oleh Super Admin');
+  // PRD §4 R9: field perkara Selesai read-only bagi non-Admin.
+  if (visible.status === 'Selesai' && !canManageSelesai(user.role)) {
+    throw forbidden('Perkara Selesai hanya dapat diubah oleh Admin');
   }
 
   const [updated] = await db
@@ -219,12 +218,10 @@ export async function deleteCase(
   user: AuthContext,
   caseId: string,
 ): Promise<void> {
-  const visible = await requireVisibleCase(db, user, caseId);
+  await requireVisibleCase(db, user, caseId);
 
-  // PRD §4 R9: perkara Selesai hanya SuperAdmin yang boleh mengubah/menghapus.
-  if (visible.status === 'Selesai' && normalizeRole(user.role) !== 'superadmin') {
-    throw forbidden('Perkara Selesai hanya dapat diubah oleh Super Admin');
-  }
+  // Hapus tetap dijaga ensureCan(D) (SuperAdmin saja); kunci Selesai (Admin) tidak berlaku di sini
+  // agar perkara Selesai tidak menjadi mustahil dihapus.
 
   const [target] = await db
     .select({ title: cases.title, regNo: cases.regNo })
@@ -256,7 +253,7 @@ export async function deleteCase(
 // --- D3: Perubahan status ---
 
 /** Ubah status perkara + set tanggal putus/upaya_deadline + entri timeline otomatis.
- *  PRD §4 R9: transisi ke/dari "Selesai" hanya SuperAdmin; alasan opsional, tercatat
+ *  PRD §4 R9: transisi ke/dari "Selesai" hanya Admin; alasan opsional, tercatat
  *  di Audit Log + timeline (siapa, kapan, status lama→baru, alasan bila diisi). */
 export async function changeCaseStatus(
   db: Db,
@@ -280,10 +277,10 @@ export async function changeCaseStatus(
       throw badRequest(`Status perkara sudah ${newStatus}`);
     }
 
-    // PRD §4 R9: kunci transisi ke/dari Selesai — hanya SuperAdmin.
+    // PRD §4 R9: kunci transisi ke/dari Selesai — hanya Admin.
     const gate = canChangeStatus(user.role, current.status, newStatus);
     if (!gate.allowed) {
-      throw forbidden('Hanya Super Admin yang dapat menyelesaikan perkara');
+      throw forbidden('Hanya Admin yang dapat menyelesaikan perkara');
     }
 
     const { caseUpdate, timelineEntry } = applyStatusChange({

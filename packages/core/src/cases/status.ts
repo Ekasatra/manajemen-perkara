@@ -113,11 +113,16 @@ export function applyStatusChange(input: StatusChangeInput): StatusChangeResult 
   };
 }
 
+/** PRD §4 R9 (revisi 18 Okt): hanya Admin yang boleh menyelesaikan/membuka kembali/mengubah perkara Selesai. */
+export function canManageSelesai(role: string): boolean {
+  return normalizeRole(role) === 'admin';
+}
+
 /**
  * Cek apakah user dengan role tertentu boleh mengubah status perkara
  * dari `currentStatus` ke `newStatus`. PRD §4 R9 (Kunci status Selesai):
- * - Transisi **ke** "Selesai" hanya SuperAdmin.
- * - Transisi **dari** "Selesai" (mengembalikan ke status lain) hanya SuperAdmin.
+ * - Transisi **ke** "Selesai" hanya Admin.
+ * - Transisi **dari** "Selesai" (mengembalikan ke status lain) hanya Admin.
  * - Transisi lain (Aktif→Putus→Banding→Kasasi→PK) bebas untuk yang berhak U cases.
  *
  * Fungsi murni — tidak menyentuh DB/IO; diuji otomatis (tabel keputusan role × transisi).
@@ -127,9 +132,8 @@ export function canChangeStatus(
   currentStatus: CaseStatus,
   newStatus: CaseStatus,
 ): { allowed: boolean } {
-  const normalized = normalizeRole(role);
   const involvesSelesai = currentStatus === 'Selesai' || newStatus === 'Selesai';
-  if (involvesSelesai && normalized !== 'superadmin') {
+  if (involvesSelesai && !canManageSelesai(role)) {
     return { allowed: false };
   }
   return { allowed: true };
