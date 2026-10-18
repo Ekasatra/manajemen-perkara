@@ -66,6 +66,23 @@ export interface PersonalNotificationItem {
   urgency: 'high' | 'medium' | 'low';
 }
 
+/**
+ * Notifikasi personal + status baca. `id` adalah kunci stabil yang dipakai
+ * `notification_reads`; `read` dihitung dari kunci yang sama, sehingga badge,
+ * kartu dashboard, dan daftar tidak mungkin berbeda filter (R8).
+ */
+export interface NotificationItem extends PersonalNotificationItem {
+  read: boolean;
+}
+
+/** Satu sumber hitungan: `unreadCount` selalu = jumlah item dengan `read === false`. */
+export interface NotificationFeed {
+  notifications: NotificationItem[];
+  unreadCount: number;
+  /** Surat keluar yang menunggu persetujuan pengguna (badge sidebar). */
+  approvalCount: number;
+}
+
 export interface DashboardData {
   cases: DashboardCaseSummary;
   sidang7Hari: DashboardScheduleItem[];
@@ -78,5 +95,5 @@ export interface DashboardData {
   klienBaruBulanIni: number;
   tenggat14Hari: DashboardTenggatItem[];
   aktivitasTerbaru: DashboardActivityItem[];
-  notifikasiPersonal: PersonalNotificationItem[];
+  notifikasiPersonal: NotificationItem[];
 }

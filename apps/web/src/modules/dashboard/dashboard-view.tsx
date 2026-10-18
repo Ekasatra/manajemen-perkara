@@ -143,6 +143,8 @@ export function DashboardView({
   const today = todayWib(now);
   const firstName = viewer.name.split(/\s+/)[0] ?? viewer.name;
   const nearest = sidang7Hari[0];
+  // Satu sumber hitungan dengan badge lonceng: item yang `read === false`.
+  const unreadNotif = data.notifikasiPersonal.filter((n) => !n.read).length;
 
   const stats: {
     icon: ReactNode;
@@ -217,13 +219,16 @@ export function DashboardView({
     },
     {
       icon: <BellRing size={18} />,
-      label: 'Notifikasi',
-      value: data.notifikasiPersonal.length,
-      sub: approvalMenungguSaya.count
-        ? `${approvalMenungguSaya.count} surat menunggu Anda`
-        : 'untuk Anda',
+      label: 'Notifikasi Belum Dibaca',
+      value: unreadNotif,
+      sub:
+        unreadNotif === 0
+          ? 'semua sudah dibaca'
+          : approvalMenungguSaya.count
+            ? `${approvalMenungguSaya.count} surat menunggu Anda`
+            : 'klik lonceng untuk membuka',
       tone: 'amber',
-      href: '/#pemberitahuan',
+      href: '/notifikasi',
     },
   ];
 
@@ -318,7 +323,16 @@ export function DashboardView({
         </section>
 
         <section id="pemberitahuan" className="card-surface scroll-mt-24 p-5">
-          <SectionTitle icon={<BellRing size={16} />}>Notifikasi</SectionTitle>
+          <SectionTitle
+            icon={<BellRing size={16} />}
+            action={
+              <Link href="/notifikasi" className={`${buttonClass.secondary} px-3 text-xs`}>
+                Lihat semua <ArrowRight aria-hidden="true" size={15} />
+              </Link>
+            }
+          >
+            {unreadNotif > 0 ? `Notifikasi Belum Dibaca (${unreadNotif})` : 'Notifikasi'}
+          </SectionTitle>
           {data.notifikasiPersonal.length === 0 ? (
             <Empty icon={<BellOff size={28} />}>Tidak ada notifikasi baru</Empty>
           ) : (
@@ -329,20 +343,33 @@ export function DashboardView({
                   <li key={n.id}>
                     <Link
                       href={n.link}
-                      className="flex gap-3 rounded-control p-2.5 hover:bg-gold-50/50"
+                      className={`flex gap-3 rounded-control p-2.5 hover:bg-gold-50/50 ${
+                        n.read ? 'opacity-70' : ''
+                      }`}
                     >
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-navy-50 text-navy-700">
                         <Icon aria-hidden="true" size={15} />
                       </span>
-                      <div className="min-w-0">
-                        <div className="line-clamp-2 text-sm font-semibold text-navy-800">
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className={`line-clamp-2 text-sm text-navy-800 ${
+                            n.read ? 'font-medium' : 'font-semibold'
+                          }`}
+                        >
                           {n.title}
                         </div>
                         <div className="line-clamp-1 text-xs text-navy-500">{n.description}</div>
                         <div className="mt-0.5 text-[11px] text-navy-400">
                           {relTime(n.date, now)}
+                          {n.read ? null : ' · belum dibaca'}
                         </div>
                       </div>
+                      {n.read ? null : (
+                        <span
+                          aria-hidden="true"
+                          className="mt-2 size-2 shrink-0 rounded-full bg-gold-500"
+                        />
+                      )}
                     </Link>
                   </li>
                 );

@@ -1,5 +1,6 @@
 /**
- * GET /api/v1/notifications — Notifikasi personal dashboard pengguna (PRD §5.10 & G6)
+ * GET  /api/v1/notifications — daftar notifikasi personal + hitungan belum dibaca (R8)
+ * POST /api/v1/notifications — tandai satu (`{ id }`) atau semua (`{ all: true }`) dibaca
  */
 import { createDb } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
@@ -7,29 +8,38 @@ import {
   ok,
   runRoute,
   requireUser,
-  getDashboardData,
-  getApprovalMenungguSaya,
-  getSuratPersonalNotifications,
+  parseBody,
+  getNotificationsForUser,
+  markNotificationRead,
+  markAllNotificationsRead,
 } from '@ekasatra/core';
+import { markNotificationsReadSchema } from '@ekasatra/shared';
 
-export async function GET(req: Request) {
+export async function GET() {
   return runRoute(async () => {
     const db = createDb();
     const supabase = await createSupabaseServerClient();
     const user = await requireUser(db, supabase);
 
-    // `?ringkas=1` dipakai lencana di topbar/sidebar: hanya surat, tanpa 11 query dashboard.
-    if (new URL(req.url).searchParams.get('ringkas') === '1') {
-      // Approval dijalankan sekali, hasilnya dipakai ulang oleh notifikasi personal.
-      const approval = await getApprovalMenungguSaya(db, user.userId);
-      const notifications = await getSuratPersonalNotifications(db, user.userId, approval);
-      return ok({ notifications, approvalCount: approval.count });
-    }
-
-    const data = await getDashboardData(db, user);
-    return ok({
-      notifications: data.notifikasiPersonal,
-      approvalCount: data.approvalMenungguSaya.count,
+    const feed = await getNotificationsForUser(db, {
+      userId: user.userId,
+      role: user.role,
     });
+    return ok(feed);
+  });
+}
+
+export async function POST(req: Request) {
+  return runRoute(async () => {
+    const db = createDb();
+    const supabase = await createSupabaseServerClient();
+    const user = await requireUser(db, supabase);
+
+    const body = await parseBody(req, markNotificationsReadSchema);
+    const target = { userId: user.userId, role: user.role };
+
+    return ok(
+      body.all ? await markAllNotificationsRead(db, target) : await markNotificationRead(db, target, body.id as string),
+    );
   });
 }
