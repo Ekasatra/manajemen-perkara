@@ -7,6 +7,56 @@ import { baseEmailLayout, escapeHtml, renderEmailTemplate } from './templates';
 import { sendEmailViaResend, type SendEmailPayload } from './resend';
 
 /**
+ * W4.2 · Background scheduler untuk pengiriman email.
+ * Saat terdaftar (mis. Next.js `after()` dari `next/server` di Vercel),
+ * pengiriman email dijadwalkan ke background agar tidak memblokir respons
+ * atau transaksi DB. Kegagalan dicatat di log tetapi tidak melempar.
+ *
+ * Default: `null` → kirim sinkron (mode testing/development).
+ */
+type BackgroundScheduler = (task: () => Promise<void>) => void;
+
+let backgroundScheduler: BackgroundScheduler | null = null;
+
+/**
+ * Daftarkan scheduler background (mis. `after` dari `next/server`).
+ * Pass `null` untuk kembali ke mode sinkron (default; dipakai oleh tes).
+ */
+export function setBackgroundScheduler(scheduler: BackgroundScheduler | null): void {
+  backgroundScheduler = scheduler;
+}
+
+/**
+ * Kirim email via `sendEmailViaResend`. Bila scheduler background terdaftar,
+ * jadwalkan ke background dan kembalikan hasil optimistik (`background_scheduled`).
+ * Selalu best-effort: tidak pernah melempar.
+ */
+async function sendEmailBestEffort(
+  payload: SendEmailPayload,
+  recipientEmail: string,
+): Promise<NotifyResult> {
+  if (backgroundScheduler) {
+    const to = recipientEmail;
+    backgroundScheduler(async () => {
+      try {
+        await sendEmailViaResend(payload);
+      } catch (err) {
+        console.error(`[notify] background email to ${to} gagal:`, err);
+      }
+    });
+    return { sent: true, reason: 'background_scheduled', recipientEmail };
+  }
+
+  const res = await sendEmailViaResend(payload);
+  return {
+    sent: res.success,
+    reason: res.error,
+    messageId: res.messageId,
+    recipientEmail,
+  };
+}
+
+/**
  * Kirim notifikasi email tunggal sesuai jenis event.
  * Menghormati pengaturan kantor `notif_email_enabled` dan preferensi email user di profil.
  */
@@ -91,19 +141,11 @@ export async function notify(
 
   const { subject, html } = renderEmailTemplate(event, profile.fullName, officeName);
 
-  // 5. Kirim via Resend
-  const sendRes = await sendEmailViaResend({
-    to: profile.email,
-    subject,
-    html,
-  });
-
-  return {
-    sent: sendRes.success,
-    reason: sendRes.error,
-    messageId: sendRes.messageId,
-    recipientEmail: profile.email,
-  };
+  // 5. Kirim via SMTP/Resend (W4.2: best-effort, background bila scheduler terdaftar)
+  return sendEmailBestEffort(
+    { to: profile.email, subject, html },
+    profile.email,
+  );
 }
 
 /**
@@ -169,8 +211,7 @@ export async function notifyGeneric(
       }),
       attachments,
     };
-    const res = await sendEmailViaResend(payload);
-    return { sent: res.success, reason: res.error, messageId: res.messageId, recipientEmail: to };
+    return sendEmailBestEffort(payload, to);
   };
 
   if (input.toUserIds.length) {

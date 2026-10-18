@@ -1,4 +1,4 @@
-export { notify, notifyMany, notifyGeneric } from './notify';
+export { notify, notifyMany, notifyGeneric, setBackgroundScheduler } from './notify';
 export type { GenericNotifyInput } from './notify';
 export {
   renderEmailTemplate,

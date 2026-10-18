@@ -51,11 +51,16 @@ export {
 } from './users/read';
 export type { UserNotificationProfile } from './users/read';
 
+// Users — Reset Link (W4 R1)
+export { sendResetLink, maskEmail } from './users/reset-link';
+export type { ResetLinkResult } from './users/reset-link';
+
 // Notifications (Agent G · G4)
 export {
   notify,
   notifyMany,
   notifyGeneric,
+  setBackgroundScheduler,
   renderEmailTemplate,
   baseEmailLayout,
   formatRupiah,
