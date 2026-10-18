@@ -7,6 +7,7 @@ import {
   can,
   canViewKas,
   ensureCan,
+  ensureCanManageUser,
   isAppError,
   normalizeRole,
   POLICY,
@@ -220,5 +221,22 @@ describe('canViewKas', () => {
     expect(canViewKas({ role: 'advokat', userId: 'uuid-advokat-1' }, kasViewers)).toBe(true);
     expect(canViewKas({ role: 'advokat', userId: 'uuid-advokat-2' }, kasViewers)).toBe(false);
     expect(canViewKas({ role: 'paralegal', userId: 'uuid-paralegal' }, [])).toBe(false);
+  });
+});
+
+describe('ensureCanManageUser', () => {
+  it('Admin/Advokat/Paralegal tidak boleh mengelola akun SuperAdmin (403)', () => {
+    for (const role of ['admin', 'Admin', 'advokat', 'paralegal']) {
+      try {
+        ensureCanManageUser({ role }, 'SuperAdmin');
+        expect.unreachable();
+      } catch (e) {
+        expect(isAppError(e) && e.status).toBe(403);
+      }
+    }
+  });
+  it('SuperAdmin boleh; Admin boleh mengelola non-SuperAdmin', () => {
+    expect(() => ensureCanManageUser({ role: 'superadmin' }, 'SuperAdmin')).not.toThrow();
+    expect(() => ensureCanManageUser({ role: 'admin' }, 'Advokat')).not.toThrow();
   });
 });

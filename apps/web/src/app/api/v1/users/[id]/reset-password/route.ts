@@ -11,6 +11,7 @@ import {
   parseBody,
   requireUser,
   ensureCan,
+  ensureCanManageUser,
   logActivity,
 } from '@ekasatra/core';
 import { notFound } from '@ekasatra/shared';
@@ -30,11 +31,12 @@ export async function POST(
     const body = await parseBody(req, resetPasswordSchema);
 
     const [target] = await db
-      .select({ fullName: profiles.fullName, email: profiles.email })
+      .select({ fullName: profiles.fullName, email: profiles.email, role: profiles.role })
       .from(profiles)
       .where(eq(profiles.id, id))
       .limit(1);
     if (!target) throw notFound('User tidak ditemukan');
+    ensureCanManageUser(user, target.role);
 
     const supabaseService = createSupabaseServiceClient();
     const { error } = await supabaseService.auth.admin.updateUserById(id, {

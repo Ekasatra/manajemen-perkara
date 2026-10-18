@@ -19,8 +19,6 @@ import { createClientSchema } from '@ekasatra/shared';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
 
-const PHONE_KINDS = ['HP', 'WhatsApp', 'Telepon'];
-
 export async function GET(req: Request) {
   return runRoute(async () => {
     const db = createDb();
@@ -87,7 +85,7 @@ export async function POST(req: Request) {
 
       // Simpan kontak ke tabel client_contacts (kanonis) dan mirror ke phone/email.
       const phoneContacts = body.contacts.filter((c) =>
-        PHONE_KINDS.includes(c.label ?? c.kind),
+        c.kind === 'phone',
       );
       const emailContacts = body.contacts.filter((c) => c.kind === 'email');
 
@@ -110,7 +108,9 @@ export async function POST(req: Request) {
       if (!inserted) throw new Error('Gagal membuat klien');
 
       // Tulis ke client_contacts.
-      await tx.insert(clientContacts).values(
+      // Kontak opsional: values([]) melempar di Drizzle.
+      if (body.contacts.length > 0)
+        await tx.insert(clientContacts).values(
         body.contacts.map((c, i) => ({
           clientId: inserted.id,
           kind: c.kind,

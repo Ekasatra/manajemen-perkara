@@ -124,3 +124,10 @@ export function canViewKas(
 ): boolean {
   return can(user, 'R', 'kas') || kasViewerIds.includes(user.userId);
 }
+
+/** Akun SuperAdmin hanya boleh dikelola (ubah/reset) oleh SuperAdmin sendiri. */
+export function ensureCanManageUser(actor: PolicyUser, targetRole: string): void {
+  if (normalizeRole(targetRole) === 'superadmin' && normalizeRole(actor.role) !== 'superadmin') {
+    throw forbidden('Akun Superadmin hanya dapat dikelola oleh Superadmin');
+  }
+}

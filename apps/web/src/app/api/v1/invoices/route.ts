@@ -2,7 +2,7 @@
  * GET  /api/v1/invoices — daftar (filter status/klien/perkara/tanggal, paginasi server)
  * POST /api/v1/invoices — buat invoice `INV/{tahun}/{0001}` (Admin)
  */
-import { parseBody } from '@ekasatra/core';
+import { ensureCan, parseBody } from '@ekasatra/core';
 import { parseQuery } from '@ekasatra/core/finance';
 import { createInvoice, listInvoices } from '@ekasatra/core/invoices';
 import { createInvoiceSchema, listInvoicesQuerySchema } from '@ekasatra/shared/invoices';
@@ -14,6 +14,10 @@ export function GET(req: Request) {
 
 export function POST(req: Request) {
   return route(async ({ db, user }) =>
-    createInvoice(db, user, await parseBody(req, createInvoiceSchema)),
+    createInvoice(
+      db,
+      user,
+      (ensureCan(user, 'C', 'invoices'), await parseBody(req, createInvoiceSchema)),
+    ),
   );
 }

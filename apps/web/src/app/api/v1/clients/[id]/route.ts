@@ -17,8 +17,6 @@ import {
 import { notFound } from '@ekasatra/shared';
 import { updateClientSchema } from '@ekasatra/shared';
 
-const PHONE_KINDS = ['HP', 'WhatsApp', 'Telepon'];
-
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -54,7 +52,7 @@ export async function PATCH(
     let updateData: Record<string, unknown> = { ...body };
     if (body.contacts) {
       const phoneContact = body.contacts.find((c) =>
-        PHONE_KINDS.includes(c.label ?? c.kind),
+        c.kind === 'phone',
       );
       const emailContact = body.contacts.find((c) => c.kind === 'email');
       updateData = {
@@ -65,7 +63,8 @@ export async function PATCH(
 
       // Hapus kontak lama lalu tulis ulang dari body.
       await db.delete(clientContacts).where(eq(clientContacts.clientId, id));
-      await db.insert(clientContacts).values(
+      if (body.contacts.length > 0)
+        await db.insert(clientContacts).values(
         body.contacts.map((c, i) => ({
           clientId: id,
           kind: c.kind,
