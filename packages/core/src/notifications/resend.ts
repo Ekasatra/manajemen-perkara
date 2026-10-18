@@ -1,3 +1,5 @@
+import { sendViaSmtp } from '../mail/transport';
+
 export interface SendEmailPayload {
   to: string;
   subject: string;
@@ -32,10 +34,15 @@ export async function sendEmailViaResend(
     return customTransport(payload);
   }
 
+  // W4 R2: coba SMTP cPanel (mail.ekasatra.com) dulu (transport utama).
+  const smtpResult = await sendViaSmtp(payload);
+  if (smtpResult !== null) return smtpResult;
+
+  // Fallback: Resend API (konfigurasi lama).
   if (!apiKey) {
     // Produksi tanpa key = konfigurasi salah; jangan pura-pura terkirim.
     if (process.env.NODE_ENV === 'production') {
-      return { success: false, error: 'RESEND_API_KEY belum diset' };
+      return { success: false, error: 'SMTP_USER/SMTP_PASS atau RESEND_API_KEY belum diset' };
     }
     // Mode simulasi/development tanpa API key — tidak throw agar flow tidak macet
     return {

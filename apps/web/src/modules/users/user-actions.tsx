@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 import { FormDialog } from '@/components/ui/form-dialog';
 import { FieldError, Label } from '@/components/ui/field';
 import { buttonClass, inputClass } from '@/components/ui/styles';
@@ -15,7 +16,15 @@ function generatePassword(): string {
   return Array.from(bytes, (b) => chars[b % chars.length]).join('');
 }
 
-export type UserRow = { id: string; fullName: string; role: string; isActive: boolean };
+export type UserRow = { id: string; fullName: string; role: string; isActive: boolean; email?: string };
+
+/** Sembunyikan email: "an***@domain.com". */
+function maskEmail(email: string | undefined): string {
+  if (!email) return '—';
+  const at = email.indexOf('@');
+  if (at <= 0) return '***';
+  return `${email.slice(0, 2)}***${email.slice(at)}`;
+}
 
 /** Ubah dan Hapus pengguna. Akun Superadmin hanya dapat diubah Superadmin dan tidak dapat dihapus. */
 export function UserActions({
@@ -28,7 +37,9 @@ export function UserActions({
   canDelete: boolean;
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<'edit' | 'delete' | 'password' | null>(null);
+  const [mode, setMode] = useState<'edit' | 'delete' | 'password' | 'resetLink' | null>(null);
+  const [showPw, setShowPw] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const toast = useToast();
   const id = `eu-${row.id}`;
 
@@ -56,6 +67,21 @@ export function UserActions({
     toast.show('Password direset. Sampaikan kepada pengguna secara pribadi.');
   }
 
+  async function sendResetLink() {
+    setResetLoading(true);
+    try {
+      const res = await fetch(`/api/v1/users/${row.id}/reset-link`, { method: 'POST' });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error?.message ?? 'Gagal mengirim link reset');
+      setMode(null);
+      toast.show(`Link reset dikirim ke ${data.data?.maskedEmail ?? 'email user'}.`);
+    } catch (e) {
+      toast.show(e instanceof Error ? e.message : 'Gagal mengirim link reset', 'error');
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   async function save(formData: FormData) {
     await call('PATCH', {
       fullName: String(formData.get('fullName') ?? '').trim(),
@@ -74,6 +100,11 @@ export function UserActions({
       {canEdit ? (
         <button type="button" onClick={() => setMode('password')} className={buttonClass.ghost}>
           Reset Password
+        </button>
+      ) : null}
+      {canEdit && row.email ? (
+        <button type="button" onClick={() => setMode('resetLink')} className={buttonClass.ghost}>
+          Kirim Link Reset
         </button>
       ) : null}
       {canDelete ? (
@@ -123,7 +154,7 @@ export function UserActions({
       {canEdit && mode === 'password' ? (
         <FormDialog
           open
-          onClose={() => setMode(null)}
+          onClose={() => { setMode(null); setShowPw(false); }}
           title="Reset Password"
           description={row.fullName}
           submitLabel="Reset"
@@ -134,21 +165,48 @@ export function UserActions({
             <Label htmlFor={`${id}-pw`} required>
               Password baru
             </Label>
-            <input
-              id={`${id}-pw`}
-              name="password"
-              required
-              minLength={8}
-              autoComplete="off"
-              aria-describedby="err-password"
-              defaultValue={generatePassword()}
-              className={`${inputClass} font-mono`}
-            />
+            <div className="relative">
+              <input
+                id={`${id}-pw`}
+                name="password"
+                required
+                minLength={8}
+                autoComplete="off"
+                type={showPw ? 'text' : 'password'}
+                aria-describedby="err-password"
+                defaultValue={generatePassword()}
+                className={`${inputClass} font-mono pr-11`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw(!showPw)}
+                aria-label={showPw ? 'Sembunyikan password' : 'Tampilkan password'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-navy-400 hover:text-navy-600"
+              >
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             <FieldError name="password" />
             <p className="mt-1.5 text-[11px] text-navy-400">
               Sampaikan password ini kepada pengguna secara pribadi. Tindakan tercatat di Audit Log.
             </p>
           </div>
+        </FormDialog>
+      ) : null}
+
+      {canEdit && mode === 'resetLink' ? (
+        <FormDialog
+          open
+          onClose={() => setMode(null)}
+          title="Kirim Link Reset?"
+          description={row.email ? maskEmail(row.email) : ''}
+          submitLabel={resetLoading ? 'Mengirim…' : 'Kirim'}
+          onSubmit={sendResetLink}
+        >
+          <p className="text-sm text-navy-600">
+            Link reset akan dikirim ke email terdaftar pengguna. Link berlaku 1 jam dan hanya
+            bisa dipakai sekali. Tindakan tercatat di Audit Log.
+          </p>
         </FormDialog>
       ) : null}
 
