@@ -16,6 +16,8 @@ import {
 } from '@ekasatra/core';
 import { badRequest, notFound, forbidden } from '@ekasatra/shared';
 
+export const maxDuration = 30;
+
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },

@@ -10,6 +10,15 @@ import { useToast } from '@/shell/toast';
 import { resetPasswordSchema } from '@ekasatra/shared';
 
 /** Password acak 12 karakter tanpa huruf yang mudah tertukar (I, l, O, 0, 1). */
+/** Baca respons API; bila server menjawab non-JSON (timeout/crash) beri pesan yang bisa dipahami. */
+async function readJson(res: Response) {
+  try {
+    return await res.json();
+  } catch {
+    throw new Error(`Server tidak merespons dengan benar (HTTP ${res.status}). Coba lagi sebentar lagi.`);
+  }
+}
+
 function generatePassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
   const bytes = crypto.getRandomValues(new Uint32Array(12));
@@ -61,7 +70,7 @@ export function UserActions({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: String(formData.get('password') ?? '') }),
     });
-    const data = await res.json();
+    const data = await readJson(res);
     if (!data.ok) throw new Error(data.error?.message ?? 'Gagal mereset password');
     setMode(null);
     toast.show('Password direset. Sampaikan kepada pengguna secara pribadi.');
@@ -71,7 +80,7 @@ export function UserActions({
     setResetLoading(true);
     try {
       const res = await fetch(`/api/v1/users/${row.id}/reset-link`, { method: 'POST' });
-      const data = await res.json();
+      const data = await readJson(res);
       if (!data.ok) throw new Error(data.error?.message ?? 'Gagal mengirim link reset');
       setMode(null);
       toast.show(`Link reset dikirim ke ${data.data?.maskedEmail ?? 'email user'}.`);
