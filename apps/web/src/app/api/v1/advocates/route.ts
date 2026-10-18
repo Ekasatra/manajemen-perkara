@@ -1,8 +1,7 @@
 /**
  * GET  /api/v1/advocates — daftar advokat (Agent C · C5)
  *   Admin: semua; non-Admin: hanya milik sendiri.
- * POST /api/v1/advocates — buat data advokat
- *   Admin: untuk userId mana pun; non-Admin: hanya userId sendiri.
+ * POST /api/v1/advocates — buat data advokat (R7: hanya SuperAdmin/Admin).
  * PRD §5.3: wajib nama, alamat, telepon, rekening, pendidikan min 1.
  */
 import { count, desc, eq } from 'drizzle-orm';
@@ -17,7 +16,7 @@ import {
   can,
   logActivity,
 } from '@ekasatra/core';
-import { forbidden, conflict } from '@ekasatra/shared';
+import { conflict } from '@ekasatra/shared';
 import { createAdvocateSchema } from '@ekasatra/shared';
 import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
@@ -69,17 +68,12 @@ export async function POST(req: Request) {
     const db = createDb();
     const supabase = await createSupabaseServerClient();
     const user = await requireUser(db, supabase);
-    ensureCan(user, 'U', 'advocates'); // Non-Admin punya 'U' → boleh buat milik sendiri.
+    // R7: tambah data advokat hanya SuperAdmin/Admin.
+    ensureCan(user, 'C', 'advocates');
 
     const body = await parseBody(req, createAdvocateSchema);
 
-    // Non-Admin hanya boleh buat untuk dirinya sendiri.
-    const isAdmin = can(user, 'C', 'advocates');
-    const targetUserId = isAdmin ? (body.userId ?? null) : user.userId;
-
-    if (!isAdmin && body.userId !== undefined && body.userId !== user.userId) {
-      throw forbidden('Tidak boleh membuat data advokat untuk user lain');
-    }
+    const targetUserId = body.userId ?? null;
 
     // Cek userId unik (satu akun = satu data advokat).
     if (targetUserId) {

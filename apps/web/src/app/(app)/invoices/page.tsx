@@ -4,7 +4,7 @@
  */
 import Link from 'next/link';
 import { FileDown } from 'lucide-react';
-import { ensureCan } from '@ekasatra/core';
+import { requireCan } from '@/lib/guard';
 import { listCaseOptions, listClientOptions } from '@ekasatra/core/finance';
 import { listInvoices, listInvoicesForReport, type InvoiceListItem } from '@ekasatra/core/invoices';
 import { INVOICE_STATUSES, listInvoicesQuerySchema } from '@ekasatra/shared/invoices';
@@ -27,7 +27,7 @@ export default async function InvoicesPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { db, user } = await pageContext();
-  ensureCan(user, 'R', 'invoices');
+  requireCan(user, 'R', 'invoices');
 
   const params = await searchParams;
   const parsed = listInvoicesQuerySchema.safeParse({

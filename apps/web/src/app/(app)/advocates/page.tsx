@@ -1,6 +1,7 @@
 /**
  * Halaman daftar Data Advokat (Agent C · C5).
- * Admin: semua; non-Admin: hanya milik sendiri.
+ * R7: semua peran boleh lihat; non-Admin hanya barisnya sendiri.
+ * Tambah/ubah/hapus hanya SuperAdmin/Admin (lewat `can('C'|'U'|'D','advocates')`).
  */
 import { count, desc, eq } from 'drizzle-orm';
 import { createDb, advocates } from '@ekasatra/db';
@@ -14,6 +15,7 @@ import { parsePageQuery } from '@/lib/pagination';
 import type { SearchParams } from '@/lib/pagination';
 import { CreateAdvocateDialog } from '@/modules/advocates/create-advocate-dialog';
 import { AdvocateActions } from '@/modules/advocates/advocate-actions';
+import { AdvocateDetailDialog } from '@/modules/advocates/advocate-detail-dialog';
 
 /** Pendidikan terakhir = entri paling akhir dalam daftar pendidikan. */
 function latestEducation(value: unknown): string {
@@ -32,6 +34,7 @@ type AdvocateRow = {
   bankAccount: string;
   licenseNumber: string | null;
   education: unknown;
+  trainings: unknown;
   createdAt: Date;
 };
 
@@ -47,6 +50,7 @@ export default async function AdvocatesPage({
 
   const params = await searchParams;
   const { page, pageSize, offset } = parsePageQuery(params);
+  // R7: tambah/ubah/hapus hanya SuperAdmin/Admin; non-Admin tetap boleh lihat barisnya sendiri.
   const isAdmin = can(user, 'C', 'advocates');
 
   const where = isAdmin ? undefined : eq(advocates.userId, user.userId);
@@ -62,6 +66,7 @@ export default async function AdvocatesPage({
       bankAccount: advocates.bankAccount,
       licenseNumber: advocates.licenseNumber,
       education: advocates.education,
+      trainings: advocates.trainings,
       createdAt: advocates.createdAt,
     })
     .from(advocates);
@@ -87,7 +92,7 @@ export default async function AdvocatesPage({
         <div className="flex items-center gap-3">
           <Avatar name={r.fullName} size={9} />
           <div>
-            <div className="font-semibold text-navy-800">{r.fullName}</div>
+            <AdvocateDetailDialog advocate={r} />
             <div className="text-xs text-navy-400">
               {r.userId ? 'Terhubung ke akun pengguna' : 'Belum terhubung ke akun'}
             </div>
@@ -124,7 +129,7 @@ export default async function AdvocatesPage({
     <div>
       <PageHeader
         title={isAdmin ? 'Data Advokat' : 'Data Diri Saya'}
-        actions={<CreateAdvocateDialog />}
+        actions={isAdmin ? <CreateAdvocateDialog /> : null}
       />
       <DataTable<AdvocateRow>
         caption="Daftar data advokat"
@@ -139,7 +144,7 @@ export default async function AdvocatesPage({
         empty={{
           title: 'Belum ada data advokat',
           hint: isAdmin ? 'Tambahkan data advokat untuk staf.' : 'Lengkapi data advokat Anda.',
-          action: <CreateAdvocateDialog />,
+          action: isAdmin ? <CreateAdvocateDialog /> : undefined,
         }}
       />
     </div>
