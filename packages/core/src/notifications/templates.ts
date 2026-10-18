@@ -38,6 +38,9 @@ export function baseEmailLayout({
       </div>`
       : '';
 
+  // PNG, bukan SVG: Gmail/Outlook memblokir SVG di email. Harus URL publik absolut.
+  const logoUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.ekasatra.com'}/brand/ekasatra-logo-horizontal-white.png`;
+
   return `
 <!DOCTYPE html>
 <html>
@@ -49,9 +52,8 @@ export function baseEmailLayout({
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC; color: #1E293B; margin: 0; padding: 24px 16px;">
   <div style="max-width: 580px; margin: 0 auto; background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
     <!-- Header -->
-    <div style="background-color: #1A2E44; padding: 24px 28px; border-bottom: 3px solid #B38B4D;">
-      <h2 style="margin: 0; color: #FFFFFF; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;">${officeName}</h2>
-      <p style="margin: 4px 0 0 0; color: #B38B4D; font-size: 13px; font-weight: 500;">Sistem Manajemen Perkara</p>
+    <div style="background-color: #0F2A3A; padding: 24px 28px; border-bottom: 3px solid #A8823F;">
+      <img src="${logoUrl}" alt="${officeName}" width="280" style="display: block; border: 0; max-width: 100%; height: auto;" />
     </div>
     
     <!-- Body -->

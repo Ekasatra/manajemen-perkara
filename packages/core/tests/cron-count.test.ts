@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const notifyMock = vi.fn();
 vi.mock('../src/notifications/notify', () => ({ notify: (...a: unknown[]) => notifyMock(...a) }));
-vi.mock('../src/settings/read', () => ({ getSetting: vi.fn(async (_d, _k, def) => def) }));
+const reminderDays = vi.hoisted(() => ({ value: 3 as number | number[] }));
+vi.mock('../src/settings/read', () => ({ getSetting: vi.fn(async () => reminderDays.value) }));
 vi.mock('../src/audit/read', () => ({
   isCronRemindersAlreadyRunToday: vi.fn(async () => false),
   recordCronRemindersRun: vi.fn(async () => undefined),
@@ -22,6 +23,7 @@ describe('cron: hitungan terkirim', () => {
   beforeEach(() => {
     process.env.CRON_SECRET = 'rahasia-panjang-1234';
     notifyMock.mockReset();
+    reminderDays.value = 3;
   });
 
   it('hanya menghitung yang benar-benar terkirim; skip preferensi bukan gagal', async () => {
@@ -33,6 +35,15 @@ describe('cron: hitungan terkirim', () => {
     const r = await runDailyRemindersCron({} as any, 'rahasia-panjang-1234');
     expect(r).toMatchObject({ status: 'success', hearingRemindersSent: 2, failed: 1 });
     expect(recordCronRemindersRun).toHaveBeenCalledTimes(1);
+  });
+
+  it('reminder_days berupa daftar: satu putaran per H-n, daysLeft sesuai', async () => {
+    reminderDays.value = [7, 1];
+    notifyMock.mockResolvedValue({ sent: true });
+    const r = await runDailyRemindersCron({} as any, 'rahasia-panjang-1234');
+    expect(r.hearingRemindersSent).toBe(8);
+    const days = new Set(notifyMock.mock.calls.map((c) => (c[1] as any).data.daysLeft));
+    expect(days).toEqual(new Set([7, 1]));
   });
 
   it('secret beda panjang/isi ditolak', async () => {

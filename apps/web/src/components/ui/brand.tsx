@@ -41,6 +41,7 @@ export function LogoMark({ size = 34, className = '' }: { size?: number; classNa
 /**
  * `full` = logo mendatar (sidebar), `vertical` = logo bertumpuk (login mobile),
  * `compact` = tanda + nama saja. `light` untuk latar gelap.
+ * `full` dan `vertical` memakai file SVG resmi di /public/brand (teks sudah berupa path).
  */
 export function Brand({
   variant = 'full',
@@ -54,20 +55,6 @@ export function Brand({
   className?: string;
 }) {
   const color = light ? 'text-white' : 'text-navy-800';
-  const sub = light ? 'text-white/70' : 'text-navy-600';
-  if (variant === 'vertical') {
-    return (
-      <div className={`flex flex-col items-center ${color} ${className}`}>
-        <LogoMark size={size ?? 64} />
-        <div className="mt-5 font-display text-[34px] font-semibold leading-none tracking-[0.22em]">
-          EKASATRA
-        </div>
-        <div className={`mt-3 text-[11px] font-medium tracking-[0.32em] ${sub}`}>
-          LAW &amp; POLICY ADVISORY
-        </div>
-      </div>
-    );
-  }
   if (variant === 'compact') {
     return (
       <div className={`flex items-center gap-2 ${color} ${className}`}>
@@ -78,18 +65,11 @@ export function Brand({
       </div>
     );
   }
+  const file = `/brand/ekasatra-logo-${variant === 'vertical' ? 'stacked' : 'horizontal'}-${light ? 'white' : 'navy'}.svg`;
+  // viewBox logo: mendatar 628x136 (penanda 102 tinggi), bertumpuk 617x423 (penanda 157 tinggi).
+  const height = variant === 'vertical' ? (size ?? 64) * 2.7 : (size ?? 34) * 1.33;
   return (
-    <div className={`flex items-center gap-3 ${color} ${className}`}>
-      <LogoMark size={size ?? 34} />
-      <span aria-hidden="true" className="h-9 w-px bg-gold-500" />
-      <div>
-        <div className="font-display text-[22px] font-semibold leading-none tracking-[0.2em]">
-          EKASATRA
-        </div>
-        <div className={`mt-1 text-[8.5px] tracking-[0.28em] ${sub}`}>
-          LAW &amp; POLICY ADVISORY
-        </div>
-      </div>
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element -- SVG statis; next/image tidak menambah nilai
+    <img src={file} alt={FIRM_NAME} height={height} style={{ height, width: 'auto' }} className={className} />
   );
 }

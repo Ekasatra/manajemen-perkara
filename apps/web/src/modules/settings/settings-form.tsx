@@ -103,7 +103,9 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
         office_website: text('office_website'),
         kas_kantor_persen: Number(text('kas_kantor_persen') || 20),
         banding_deadline_days: Number(text('banding_deadline_days') || 14),
-        reminder_days: Number(text('reminder_days') || 3),
+        reminder_days: csv('reminder_days')
+          .map(Number)
+          .filter((n) => Number.isInteger(n) && n >= 0),
         scope_assigned_only: text('scope_assigned_only') === 'Ya',
         notif_email_enabled: text('notif_email_enabled') === 'Ya',
         pimpinan_user_id: text('pimpinan_user_id'),
@@ -319,13 +321,12 @@ export function SettingsForm({ initialSettings: s, canEdit, leaders, matrix, rol
               className={inputClass}
             />
           </Field>
-          <Field id="reminder_days" label="Pengingat Sidang (H-…)">
+          <Field id="reminder_days" label="Pengingat Sidang (H-… , pisahkan koma)">
             <input
               id="reminder_days"
               name="reminder_days"
-              type="number"
-              min={1}
-              defaultValue={String(s.reminder_days ?? 3)}
+              placeholder="7, 1"
+              defaultValue={[s.reminder_days ?? [7, 1]].flat().join(', ')}
               disabled={dis}
               className={inputClass}
             />

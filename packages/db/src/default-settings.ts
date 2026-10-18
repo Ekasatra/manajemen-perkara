@@ -16,7 +16,7 @@ export const DEFAULT_SETTINGS: Record<string, unknown> = {
   scope_assigned_only: true,
   banding_deadline_days: 14,
   kas_kantor_persen: 20,
-  reminder_days: 3, // ?
+  reminder_days: [7, 1], // H-7 dan H-1
   notif_email_enabled: true,
   pimpinan_user_id: '', // kosong → Admin pertama
   kas_viewers: [] as string[], // user id non-Admin yang boleh melihat kas

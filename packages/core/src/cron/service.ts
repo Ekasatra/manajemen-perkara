@@ -73,13 +73,10 @@ export async function runDailyRemindersCron(
     };
   }
 
-  // 4. Baca pengaturan reminder_days dari tabel settings (default 3 hari)
-  const reminderDays = await getSetting<number>(db, 'reminder_days', 3);
-
-  // Hitung tanggal target sidang = today + reminderDays
+  // 4. Baca pengaturan reminder_days: angka (lama) atau daftar hari, mis. [7, 1]
+  const rawDays = await getSetting<number | number[]>(db, 'reminder_days', [7, 1]);
+  const reminderDaysList = [...new Set([rawDays].flat().filter((n) => Number.isInteger(n) && n >= 0))];
   const todayDate = new Date(`${todayWibStr}T00:00:00Z`);
-  const hearingTargetDate = new Date(todayDate.getTime() + reminderDays * 24 * 60 * 60 * 1000);
-  const hearingTargetDateStr = hearingTargetDate.toISOString().slice(0, 10);
 
   // Hitung tanggal target batas upaya hukum = today + 5 hari
   const upayaTargetMaxDate = new Date(todayDate.getTime() + 5 * 24 * 60 * 60 * 1000);
@@ -94,23 +91,28 @@ export async function runDailyRemindersCron(
     else if (r.reason && !SKIP_REASONS.has(r.reason)) failed++;
   };
 
-  // 5. Eksekusi Pengingat Sidang
-  const upcomingHearings = await getHearingRemindersForDate(db, hearingTargetDateStr);
-  for (const hearing of upcomingHearings) {
-    for (const userId of hearing.memberUserIds) {
-      const res = await notify(db, {
-        type: 'reminder_sidang',
-        recipientUserId: userId,
-        data: {
-          caseId: hearing.caseId,
-          caseTitle: hearing.caseTitle,
-          scheduleDate: hearing.scheduleDate,
-          scheduleTime: hearing.scheduleTime,
-          location: hearing.location,
-          daysLeft: reminderDays,
-        },
-      });
-      tally(res, () => hearingRemindersSent++);
+  // 5. Eksekusi Pengingat Sidang (satu putaran per H-n)
+  for (const reminderDays of reminderDaysList) {
+    const hearingTargetDateStr = new Date(todayDate.getTime() + reminderDays * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const upcomingHearings = await getHearingRemindersForDate(db, hearingTargetDateStr);
+    for (const hearing of upcomingHearings) {
+      for (const userId of hearing.memberUserIds) {
+        const res = await notify(db, {
+          type: 'reminder_sidang',
+          recipientUserId: userId,
+          data: {
+            caseId: hearing.caseId,
+            caseTitle: hearing.caseTitle,
+            scheduleDate: hearing.scheduleDate,
+            scheduleTime: hearing.scheduleTime,
+            location: hearing.location,
+            daysLeft: reminderDays,
+          },
+        });
+        tally(res, () => hearingRemindersSent++);
+      }
     }
   }
 
