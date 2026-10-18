@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Lock, ShieldCheck } from 'lucide-react';
@@ -10,7 +10,7 @@ import { buttonClass, inputClass } from '@/components/ui/styles';
 
 const INVALID_LINK = 'Link tidak valid atau sudah kedaluwarsa. Minta link baru ke admin.';
 
-export default function SetPasswordPage() {
+function SetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pending, setPending] = useState(false);
@@ -130,5 +130,14 @@ export default function SetPasswordPage() {
         Link bersifat sekali pakai dan berlaku 1 jam.
       </p>
     </div>
+  );
+}
+
+// useSearchParams wajib dibungkus Suspense agar halaman bisa diprerender saat build.
+export default function SetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <SetPasswordForm />
+    </Suspense>
   );
 }
