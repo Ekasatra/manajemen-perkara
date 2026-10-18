@@ -1,7 +1,7 @@
 /**
  * Middleware — proteksi rute & refresh sesi Supabase (Agent C · C1).
  * Rute publik: /login, /setup, /api/v1/auth/{login,logout,setup}.
- * Rute lain wajib login; bila tidak ada sesi → redirect /login.
+ * Rute lain wajib login; bila tidak ada sesi → redirect /login (API: 401 JSON).
  */
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
@@ -18,6 +18,17 @@ function isPublic(pathname: string): boolean {
   return false;
 }
 
+/** Tanpa sesi: API → 401 JSON (agar klien bisa menampilkan pesan); halaman → redirect /login. */
+function unauthenticated(request: NextRequest): NextResponse {
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'UNAUTHORIZED', message: 'Sesi berakhir. Silakan login ulang.' } },
+      { status: 401 },
+    );
+  }
+  return NextResponse.redirect(new URL('/login', request.url));
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
@@ -27,7 +38,7 @@ export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return unauthenticated(request);
   }
 
   const response = NextResponse.next({ request });
@@ -50,8 +61,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    const loginUrl = new URL('/login', request.url);
-    return NextResponse.redirect(loginUrl);
+    return unauthenticated(request);
   }
 
   return response;
