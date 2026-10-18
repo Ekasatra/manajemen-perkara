@@ -3,7 +3,7 @@
  * Tabel keputusan: status × kondisi → field yang berubah + entri timeline.
  */
 import { describe, expect, it } from 'vitest';
-import { applyStatusChange, addDays } from '../src/cases/status';
+import { applyStatusChange, addDays, canChangeStatus } from '../src/cases/status';
 import type { CaseStatusState } from '../src/cases/status';
 
 const TODAY = '2026-10-15';
@@ -115,5 +115,104 @@ describe('applyStatusChange — timeline title', () => {
       today: TODAY,
     });
     expect(r.timelineEntry.title).toBe('Status berubah: Aktif → Banding');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PRD §4 R9 — Kunci status Selesai: tabel keputusan role × transisi.
+// ---------------------------------------------------------------------------
+
+describe('canChangeStatus — PRD §4 R9 (Kunci status Selesai)', () => {
+  // Semua status non-Selesai untuk transisi "lainnya".
+  const NON_SELESAI = ['Aktif', 'Putus', 'Banding', 'Kasasi', 'PK'] as const;
+
+  describe('SuperAdmin — semua transisi bebas', () => {
+    // Ke Selesai dari setiap status.
+    for (const from of ['Aktif', 'Putus', 'Banding', 'Kasasi', 'PK'] as const) {
+      it(`SuperAdmin: ${from} → Selesai = allowed`, () => {
+        expect(canChangeStatus('superadmin', from, 'Selesai')).toEqual({ allowed: true });
+      });
+    }
+    // Dari Selesai ke setiap status lain.
+    for (const to of NON_SELESAI) {
+      it(`SuperAdmin: Selesai → ${to} = allowed`, () => {
+        expect(canChangeStatus('superadmin', 'Selesai', to)).toEqual({ allowed: true });
+      });
+    }
+    // Transisi non-Selesai lainnya.
+    it('SuperAdmin: Aktif → Putus = allowed', () => {
+      expect(canChangeStatus('superadmin', 'Aktif', 'Putus')).toEqual({ allowed: true });
+    });
+    it('SuperAdmin: Kasasi → PK = allowed', () => {
+      expect(canChangeStatus('superadmin', 'Kasasi', 'PK')).toEqual({ allowed: true });
+    });
+  });
+
+  // Peran non-SuperAdmin yang memiliki U cases: Admin, Advokat, Paralegal.
+  for (const role of ['admin', 'advokat', 'paralegal'] as const) {
+    describe(`${role} — transisi Selesai diblokir, lainnya bebas`, () => {
+      // Ke Selesai dari setiap status non-Selesai.
+      for (const from of NON_SELESAI) {
+        it(`${role}: ${from} → Selesai = BLOCKED`, () => {
+          expect(canChangeStatus(role, from, 'Selesai')).toEqual({ allowed: false });
+        });
+      }
+      // Dari Selesai ke setiap status lain.
+      for (const to of NON_SELESAI) {
+        it(`${role}: Selesai → ${to} = BLOCKED`, () => {
+          expect(canChangeStatus(role, 'Selesai', to)).toEqual({ allowed: false });
+        });
+      }
+      // Transisi non-Selesai lainnya tetap bebas.
+      it(`${role}: Aktif → Putus = allowed`, () => {
+        expect(canChangeStatus(role, 'Aktif', 'Putus')).toEqual({ allowed: true });
+      });
+      it(`${role}: Putus → Banding = allowed`, () => {
+        expect(canChangeStatus(role, 'Putus', 'Banding')).toEqual({ allowed: true });
+      });
+      it(`${role}: Banding → Kasasi = allowed`, () => {
+        expect(canChangeStatus(role, 'Banding', 'Kasasi')).toEqual({ allowed: true });
+      });
+      it(`${role}: Kasasi → PK = allowed`, () => {
+        expect(canChangeStatus(role, 'Kasasi', 'PK')).toEqual({ allowed: true });
+      });
+    });
+  }
+
+  describe('normalisasi role DB berkapital', () => {
+    it('SuperAdmin (kapital) diperlakukan sebagai superadmin', () => {
+      expect(canChangeStatus('SuperAdmin', 'Aktif', 'Selesai')).toEqual({ allowed: true });
+      expect(canChangeStatus('SuperAdmin', 'Selesai', 'Aktif')).toEqual({ allowed: true });
+    });
+    it('Admin (kapital) tidak boleh ke Selesai', () => {
+      expect(canChangeStatus('Admin', 'Aktif', 'Selesai')).toEqual({ allowed: false });
+    });
+    it('Advokat (kapital) tidak boleh dari Selesai', () => {
+      expect(canChangeStatus('Advokat', 'Selesai', 'Aktif')).toEqual({ allowed: false });
+    });
+    it('Paralegal (kapital) tidak boleh ke Selesai', () => {
+      expect(canChangeStatus('Paralegal', 'PK', 'Selesai')).toEqual({ allowed: false });
+    });
+  });
+
+  describe('viewer — transisi Selesai diblokir', () => {
+    it('viewer: Aktif → Selesai = BLOCKED', () => {
+      expect(canChangeStatus('viewer', 'Aktif', 'Selesai')).toEqual({ allowed: false });
+    });
+    it('viewer: Selesai → Aktif = BLOCKED', () => {
+      expect(canChangeStatus('viewer', 'Selesai', 'Aktif')).toEqual({ allowed: false });
+    });
+  });
+
+  describe('role tak dikenal → least privilege (viewer)', () => {
+    it('role acak tidak boleh ke Selesai', () => {
+      expect(canChangeStatus('hacker', 'Aktif', 'Selesai')).toEqual({ allowed: false });
+    });
+    it('role acak tidak boleh dari Selesai', () => {
+      expect(canChangeStatus('hacker', 'Selesai', 'Aktif')).toEqual({ allowed: false });
+    });
+    it('role acak tetap boleh transisi non-Selesai', () => {
+      expect(canChangeStatus('hacker', 'Aktif', 'Putus')).toEqual({ allowed: true });
+    });
   });
 });

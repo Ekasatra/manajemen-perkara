@@ -9,6 +9,31 @@ import { createClientSchema, contactsSchema, contactSchema } from '../src/client
 import { createOpponentSchema } from '../src/opponents';
 import { createAdvocateSchema, educationSchema } from '../src/advocates';
 import { updateSettingsSchema } from '../src/settings';
+import { changeCaseStatusSchema } from '../src/cases';
+
+describe('D3 Cases — changeCaseStatusSchema (W8 R9)', () => {
+  it('menerima status tanpa alasan', () => {
+    const r = changeCaseStatusSchema.safeParse({ status: 'Selesai' });
+    expect(r.success).toBe(true);
+  });
+  it('menerima status + alasan opsional', () => {
+    const r = changeCaseStatusSchema.safeParse({ status: 'Selesai', reason: 'Koreksi data' });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.reason).toBe('Koreksi data');
+  });
+  it('memotong (trim) alasan dan menerima string kosong sebagai undefined', () => {
+    const r = changeCaseStatusSchema.safeParse({ status: 'Putus', reason: '  ' });
+    expect(r.success).toBe(true);
+  });
+  it('menolak status tidak valid', () => {
+    const r = changeCaseStatusSchema.safeParse({ status: 'Dibatalkan' });
+    expect(r.success).toBe(false);
+  });
+  it('menolak alasan > 500 karakter', () => {
+    const r = changeCaseStatusSchema.safeParse({ status: 'Selesai', reason: 'x'.repeat(501) });
+    expect(r.success).toBe(false);
+  });
+});
 
 describe('C1 Auth — loginSchema', () => {
   it('menerima email + password 8 karakter', () => {

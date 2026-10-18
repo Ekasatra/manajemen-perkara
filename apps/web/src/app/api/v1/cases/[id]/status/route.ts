@@ -25,8 +25,8 @@ export async function PATCH(
     const user = await requireUser(db, supabase);
     ensureCan(user, 'U', 'cases');
 
-    const { status } = await parseBody(req, changeCaseStatusSchema);
-    const updated = await changeCaseStatus(db, user, id, status);
+    const { status, reason } = await parseBody(req, changeCaseStatusSchema);
+    const updated = await changeCaseStatus(db, user, id, status, reason);
     return ok(updated);
   });
 }

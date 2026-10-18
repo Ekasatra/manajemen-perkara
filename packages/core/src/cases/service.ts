@@ -16,6 +16,7 @@ import {
   notFound,
   badRequest,
   conflict,
+  forbidden,
   type CreateCaseInput,
   type UpdateCaseInput,
   type CreateCaseMemberInput,
@@ -28,8 +29,9 @@ import {
 import { withTx, nextCounter } from '../kernel/db-helpers';
 import { logActivity } from '../kernel/activity';
 import type { AuthContext } from '../kernel/auth';
+import { normalizeRole } from '../kernel/policy';
 import { getCaseForUser, getCaseTeamMembers, listVisibleCaseIds } from './read';
-import { applyStatusChange } from './status';
+import { applyStatusChange, canChangeStatus } from './status';
 import { getSetting } from '../settings/read';
 import type { Db } from '@ekasatra/db';
 
@@ -184,7 +186,12 @@ export async function updateCase(
   caseId: string,
   input: UpdateCaseInput,
 ): Promise<typeof cases.$inferSelect> {
-  await requireVisibleCase(db, user, caseId);
+  const visible = await requireVisibleCase(db, user, caseId);
+
+  // PRD §4 R9: field perkara Selesai read-only bagi non-SuperAdmin.
+  if (visible.status === 'Selesai' && normalizeRole(user.role) !== 'superadmin') {
+    throw forbidden('Perkara Selesai hanya dapat diubah oleh Super Admin');
+  }
 
   const [updated] = await db
     .update(cases)
@@ -212,7 +219,12 @@ export async function deleteCase(
   user: AuthContext,
   caseId: string,
 ): Promise<void> {
-  await requireVisibleCase(db, user, caseId);
+  const visible = await requireVisibleCase(db, user, caseId);
+
+  // PRD §4 R9: perkara Selesai hanya SuperAdmin yang boleh mengubah/menghapus.
+  if (visible.status === 'Selesai' && normalizeRole(user.role) !== 'superadmin') {
+    throw forbidden('Perkara Selesai hanya dapat diubah oleh Super Admin');
+  }
 
   const [target] = await db
     .select({ title: cases.title, regNo: cases.regNo })
@@ -243,17 +255,20 @@ export async function deleteCase(
 
 // --- D3: Perubahan status ---
 
-/** Ubah status perkara + set tanggal putus/upaya_deadline + entri timeline otomatis. */
+/** Ubah status perkara + set tanggal putus/upaya_deadline + entri timeline otomatis.
+ *  PRD §4 R9: transisi ke/dari "Selesai" hanya SuperAdmin; alasan opsional, tercatat
+ *  di Audit Log + timeline (siapa, kapan, status lama→baru, alasan bila diisi). */
 export async function changeCaseStatus(
   db: Db,
   user: AuthContext,
   caseId: string,
   newStatus: CaseStatus,
+  reason?: string,
 ): Promise<typeof cases.$inferSelect> {
   const bandingDays = await getSetting<number>(db, 'banding_deadline_days', 14);
   const today = todayWib();
 
-  const [updated] = await withTx(db, async (tx) => {
+  const [updated, oldStatus] = await withTx(db, async (tx) => {
     const [current] = await tx
       .select()
       .from(cases)
@@ -263,6 +278,12 @@ export async function changeCaseStatus(
 
     if (current.status === newStatus) {
       throw badRequest(`Status perkara sudah ${newStatus}`);
+    }
+
+    // PRD §4 R9: kunci transisi ke/dari Selesai — hanya SuperAdmin.
+    const gate = canChangeStatus(user.role, current.status, newStatus);
+    if (!gate.allowed) {
+      throw forbidden('Hanya Super Admin yang dapat menyelesaikan perkara');
     }
 
     const { caseUpdate, timelineEntry } = applyStatusChange({
@@ -277,6 +298,11 @@ export async function changeCaseStatus(
       today,
     });
 
+    // Sertakan alasan opsional di deskripsi timeline (PRD §4 R9).
+    const description = reason
+      ? `${timelineEntry.description} Alasan: ${reason}.`
+      : timelineEntry.description;
+
     const [row] = await tx
       .update(cases)
       .set(caseUpdate)
@@ -288,11 +314,11 @@ export async function changeCaseStatus(
       eventType: timelineEntry.eventType,
       eventDate: timelineEntry.eventDate,
       title: timelineEntry.title,
-      description: timelineEntry.description,
+      description,
       createdBy: user.userId,
     });
 
-    return [row];
+    return [row, current.status] as [typeof row, CaseStatus];
   });
 
   if (!updated) throw notFound('Perkara tidak ditemukan');
@@ -305,7 +331,12 @@ export async function changeCaseStatus(
     entityType: 'case',
     entityId: caseId,
     description: `Status perkara ${updated.title} diubah ke ${newStatus}`,
-    metadata: { newStatus, bandingDeadlineDays: bandingDays },
+    metadata: {
+      oldStatus,
+      newStatus,
+      bandingDeadlineDays: bandingDays,
+      ...(reason ? { reason } : {}),
+    },
   });
 
   return updated;

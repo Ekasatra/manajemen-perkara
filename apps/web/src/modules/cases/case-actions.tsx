@@ -33,12 +33,14 @@ export function CaseActions({
   opponentOptions,
   canEdit,
   canDelete,
+  isSuperAdmin,
 }: {
   row: CaseActionRow;
   clientOptions: PartyOption[] | null;
   opponentOptions: PartyOption[] | null;
   canEdit: boolean;
   canDelete: boolean;
+  isSuperAdmin: boolean;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<'edit' | 'delete' | 'status' | null>(null);
@@ -58,11 +60,12 @@ export function CaseActions({
 
   async function changeStatus(formData: FormData) {
     const status = String(formData.get('status') ?? '');
+    const reason = String(formData.get('reason') ?? '').trim();
     if (status === row.status) throw new Error('Status sama dengan status saat ini');
     const res = await fetch(`/api/v1/cases/${row.id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, ...(reason ? { reason } : {}) }),
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error?.message ?? 'Gagal mengubah status');
@@ -138,11 +141,36 @@ export function CaseActions({
               className={inputClass}
             >
               {CASE_STATUS.map((st) => (
-                <option key={st}>{st}</option>
+                <option
+                  key={st}
+                  disabled={st === 'Selesai' && !isSuperAdmin}
+                >
+                  {st === 'Selesai' && !isSuperAdmin ? `${st} (Super Admin saja)` : st}
+                </option>
               ))}
             </select>
             <FieldError name="status" />
           </div>
+          {isSuperAdmin ? (
+            <div>
+              <Label htmlFor="st-reason" optional>
+                Alasan (opsional)
+              </Label>
+              <textarea
+                id="st-reason"
+                name="reason"
+                rows={2}
+                aria-describedby="err-reason"
+                className={inputClass}
+                placeholder="Catatan untuk audit log, mis. alasan menyelesaikan/membuka kembali perkara"
+              />
+              <FieldError name="reason" />
+            </div>
+          ) : (
+            <p className="text-xs text-navy-400">
+              Status &ldquo;Selesai&rdquo; hanya dapat diatur oleh Super Admin.
+            </p>
+          )}
         </FormDialog>
       ) : null}
 

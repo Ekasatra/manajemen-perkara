@@ -71,6 +71,15 @@ export type {
   EmailTransport,
 } from './notifications';
 
+// Notifikasi in-app (R8) — satu sumber hitungan "belum dibaca"
+export {
+  getNotificationsForUser,
+  buildSidangNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from './notifications';
+export type { NotificationUser, NotificationPreloaded } from './notifications';
+
 // Cases (Modul D · D1–D7)
 export {
   // D7 — kontrak baca untuk modul lain (E, F, G)
@@ -102,7 +111,7 @@ export {
   getUpayaDeadlineReminders,
 } from './cases/read';
 // D3 — transisi status (fungsi murni)
-export { applyStatusChange, addDays } from './cases/status';
+export { applyStatusChange, addDays, canChangeStatus } from './cases/status';
 export type { CaseStatusState, StatusChangeInput, StatusChangeResult } from './cases/status';
 // D1/D2/D4 — service
 export {
