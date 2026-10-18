@@ -4,7 +4,7 @@ import type { BadgeTone } from '@/components/ui/badge';
 
 const TONE: Record<InvoiceStatus, BadgeTone> = {
   'Belum Bayar': 'danger',
-  Sebagian: 'warning',
+  'Sudah Bayar Sebagian': 'warning',
   Lunas: 'success',
 };
 

@@ -93,10 +93,10 @@ describe.skipIf(!url)('invoices — Postgres', () => {
     await expect(listInvoices(db, advokat, { page: 1, pageSize: 20 })).rejects.toThrow(/Akses/);
   });
 
-  it('cicilan → Sebagian → pelunasan → Lunas dengan paid_date', async () => {
+  it('cicilan → Sudah Bayar Sebagian → pelunasan → Lunas dengan paid_date', async () => {
     const inv = await createInvoice(db, admin, { caseId: ids.case, amount: 1_000_000 });
     const p1 = await recordPayment(db, admin, inv.id, { amount: 400_000, paidDate: '2026-10-01' });
-    expect(p1.status).toBe('Sebagian');
+    expect(p1.status).toBe('Sudah Bayar Sebagian');
     expect(p1.paidDate).toBeNull();
     const p2 = await recordPayment(db, admin, inv.id, { amount: 600_000, paidDate: '2026-10-15' });
     expect(p2.status).toBe('Lunas');
@@ -121,11 +121,11 @@ describe.skipIf(!url)('invoices — Postgres', () => {
     expect(done.paidDate).toBe('2026-10-20');
   });
 
-  it('mengubah jumlah invoice Lunas menurunkannya ke Sebagian', async () => {
+  it('mengubah jumlah invoice Lunas menurunkannya ke Sudah Bayar Sebagian', async () => {
     const inv = await createInvoice(db, admin, { caseId: ids.case, amount: 100_000 });
     await markPaid(db, admin, inv.id);
     const up = await updateInvoice(db, admin, inv.id, { amount: 150_000 });
-    expect(up.status).toBe('Sebagian');
+    expect(up.status).toBe('Sudah Bayar Sebagian');
     expect(up.paidDate).toBeNull();
   });
 
@@ -171,12 +171,15 @@ describe.skipIf(!url)('invoices — Postgres', () => {
     expect(s.totalAmount).toBe(7_000);
     expect(s.totalPaid).toBe(4_500);
     expect(s.outstanding).toBe(2_500); // 1.000 + 1.500
-    expect(s.byStatus).toEqual({ 'Belum Bayar': 1, Sebagian: 1, Lunas: 1 });
+    expect(s.byStatus).toEqual({ 'Belum Bayar': 1, 'Sudah Bayar Sebagian': 1, Lunas: 1 });
     expect(s.overdue).toEqual({ count: 1, outstanding: 1_000 });
     expect(s.dueSoon.map((d) => d.invoiceNo)).toEqual([b.invoiceNo]);
     expect(s.dueSoon[0]?.outstanding).toBe(1_500);
 
-    const rep = await listInvoicesForReport(db, admin, { from: '2026-10-01', status: 'Sebagian' });
+    const rep = await listInvoicesForReport(db, admin, {
+      from: '2026-10-01',
+      status: 'Sudah Bayar Sebagian',
+    });
     expect(rep.map((r) => r.id)).toEqual([b.id]);
     expect(rep[0]?.clientName).toBe('Klien Uji');
     expect(rep[0]?.caseRegNo).toBe('REG/T/0001');

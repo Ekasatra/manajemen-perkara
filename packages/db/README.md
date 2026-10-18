@@ -402,7 +402,7 @@ Tagihan. `status` kolom turunan dari `paid_amount`/`amount`.
 | `invoice_date` | date                     | tidak | default `now()`                                                                                                       |
 | `due_date`     | date                     | ya    |                                                                                                                       |
 | `paid_date`    | date                     | ya    |                                                                                                                       |
-| `status`       | text                     | tidak | generated: (case when paid_amount <= 0 then 'Belum Bayar' when paid_amount < amount then 'Sebagian' else 'Lunas' end) |
+| `status`       | text                     | tidak | generated: (case when paid_amount <= 0 then 'Belum Bayar' when paid_amount < amount then 'Sudah Bayar Sebagian' else 'Lunas' end) |
 | `created_by`   | uuid                     | ya    |                                                                                                                       |
 | `created_at`   | timestamp with time zone | tidak | default `now()`                                                                                                       |
 | `updated_at`   | timestamp with time zone | tidak | default `now()`                                                                                                       |

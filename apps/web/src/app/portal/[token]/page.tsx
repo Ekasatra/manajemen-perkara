@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 const INVOICE_TONE: Record<string, BadgeTone> = {
   Lunas: 'success',
-  Sebagian: 'warning',
+  'Sudah Bayar Sebagian': 'warning',
   'Belum Bayar': 'danger',
 };
 

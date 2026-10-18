@@ -4,7 +4,7 @@
  */
 import { z } from 'zod';
 
-export const INVOICE_STATUSES = ['Belum Bayar', 'Sebagian', 'Lunas'] as const;
+export const INVOICE_STATUSES = ['Belum Bayar', 'Sudah Bayar Sebagian', 'Lunas'] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
 const rupiah = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
