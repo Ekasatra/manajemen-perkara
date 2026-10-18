@@ -40,6 +40,10 @@ export async function sendViaSmtp(
     host,
     port,
     secure: port === 465,
+    // Batasi tunggu: server SMTP yang tak merespons jangan sampai menggantung fungsi serverless.
+    connectionTimeout: 8_000,
+    greetingTimeout: 8_000,
+    socketTimeout: 15_000,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
