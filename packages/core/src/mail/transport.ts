@@ -1,6 +1,6 @@
 /**
- * Transport email SMTP Gmail Workspace (W4 · R2 · K1).
- * Pengirim: "EKASATRA <info@ekasatra.com>", host smtp.gmail.com:465 (SSL).
+ * Transport email SMTP cPanel (mail.ekasatra.com) (W4 · R2 · K1).
+ * Pengirim: "EKASATRA <info@ekasatra.com>", host mail.ekasatra.com:465 (SSL).
  * Env: SMTP_USER, SMTP_PASS, MAIL_FROM. Tanpa env → no-op + warning (dev tidak error).
  * Dependensi baru yang diizinkan: nodemailer saja.
  */
@@ -15,7 +15,7 @@ export function isSmtpConfigured(): boolean {
 let warned = false;
 
 /**
- * Kirim email via SMTP Gmail Workspace. Return null bila env belum diset
+ * Kirim email via SMTP cPanel (mail.ekasatra.com). Return null bila env belum diset
  * (pemanggil bisa fallback ke transport lain). Best-effort: tidak melempar.
  */
 export async function sendViaSmtp(
@@ -32,7 +32,7 @@ export async function sendViaSmtp(
     return null;
   }
 
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const host = process.env.SMTP_HOST || 'mail.ekasatra.com';
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const from = payload.from || process.env.MAIL_FROM || 'EKASATRA <info@ekasatra.com>';
 

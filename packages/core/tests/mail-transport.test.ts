@@ -59,7 +59,7 @@ describe('sendViaSmtp (W4 R2)', () => {
     expect(result).toEqual({ success: true, messageId: '<test@example.com>' });
     expect(createTransportMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        host: 'smtp.gmail.com',
+        host: 'mail.ekasatra.com',
         port: 465,
         secure: true,
         auth: { user: 'info@ekasatra.com', pass: 'app-password' },

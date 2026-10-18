@@ -34,7 +34,7 @@ export async function sendEmailViaResend(
     return customTransport(payload);
   }
 
-  // W4 R2: coba SMTP Gmail Workspace dulu (transport utama).
+  // W4 R2: coba SMTP cPanel (mail.ekasatra.com) dulu (transport utama).
   const smtpResult = await sendViaSmtp(payload);
   if (smtpResult !== null) return smtpResult;
 
