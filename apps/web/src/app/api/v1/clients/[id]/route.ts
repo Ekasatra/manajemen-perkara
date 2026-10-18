@@ -4,7 +4,7 @@
  * DELETE /api/v1/clients/[id] — hapus klien
  */
 import { eq } from 'drizzle-orm';
-import { createDb, clients } from '@ekasatra/db';
+import { createDb, clients, clientContacts } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import {
   ok,
@@ -16,6 +16,8 @@ import {
 } from '@ekasatra/core';
 import { notFound } from '@ekasatra/shared';
 import { updateClientSchema } from '@ekasatra/shared';
+
+const PHONE_KINDS = ['HP', 'WhatsApp', 'Telepon'];
 
 export async function GET(
   _req: Request,
@@ -48,18 +50,31 @@ export async function PATCH(
 
     const body = await parseBody(req, updateClientSchema);
 
-    // Turunkan phone/email dari kontak bila kontak diubah.
+    // Turunkan phone/email dari kontak dan sinkronkan ke client_contacts.
     let updateData: Record<string, unknown> = { ...body };
     if (body.contacts) {
       const phoneContact = body.contacts.find((c) =>
-        ['HP', 'WhatsApp', 'Telepon'].includes(c.type),
+        PHONE_KINDS.includes(c.label ?? c.kind),
       );
-      const emailContact = body.contacts.find((c) => c.type === 'Email');
+      const emailContact = body.contacts.find((c) => c.kind === 'email');
       updateData = {
         ...updateData,
         phone: phoneContact?.value ?? null,
         email: emailContact?.value ?? null,
       };
+
+      // Hapus kontak lama lalu tulis ulang dari body.
+      await db.delete(clientContacts).where(eq(clientContacts.clientId, id));
+      await db.insert(clientContacts).values(
+        body.contacts.map((c, i) => ({
+          clientId: id,
+          kind: c.kind,
+          value: c.value,
+          label: c.label ?? null,
+          isPrimary: c.isPrimary === true,
+          position: c.position ?? i,
+        })),
+      );
     }
 
     const [updated] = await db

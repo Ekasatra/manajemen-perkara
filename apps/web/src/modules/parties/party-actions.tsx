@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
 import { Label, RequiredNote } from '@/components/ui/field';
 import { buttonClass, inputClass } from '@/components/ui/styles';
-
-type Contact = { type: string; value: string };
+import { asContacts, normalizeContact, PHONE_KINDS } from '@/lib/contacts';
 
 export type PartyRow = {
   id: string;
@@ -16,17 +15,18 @@ export type PartyRow = {
   contacts: unknown;
 };
 
-const PHONE_TYPES = ['HP', 'WhatsApp', 'Telepon'];
-
-function asContacts(value: unknown): Contact[] {
-  return Array.isArray(value) ? (value as Contact[]) : [];
-}
-
 /** Ganti kontak telepon/email pertama, kontak jenis lain dibiarkan utuh. */
-function setContact(list: Contact[], types: string[], fallback: string, value: string): Contact[] {
-  const i = list.findIndex((c) => types.includes(c.type));
+function setContact(
+  list: { kind: string; label?: string; value: string }[],
+  kinds: string[],
+  fallbackKind: string,
+  fallbackLabel: string,
+  value: string,
+): { kind: string; label?: string; value: string }[] {
+  const i = list.findIndex((c) => kinds.includes(c.kind));
   if (!value) return i < 0 ? list : list.filter((_, n) => n !== i);
-  if (i < 0) return [...list, { type: fallback, value }];
+  if (i < 0)
+    return [...list, { kind: fallbackKind, label: fallbackLabel, value }];
   return list.map((c, n) => (n === i ? { ...c, value } : c));
 }
 
@@ -48,9 +48,9 @@ export function PartyActions({
   const router = useRouter();
   const [mode, setMode] = useState<'edit' | 'delete' | null>(null);
   const isClient = entity === 'clients';
-  const contacts = asContacts(row.contacts);
-  const phone = contacts.find((c) => PHONE_TYPES.includes(c.type))?.value ?? '';
-  const email = contacts.find((c) => c.type === 'Email')?.value ?? '';
+  const contacts = asContacts(row.contacts).map(normalizeContact);
+  const phone = contacts.find((c) => PHONE_KINDS.includes(c.kind))?.value ?? '';
+  const email = contacts.find((c) => c.kind === 'email')?.value ?? '';
   const noun = isClient ? 'klien' : 'pihak lawan';
 
   async function call(method: 'PATCH' | 'DELETE', body?: unknown) {
@@ -67,8 +67,15 @@ export function PartyActions({
 
   async function save(formData: FormData) {
     const text = (k: string) => String(formData.get(k) ?? '').trim();
-    let next = setContact(contacts, PHONE_TYPES, 'HP', text('phone'));
-    if (isClient) next = setContact(next, ['Email'], 'Email', text('email'));
+    let next = setContact(
+      contacts,
+      PHONE_KINDS,
+      'phone',
+      'Telepon',
+      text('phone'),
+    );
+    if (isClient)
+      next = setContact(next, ['email'], 'email', 'Email', text('email'));
     await call('PATCH', {
       name: text('name'),
       type: text('type') || null,
