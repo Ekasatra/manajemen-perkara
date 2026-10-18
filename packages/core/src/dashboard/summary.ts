@@ -15,6 +15,7 @@ import {
   getApprovalMenungguSaya,
   getSuratPersonalNotifications,
 } from '../surat/read';
+import { getNotificationsForUser } from '../notifications/read';
 import { outstandingSummary, getTenggat14HariInvoices } from '../finance/read';
 import { getNewClientsCountThisMonth } from '../clients/read';
 import { getRecentActivitiesForDashboard } from '../audit/read';
@@ -89,27 +90,18 @@ export async function getDashboardData(
     (a, b) => a.daysLeft - b.daysLeft,
   );
 
-  // Gabungkan notifikasi personal (approval, disposisi, reject, sidang)
-  const notifikasiPersonal = [...suratPersonalNotifs];
-
-  // Tambahkan jadwal sidang 7 hari ke depan ke notifikasi personal bila belum ada
-  for (const s of sidang7Hari) {
-    if (!s.scheduleDate) continue;
-    const todayMs = new Date(todayStr).getTime();
-    const sMs = new Date(s.scheduleDate).getTime();
-    const daysLeft = Math.ceil((sMs - todayMs) / (1000 * 60 * 60 * 24));
-    if (daysLeft <= 3) {
-      notifikasiPersonal.push({
-        id: `sidang-notif-${s.id}`,
-        type: 'sidang',
-        title: `Sidang Mendatang: ${s.caseTitle}`,
-        description: `${s.kind} pada ${s.scheduleDate}${s.scheduleTime ? ` ${s.scheduleTime} WIB` : ''}${s.location ? ` di ${s.location}` : ''}`,
-        date: s.scheduleDate,
-        link: `/cases/${s.caseId}`,
-        urgency: daysLeft <= 1 ? 'high' : 'medium',
-      });
-    }
-  }
+  // Notifikasi personal: SATU sumber dengan badge lonceng (R8). Data yang sudah
+  // dihitung di atas dipakai ulang agar tidak ada query tambahan, lalu status
+  // baca diambil dari `notification_reads` di dalam helper.
+  const notifikasi = await getNotificationsForUser(
+    db,
+    { userId: user.userId, role: user.role },
+    {
+      approval: approvalMenungguSaya,
+      suratNotifications: suratPersonalNotifs,
+      sidang7Hari,
+    },
+  );
 
   return {
     cases: casesSummary,
@@ -123,6 +115,6 @@ export async function getDashboardData(
     klienBaruBulanIni,
     tenggat14Hari,
     aktivitasTerbaru,
-    notifikasiPersonal,
+    notifikasiPersonal: notifikasi.notifications,
   };
 }

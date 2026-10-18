@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Bell, Calendar, CircleUser, LogOut, Menu, X } from 'lucide-react';
-import { APP_NAME, Brand } from '@/components/ui/brand';
+import { Calendar, CircleUser, LogOut, Menu, X } from 'lucide-react';import { APP_NAME, Brand } from '@/components/ui/brand';
 import { avatarColor } from '@/lib/avatar';
 import { NAV_ICONS } from './nav-icons';
 import type { NavIconName } from './nav-icons';
+import { NotificationBell } from './notification-bell';
 import { ThemeToggle } from './theme-toggle';
 import { ToastProvider } from './toast';
+import { useNotifications } from './use-notifications';
 
 /**
  * Satu entri sidebar. Daftar entri dirakit di layout lalu dikelompokkan berdasarkan `group`
@@ -53,7 +54,6 @@ function toSections(nav: NavItem[]): NavSection[] {
 }
 
 const LOGOUT_PATH = '/api/v1/auth/logout';
-const NOTIF_PATH = '/api/v1/notifications?ringkas=1';
 const TODAY_FORMAT = new Intl.DateTimeFormat('id-ID', {
   weekday: 'long',
   day: 'numeric',
@@ -61,28 +61,6 @@ const TODAY_FORMAT = new Intl.DateTimeFormat('id-ID', {
   year: 'numeric',
   timeZone: 'Asia/Jakarta',
 });
-
-/** Jumlah pemberitahuan dan surat menunggu persetujuan; dimuat setelah halaman tampil agar tidak menahan render. */
-function useShellCounts() {
-  const [counts, setCounts] = useState({ notif: 0, approvals: 0 });
-  useEffect(() => {
-    let cancelled = false;
-    fetch(NOTIF_PATH)
-      .then((r) => r.json())
-      .then((body) => {
-        if (cancelled || !body?.ok) return;
-        setCounts({
-          notif: Array.isArray(body.data?.notifications) ? body.data.notifications.length : 0,
-          approvals: Number(body.data?.approvalCount ?? 0),
-        });
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return counts;
-}
 
 export function AppShell({
   nav,
@@ -96,7 +74,8 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const counts = useShellCounts();
+  // Satu fetch untuk lonceng dan badge sidebar; badge memakai `approvalCount` dari feed yang sama.
+  const notifications = useNotifications();
 
   useEffect(() => {
     if (!open) return;
@@ -115,22 +94,6 @@ export function AppShell({
   const current = nav
     .filter((item) => isActive(pathname, item.href))
     .sort((a, b) => b.href.length - a.href.length)[0];
-  const notifLabel = counts.notif > 9 ? '9+' : String(counts.notif);
-
-  const bell = (
-    <Link
-      href="/#pemberitahuan"
-      aria-label={counts.notif ? `Pemberitahuan, ${counts.notif} baru` : 'Pemberitahuan'}
-      className="relative inline-flex size-11 items-center justify-center rounded-control text-navy-500 transition hover:bg-navy-100 hover:text-navy-800"
-    >
-      <Bell aria-hidden="true" size={18} />
-      {counts.notif ? (
-        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold-500 px-1 text-[10px] font-bold text-white">
-          {notifLabel}
-        </span>
-      ) : null}
-    </Link>
-  );
 
   return (
     <ToastProvider>
@@ -179,7 +142,7 @@ export function AppShell({
                 {section.items.map((item) => {
                   const active = isActive(pathname, item.href);
                   const Icon = item.icon ? NAV_ICONS[item.icon] : null;
-                  const badge = item.badge === 'approvals' ? counts.approvals : 0;
+                  const badge = item.badge === 'approvals' ? notifications.approvalCount : 0;
                   return (
                     <li key={item.href}>
                       <Link
@@ -258,7 +221,7 @@ export function AppShell({
               {TODAY_FORMAT.format(new Date())}
             </span>
             <ThemeToggle />
-            {bell}
+            <NotificationBell feed={notifications} />
             <Link
               href="/profil"
               aria-label="Profil Saya"

@@ -98,8 +98,7 @@ export interface NotifyResult {
   recipientEmail?: string;
 }
 
-export const notificationEventSchema = z.discriminatedUnion('type', [
-  z.object({
+export const notificationEventSchema = z.discriminatedUnion('type', [  z.object({
     type: z.literal('surat_submit'),
     recipientUserId: z.string().uuid(),
     data: z.object({
@@ -193,4 +192,19 @@ export const notificationEventSchema = z.discriminatedUnion('type', [
     }),
   }),
 ]);
+
+/**
+ * Body `POST /api/v1/notifications` (R8).
+ * - `{ id }` → tandai satu notifikasi dibaca.
+ * - `{ all: true }` → tandai semua notifikasi yang saat ini belum dibaca.
+ */
+export const markNotificationsReadSchema = z
+  .object({
+    id: z.string().min(1).optional(),
+    all: z.literal(true).optional(),
+  })
+  .refine((v) => v.all === true || Boolean(v.id), {
+    message: 'Sertakan id notifikasi atau all: true',
+  });
+
 

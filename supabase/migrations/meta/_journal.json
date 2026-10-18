@@ -50,6 +50,13 @@
       "when": 1792317875287,
       "tag": "0006_invoice_status_label",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792303675052,
+      "tag": "0007_notification_reads",
+      "breakpoints": true
     }
   ]
 }
