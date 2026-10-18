@@ -73,6 +73,8 @@ export type UpdateCaseInput = z.infer<typeof updateCaseSchema>;
 
 export const changeCaseStatusSchema = z.object({
   status: z.enum(CASE_STATUS),
+  /** Alasan opsional (PRD §4 R9: SuperAdmin bebas ubah, alasan opsional, tercatat di audit). */
+  reason: z.string().trim().max(500).optional(),
 });
 export type ChangeCaseStatusInput = z.infer<typeof changeCaseStatusSchema>;
 

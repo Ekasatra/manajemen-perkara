@@ -19,6 +19,7 @@ import {
   requireUser,
   ensureCan,
   can,
+  normalizeRole,
   getCaseForUser,
   getCaseTeamMembers,
   listSuratMasukForReport,
@@ -85,10 +86,14 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const opponentName = opponentRow[0]?.name ?? null;
 
   // Hak akses via can() dari kernel — tidak ada if role === di UI.
+  const isSuperAdmin = normalizeRole(user.role) === 'superadmin';
+  const isSelesai = caseRow.status === 'Selesai';
   const canUpdate = can(user, 'U', 'cases');
+  // PRD §4 R9: perkara Selesai — field & status read-only bagi non-SuperAdmin.
+  const canEditCase = canUpdate && (!isSelesai || isSuperAdmin);
   const canManageTeam = can(user, 'C', 'users');
   const canViewBiaya = can(user, 'R', 'invoices');
-  const canDelete = can(user, 'D', 'cases');
+  const canDelete = can(user, 'D', 'cases') && (!isSelesai || isSuperAdmin);
 
   // Pilihan klien/lawan untuk form ubah: hanya bila user berhak membaca masterannya.
   const [clientOptions, opponentOptions] = await Promise.all([
@@ -140,8 +145,9 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
               row={caseRow}
               clientOptions={clientOptions}
               opponentOptions={opponentOptions}
-              canEdit={canUpdate}
+              canEdit={canEditCase}
               canDelete={canDelete}
+              isSuperAdmin={isSuperAdmin}
             />
           ) : undefined
         }
