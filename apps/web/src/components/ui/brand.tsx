@@ -45,7 +45,7 @@ export function LogoMark({ size = 34, className = '' }: { size?: number; classNa
  */
 export function Brand({
   variant = 'full',
-  light = false,
+  light,
   size,
   className = '',
 }: {
@@ -54,7 +54,7 @@ export function Brand({
   size?: number;
   className?: string;
 }) {
-  const color = light ? 'text-white' : 'text-navy-800';
+  const color = light ? 'text-white' : 'text-navy-800 dark:text-white';
   if (variant === 'compact') {
     return (
       <div className={`flex items-center gap-2 ${color} ${className}`}>
@@ -65,11 +65,19 @@ export function Brand({
       </div>
     );
   }
-  const file = `/brand/ekasatra-logo-${variant === 'vertical' ? 'stacked' : 'horizontal'}-${light ? 'white' : 'navy'}.svg`;
+  const kind = variant === 'vertical' ? 'stacked' : 'horizontal';
   // viewBox logo: mendatar 628x136 (penanda 102 tinggi), bertumpuk 617x423 (penanda 157 tinggi).
   const height = variant === 'vertical' ? (size ?? 64) * 2.7 : (size ?? 34) * 1.33;
-  return (
+  const img = (tone: 'navy' | 'white', extra = '', alt = FIRM_NAME) => (
     // eslint-disable-next-line @next/next/no-img-element -- SVG statis; next/image tidak menambah nilai
-    <img src={file} alt={FIRM_NAME} height={height} style={{ height, width: 'auto' }} className={className} />
+    <img
+      src={`/brand/ekasatra-logo-${kind}-${tone}.svg`}
+      alt={alt}
+      style={{ height, width: 'auto' }}
+      className={`${className} ${extra}`}
+    />
   );
+  // `light` tak diisi = ikut tema (navy di terang, putih di gelap).
+  if (light === undefined) return <>{img('navy', 'dark:hidden')}{img('white', 'hidden dark:block', '')}</>;
+  return img(light ? 'white' : 'navy');
 }
