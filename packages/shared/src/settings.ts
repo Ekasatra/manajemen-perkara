@@ -16,7 +16,10 @@ export const updateSettingsSchema = z.object({
   scope_assigned_only: z.boolean().optional(),
   banding_deadline_days: z.number().int().min(0).optional(),
   kas_kantor_persen: z.number().min(0).max(100).optional(),
-  reminder_days: z.number().int().min(0).optional(),
+  // Satu angka (lama) atau daftar hari, mis. [7, 1] = pengingat H-7 dan H-1.
+  reminder_days: z
+    .union([z.number().int().min(0), z.array(z.number().int().min(0).max(365)).min(1).max(5)])
+    .optional(),
   notif_email_enabled: z.boolean().optional(),
   pimpinan_user_id: z.string().optional(),
   kas_viewers: z.array(z.string()).optional(),
