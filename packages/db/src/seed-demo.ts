@@ -34,7 +34,7 @@ const ago = (hours: number) => sql`(now() - make_interval(hours => ${hours}::int
 const year = new Date().getFullYear();
 
 type Role = 'Admin' | 'Advokat' | 'Paralegal';
-type Person = { key: string; email: string; name: string; role: Role; advocate?: boolean };
+type Person = { key: string; email: string; name: string; role: Role };
 
 const PEOPLE: Person[] = [
   {
@@ -48,14 +48,12 @@ const PEOPLE: Person[] = [
     email: 'advokat@ekasatra.com',
     name: 'Rangga Wibowo, S.H., M.H.',
     role: 'Advokat',
-    advocate: true,
   },
   {
     key: 'maya',
     email: 'maya.kusuma@ekasatra.com',
     name: 'Maya Kusuma, S.H.',
     role: 'Advokat',
-    advocate: true,
   },
   { key: 'dewi', email: 'paralegal@ekasatra.com', name: 'Dewi Lestari', role: 'Paralegal' },
   { key: 'bagas', email: 'bagas.nugroho@ekasatra.com', name: 'Bagas Nugroho', role: 'Paralegal' },
@@ -461,16 +459,27 @@ const CASES: CaseSeed[] = [
 async function seedAll(u: Record<string, string>) {
   const uid = (k: string) => u[k] as string;
 
-  // Data advokat milik akun Advokat (satu akun satu data).
-  for (const p of PEOPLE.filter((x) => x.advocate)) {
+  // Data advokat/paralegal: barisnya sudah dibuat otomatis oleh trigger saat profil dibuat
+  // (nama + kind). Seed hanya melengkapi sisanya; telepon dibedakan per orang.
+  const staff = PEOPLE.filter((x) => x.role !== 'Admin');
+  for (const [i, p] of staff.entries()) {
     const education = sql.json([
       { level: 'S1', institution: 'Universitas Indonesia', year: 2012 },
-      { level: 'S2', institution: 'Universitas Gadjah Mada', year: 2016 },
+      ...(p.role === 'Advokat'
+        ? [{ level: 'S2', institution: 'Universitas Gadjah Mada', year: 2016 }]
+        : []),
     ]);
+    const trainings = sql.json(
+      p.role === 'Advokat'
+        ? [{ name: 'Pendidikan Khusus Profesi Advokat', organizer: 'PERADI', year: 2013 }]
+        : [],
+    );
     await sql`
-      insert into advocates (user_id, full_name, address, phone, bank_name, bank_account, license_number, education, trainings)
-      values (${uid(p.key)}, ${p.name}, 'Jakarta Selatan', '0811-5550000', 'Bank Mandiri', ${p.key === 'rangga' ? '1230012345678' : '1230087654321'}, ${'PERADI-' + p.key.toUpperCase()}, ${education}, ${sql.json([{ name: 'Pendidikan Khusus Profesi Advokat', organizer: 'PERADI', year: 2013 }])})
-      on conflict (user_id) do update set full_name = excluded.full_name`;
+      update advocates set address = 'Jakarta Selatan', phone = ${'0811-5550' + String(100 + i)},
+        bank_name = 'Bank Mandiri', bank_account = ${'12300' + String(12345678 + i * 1111111)},
+        license_number = ${p.role === 'Advokat' ? 'PERADI-' + p.key.toUpperCase() : null},
+        education = ${education}, trainings = ${trainings}
+      where user_id = ${uid(p.key)}`;
   }
 
   // Master data.

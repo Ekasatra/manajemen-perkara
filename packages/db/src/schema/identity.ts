@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { sql, type SQL } from 'drizzle-orm';
 import {
   bigint,
   boolean,
@@ -51,10 +51,15 @@ export const advocates = pgTable(
       .unique()
       .references(() => profiles.id, { onDelete: 'set null' }),
     fullName: text('full_name').notNull(),
-    address: text('address').notNull(),
-    phone: text('phone').notNull(),
+    /** 'Advokat' | 'Paralegal' — dua halaman memakai satu tabel; diisi trigger dari profiles.role. */
+    kind: text('kind').notNull().default('Advokat'),
+    /** false bila akun nonaktif / bukan lagi Advokat-Paralegal (data tidak dihapus, honor lama aman). */
+    isActive: boolean('is_active').notNull().default(true),
+    // Nullable: akun baru belum punya data ini; kelengkapan dihitung DB (isComplete).
+    address: text('address'),
+    phone: text('phone'),
     bankName: text('bank_name'),
-    bankAccount: text('bank_account').notNull(),
+    bankAccount: text('bank_account'),
     licenseNumber: text('license_number'),
     /** [{ level, institution, year? }] — minimal 1. */
     education: jsonb('education')
@@ -64,13 +69,15 @@ export const advocates = pgTable(
     trainings: jsonb('trainings')
       .notNull()
       .default(sql`'[]'::jsonb`),
+    isComplete: boolean('is_complete').generatedAlwaysAs(
+      (): SQL =>
+        sql`coalesce(btrim(${advocates.address}), '') <> '' and coalesce(btrim(${advocates.phone}), '') <> '' and coalesce(btrim(${advocates.bankAccount}), '') <> '' and jsonb_array_length(${advocates.education}) >= 1`,
+    ),
     ...timestamps,
   },
   (t) => [
-    check(
-      'advocates_education_min1',
-      sql`jsonb_typeof(${t.education}) = 'array' and jsonb_array_length(${t.education}) >= 1`,
-    ),
+    check('advocates_kind_chk', sql`${t.kind} in ('Advokat', 'Paralegal')`),
+    check('advocates_education_array', sql`jsonb_typeof(${t.education}) = 'array'`),
   ],
 );
 

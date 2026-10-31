@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { RESOURCES } from '@ekasatra/core';
 import { APP_NAV, visibleNav } from '@/shell/app-nav';
 
-const hrefs = (role: string | null) => visibleNav(role === null ? null : { role }).map((i) => i.href);
+const hrefs = (role: string | null) =>
+  visibleNav(role === null ? null : { role }).map((i) => i.href);
 
 describe('visibleNav — menu per role', () => {
   it('Advokat/Paralegal tidak melihat Biaya Perkara, Manajemen User, Pengaturan', () => {
@@ -15,9 +16,22 @@ describe('visibleNav — menu per role', () => {
       expect(seen, role).not.toContain('/invoices');
       expect(seen, role).not.toContain('/users');
       expect(seen, role).not.toContain('/settings');
-      // Tetap boleh: Data Advokat (lihat) & Honor Tim (milik sendiri).
-      expect(seen, role).toContain('/advocates');
+      // Tetap boleh: Honor Tim (milik sendiri).
       expect(seen, role).toContain('/honor-tim');
+    }
+  });
+
+  it('Advokat/Paralegal hanya melihat menu data diri sesuai rolenya', () => {
+    expect(hrefs('advokat')).toContain('/advocates');
+    expect(hrefs('advokat')).not.toContain('/paralegals');
+    expect(hrefs('paralegal')).toContain('/paralegals');
+    expect(hrefs('paralegal')).not.toContain('/advocates');
+  });
+
+  it('Data Paralegal tepat di bawah Data Advokat untuk Admin/SuperAdmin', () => {
+    for (const role of ['superadmin', 'admin']) {
+      const seen = hrefs(role);
+      expect(seen.indexOf('/paralegals'), role).toBe(seen.indexOf('/advocates') + 1);
     }
   });
 

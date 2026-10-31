@@ -11,10 +11,12 @@ export type AdvocateDetail = {
   id: string;
   userId: string | null;
   fullName: string;
-  address: string;
-  phone: string;
+  kind?: string;
+  email?: string | null;
+  address: string | null;
+  phone: string | null;
   bankName: string | null;
-  bankAccount: string;
+  bankAccount: string | null;
   licenseNumber: string | null;
   education: unknown;
   trainings: unknown;
@@ -69,7 +71,7 @@ export function AdvocateDetailDialog({ advocate }: { advocate: AdvocateDetail })
         <div className="flex flex-col gap-5 p-6">
           <div>
             <h2 id={titleId} className="text-base">
-              Data Advokat
+              Data {advocate.kind ?? 'Advokat'}
             </h2>
             <p className="mt-1 text-sm text-navy-400">
               Hanya lihat. Hubungi Admin bila ada data yang perlu diubah.
@@ -78,6 +80,7 @@ export function AdvocateDetailDialog({ advocate }: { advocate: AdvocateDetail })
 
           <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
             <Field label="Nama Lengkap" value={advocate.fullName} />
+            <Field label="Email Akun" value={advocate.email ?? null} />
             <Field label="No. KTA" value={advocate.licenseNumber} />
             <Field label="Telepon" value={advocate.phone} />
             <Field label="Nama Bank" value={advocate.bankName} />

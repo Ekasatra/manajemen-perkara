@@ -2,8 +2,9 @@
  * Halaman daftar Pengguna (Agent C · C2).
  * Server component: query DB langsung, render DataTable + tombol buat (client).
  */
-import { count, desc } from 'drizzle-orm';
-import { createDb, profiles } from '@ekasatra/db';
+import Link from 'next/link';
+import { count, desc, eq } from 'drizzle-orm';
+import { createDb, profiles, advocates } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { requireUser, can } from '@ekasatra/core';
 import { requireCan } from '@/lib/guard';
@@ -27,6 +28,9 @@ type UserRow = {
   isActive: boolean;
   lastLoginAt: Date | null;
   createdAt: Date;
+  /** Data Advokat/Paralegal terkait (dibuat otomatis); null bila role lain. */
+  dataComplete: boolean | null;
+  dataKind: string | null;
 };
 
 export default async function UsersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -48,8 +52,11 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         isActive: profiles.isActive,
         lastLoginAt: profiles.lastLoginAt,
         createdAt: profiles.createdAt,
+        dataComplete: advocates.isComplete,
+        dataKind: advocates.kind,
       })
       .from(profiles)
+      .leftJoin(advocates, eq(advocates.userId, profiles.id))
       .orderBy(desc(profiles.createdAt))
       .limit(pageSize)
       .offset(offset),
@@ -92,6 +99,24 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           {r.role === 'SuperAdmin' ? 'Super Admin' : r.role}
         </Badge>
       ),
+    },
+    {
+      key: 'data',
+      header: 'Data Staf',
+      cell: (r) =>
+        r.dataKind && (r.role === 'Advokat' || r.role === 'Paralegal') ? (
+          <Link
+            href={r.dataKind === 'Paralegal' ? '/paralegals' : '/advocates'}
+            className="inline-flex"
+            aria-label={`Data ${r.dataKind} ${r.fullName}: ${r.dataComplete ? 'lengkap' : 'belum lengkap'}`}
+          >
+            <Badge tone={r.dataComplete ? 'success' : 'warning'}>
+              {r.dataComplete ? 'Lengkap' : 'Belum lengkap'}
+            </Badge>
+          </Link>
+        ) : (
+          <span className="text-navy-300">—</span>
+        ),
     },
     {
       key: 'isActive',
