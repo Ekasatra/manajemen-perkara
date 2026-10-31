@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
-import { Calendar, CircleUser, LogOut, Menu, X } from 'lucide-react';import { APP_NAME, Brand } from '@/components/ui/brand';
+import { Calendar, CircleUser, LogOut, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { APP_NAME, Brand, LogoMark } from '@/components/ui/brand';
 import { avatarColor } from '@/lib/avatar';
 import { NAV_ICONS } from './nav-icons';
 import type { NavIconName } from './nav-icons';
@@ -54,6 +55,34 @@ function toSections(nav: NavItem[]): NavSection[] {
 }
 
 const LOGOUT_PATH = '/api/v1/auth/logout';
+const COLLAPSED_KEY = 'ekasatra:sidebar-collapsed';
+
+// Pilihan ciut disimpan di localStorage; salinan di memori menjaga tombol tetap bekerja bila penyimpanan diblokir.
+let collapsedMemo: boolean | null = null;
+const collapsedListeners = new Set<() => void>();
+function readCollapsed(): boolean {
+  if (collapsedMemo === null) {
+    try {
+      collapsedMemo = localStorage.getItem(COLLAPSED_KEY) === '1';
+    } catch {
+      collapsedMemo = false;
+    }
+  }
+  return collapsedMemo;
+}
+function subscribeCollapsed(cb: () => void) {
+  collapsedListeners.add(cb);
+  return () => void collapsedListeners.delete(cb);
+}
+function writeCollapsed(next: boolean) {
+  collapsedMemo = next;
+  try {
+    localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0');
+  } catch {
+    // tidak tersimpan, tetap berlaku untuk sesi ini
+  }
+  collapsedListeners.forEach((cb) => cb());
+}
 const TODAY_FORMAT = new Intl.DateTimeFormat('id-ID', {
   weekday: 'long',
   day: 'numeric',
@@ -74,6 +103,8 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  // Hanya desktop (lg+): sidebar diciutkan jadi kolom sempit berisi logo. Di mobile tetap laci.
+  const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
   // Satu fetch untuk lonceng dan badge sidebar; badge memakai `approvalCount` dari feed yang sama.
   const notifications = useNotifications();
 
@@ -83,6 +114,10 @@ export function AppShell({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
+
+  function toggleCollapsed() {
+    writeCollapsed(!collapsed);
+  }
 
   async function logout() {
     await fetch(LOGOUT_PATH, { method: 'POST' });
@@ -114,12 +149,29 @@ export function AppShell({
 
       <aside
         id="sidebar"
-        className={`sidebar-surface inset-y-0 left-0 z-40 flex w-[268px] flex-col text-white transition-transform duration-200 lg:translate-x-0 print:hidden ${
-          open ? 'translate-x-0' : 'max-lg:invisible max-lg:-translate-x-full'
-        }`}
+        className={`sidebar-surface inset-y-0 left-0 z-40 flex w-[268px] flex-col text-white transition-[transform,width] duration-200 lg:translate-x-0 print:hidden ${
+          collapsed ? 'lg:w-[76px]' : ''
+        } ${open ? 'translate-x-0' : 'max-lg:invisible max-lg:-translate-x-full'}`}
       >
-        <div className="relative z-10 flex items-center justify-between border-b border-white/10 px-5 pb-5 pt-6">
-          <Brand light />
+        <div
+          className={`relative z-10 flex items-center justify-between border-b border-white/10 px-5 pb-5 pt-6 ${
+            collapsed ? 'lg:justify-center lg:px-0' : ''
+          }`}
+        >
+          <div className={collapsed ? 'lg:hidden' : ''}>
+            <Brand light />
+          </div>
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label="Buka sidebar"
+            title="Buka sidebar"
+            className={`hidden size-11 items-center justify-center rounded-control text-white hover:bg-white/10 focus-visible:outline-gold-300 ${
+              collapsed ? 'lg:inline-flex' : ''
+            }`}
+          >
+            <LogoMark size={34} />
+          </button>
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -130,7 +182,10 @@ export function AppShell({
           </button>
         </div>
 
-        <nav aria-label="Menu utama" className="relative z-10 flex-1 overflow-y-auto px-3 py-4">
+        <nav
+          aria-label="Menu utama"
+          className={`relative z-10 flex-1 overflow-y-auto px-3 py-4 ${collapsed ? 'lg:hidden' : ''}`}
+        >
           {sections.map((section, i) => (
             <div key={section.group ?? `top-${i}`} className={i > 0 ? 'mt-5' : ''}>
               {section.group ? (
@@ -172,7 +227,9 @@ export function AppShell({
         </nav>
 
         {viewer ? (
-          <div className="relative z-10 border-t border-white/10 p-3">
+          <div
+            className={`relative z-10 border-t border-white/10 p-3 ${collapsed ? 'lg:hidden' : ''}`}
+          >
             <div className="flex items-center gap-3 rounded-control bg-white/10 p-3 backdrop-blur">
               <span
                 aria-hidden="true"
@@ -198,7 +255,11 @@ export function AppShell({
         ) : null}
       </aside>
 
-      <div className="min-w-0 lg:pl-[268px] print:pl-0">
+      <div
+        className={`min-w-0 transition-[padding] duration-200 print:pl-0 ${
+          collapsed ? 'lg:pl-[76px]' : 'lg:pl-[268px]'
+        }`}
+      >
         <header className="sticky top-0 z-20 print:hidden">
           <div className="card-surface mx-3 mt-3 flex items-center gap-3 px-3 py-2.5 sm:mx-6 sm:px-4">
             <button
@@ -210,6 +271,21 @@ export function AppShell({
               className="inline-flex size-11 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100 lg:hidden"
             >
               <Menu aria-hidden="true" size={18} />
+            </button>
+            <button
+              type="button"
+              aria-controls="sidebar"
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? 'Buka sidebar' : 'Ciutkan sidebar'}
+              title={collapsed ? 'Buka sidebar' : 'Ciutkan sidebar'}
+              onClick={toggleCollapsed}
+              className="hidden size-11 items-center justify-center rounded-control text-navy-500 hover:bg-navy-100 lg:inline-flex"
+            >
+              {collapsed ? (
+                <PanelLeftOpen aria-hidden="true" size={18} />
+              ) : (
+                <PanelLeftClose aria-hidden="true" size={18} />
+              )}
             </button>
             <p className="min-w-0 flex-1 truncate text-xs text-navy-400">
               <span className="font-semibold text-navy-800">{APP_NAME.toUpperCase()}</span>

@@ -62,10 +62,10 @@ describe('POLICY — matriks PRD §4', () => {
     [
       'timeline',
       'Timeline/Jadwal/Dokumen: Paralegal CRU',
-      { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
+      { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
     ],
-    ['schedules', '', { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' }],
-    ['case_documents', '', { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' }],
+    ['schedules', '', { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' }],
+    ['case_documents', '', { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' }],
     [
       'surat_masuk',
       'Surat: semua staf CRU',
@@ -190,7 +190,9 @@ describe('can / ensureCan', () => {
 
   it('hanya superadmin yang boleh menghapus; admin tetap boleh buat dan ubah', () => {
     for (const resource of RESOURCES) {
-      expect(can({ role: 'admin' }, 'D', resource), `admin/D/${resource}`).toBe(false);
+      for (const role of ['admin', 'advokat', 'paralegal', 'viewer']) {
+        expect(can({ role }, 'D', resource), `${role}/D/${resource}`).toBe(false);
+      }
     }
     for (const resource of ['users', 'clients', 'opponents', 'cases', 'invoices'] as const) {
       expect(can({ role: 'superadmin' }, 'D', resource)).toBe(true);
