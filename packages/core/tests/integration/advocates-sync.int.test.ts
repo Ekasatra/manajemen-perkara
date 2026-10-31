@@ -31,7 +31,12 @@ d('sinkron akun <-> advokat/paralegal (Postgres)', () => {
   it('akun Advokat/Paralegal baru → baris otomatis, belum lengkap, tanpa nilai palsu', async () => {
     const a = await newUser('Sinkron Advokat', 'Advokat');
     const p = await newUser('Sinkron Paralegal', 'Paralegal');
-    expect(await row(a)).toMatchObject({ kind: 'Advokat', is_active: true, is_complete: false, address: null });
+    expect(await row(a)).toMatchObject({
+      kind: 'Advokat',
+      is_active: true,
+      is_complete: false,
+      address: null,
+    });
     expect(await row(p)).toMatchObject({ kind: 'Paralegal', full_name: 'Sinkron Paralegal' });
   });
 
@@ -68,5 +73,15 @@ d('sinkron akun <-> advokat/paralegal (Postgres)', () => {
 
     await db.execute(sql`update profiles set is_active = false where id = ${id}`);
     expect(await row(id)).toMatchObject({ is_active: false });
+  });
+
+  it('hapus akun → baris ditandai nonaktif dan tautan terlepas, baris tidak hilang', async () => {
+    const id = await newUser('Akun Dihapus', 'Paralegal');
+    await db.execute(sql`delete from auth.users where id = ${id}`);
+    const r = (await db.execute(
+      sql`select is_active, user_id from advocates where full_name = 'Akun Dihapus'`,
+    )) as unknown as { is_active: boolean; user_id: string | null }[];
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ is_active: false, user_id: null });
   });
 });

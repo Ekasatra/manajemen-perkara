@@ -1,13 +1,13 @@
 /**
  * GET    /api/v1/advocates/[id] — detail advokat (Agent C · C5)
  * PATCH  /api/v1/advocates/[id] — update advokat/paralegal (nama ikut mengubah nama akun lewat trigger)
- * DELETE /api/v1/advocates/[id] — hapus advokat (Admin only)
+ * DELETE /api/v1/advocates/[id] — hapus advokat (SuperAdmin; hanya baris nonaktif / tanpa akun)
  */
 import { eq } from 'drizzle-orm';
 import { createDb, advocates } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ok, runRoute, parseBody, requireUser, ensureCan, can, logActivity } from '@ekasatra/core';
-import { forbidden, notFound } from '@ekasatra/shared';
+import { badRequest, forbidden, notFound } from '@ekasatra/shared';
 import { updateAdvocateSchema } from '@ekasatra/shared';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -73,11 +73,21 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     ensureCan(user, 'D', 'advocates'); // Admin only.
 
     const [target] = await db
-      .select({ fullName: advocates.fullName })
+      .select({
+        fullName: advocates.fullName,
+        userId: advocates.userId,
+        isActive: advocates.isActive,
+      })
       .from(advocates)
       .where(eq(advocates.id, id))
       .limit(1);
     if (!target) throw notFound('Data advokat tidak ditemukan');
+    // Baris milik akun aktif dikelola lewat Manajemen User (nonaktifkan/hapus akun), bukan dihapus di sini.
+    if (target.userId && target.isActive) {
+      throw badRequest(
+        'Data ini milik akun yang masih aktif. Nonaktifkan atau hapus akunnya di Manajemen User.',
+      );
+    }
 
     await db.delete(advocates).where(eq(advocates.id, id));
 

@@ -146,7 +146,11 @@ export async function StaffPage({
             key: 'aksi',
             header: '',
             cell: (r: StaffRow) => (
-              <AdvocateActions row={r} canEdit={canEdit} canDelete={canDelete} />
+              <AdvocateActions
+                row={r}
+                canEdit={canEdit}
+                canDelete={canDelete && (!r.isActive || !r.userId)}
+              />
             ),
           },
         ]
