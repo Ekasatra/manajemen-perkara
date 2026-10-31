@@ -7,7 +7,7 @@ import { loginSchema, setupSchema } from '../src/auth';
 import { createUserSchema } from '../src/users';
 import { createClientSchema, contactsSchema, contactSchema } from '../src/clients';
 import { createOpponentSchema } from '../src/opponents';
-import { createAdvocateSchema, educationSchema } from '../src/advocates';
+import { updateAdvocateSchema, educationSchema } from '../src/advocates';
 import { INVOICE_STATUSES, listInvoicesQuerySchema } from '../src/invoices';
 import { updateSettingsSchema } from '../src/settings';
 import { changeCaseStatusSchema } from '../src/cases';
@@ -199,25 +199,21 @@ describe('C5 Advocates — educationSchema', () => {
   });
 });
 
-describe('C5 Advocates — createAdvocateSchema', () => {
-  const validBase = {
-    fullName: 'Andi',
-    address: 'Jl. A',
-    phone: '0812',
-    bankAccount: '123456',
-    education: [{ level: 'S1', institution: 'UI' }],
-  };
-  it('wajib: nama, alamat, telepon, rekening, pendidikan min 1', () => {
-    const r = createAdvocateSchema.safeParse(validBase);
-    expect(r.success).toBe(true);
+describe('C5 Advocates — updateAdvocateSchema', () => {
+  it('field yang tidak dikirim tetap undefined (tidak menimpa data)', () => {
+    const r = updateAdvocateSchema.parse({ fullName: 'Andi' });
+    expect(r.phone).toBeUndefined();
+    expect(r.education).toBeUndefined();
   });
-  it('menolak pendidikan kosong', () => {
-    const r = createAdvocateSchema.safeParse({ ...validBase, education: [] });
-    expect(r.success).toBe(false);
+  it('teks kosong menjadi null (belum diisi), bukan string kosong', () => {
+    const r = updateAdvocateSchema.parse({ phone: '  ', address: '', bankAccount: null });
+    expect(r.phone).toBeNull();
+    expect(r.address).toBeNull();
+    expect(r.bankAccount).toBeNull();
   });
-  it('menolak tanpa bankAccount', () => {
-    const r = createAdvocateSchema.safeParse({ ...validBase, bankAccount: '' });
-    expect(r.success).toBe(false);
+  it('pendidikan boleh kosong (belum lengkap) tetapi nama tidak boleh kosong', () => {
+    expect(updateAdvocateSchema.safeParse({ education: [] }).success).toBe(true);
+    expect(updateAdvocateSchema.safeParse({ fullName: ' ' }).success).toBe(false);
   });
 });
 

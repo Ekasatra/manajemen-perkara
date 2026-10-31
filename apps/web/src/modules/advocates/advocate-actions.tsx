@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormDialog } from '@/components/ui/form-dialog';
-import { Label, RequiredNote } from '@/components/ui/field';
+import { Label } from '@/components/ui/field';
 import { buttonClass, inputClass, labelClass } from '@/components/ui/styles';
 
 type Education = { level: string; institution: string; year?: string };
@@ -11,10 +11,12 @@ type Education = { level: string; institution: string; year?: string };
 export type AdvocateActionRow = {
   id: string;
   fullName: string;
-  address: string;
-  phone: string;
+  kind?: string;
+  email?: string | null;
+  address: string | null;
+  phone: string | null;
   bankName: string | null;
-  bankAccount: string;
+  bankAccount: string | null;
   licenseNumber: string | null;
   education: unknown;
 };
@@ -50,11 +52,17 @@ export function AdvocateActions({
   async function save(formData: FormData) {
     const text = (k: string) => String(formData.get(k) ?? '').trim();
     const year = text('eduYear');
-    const head: Education = {
-      level: text('eduLevel'),
-      institution: text('eduInstitution'),
-      ...(year ? { year } : {}),
-    };
+    // Pendidikan utama kosong = belum diisi (data belum lengkap), bukan error.
+    const head: Education[] =
+      text('eduLevel') && text('eduInstitution')
+        ? [
+            {
+              level: text('eduLevel'),
+              institution: text('eduInstitution'),
+              ...(year ? { year } : {}),
+            },
+          ]
+        : [];
     await call('PATCH', {
       fullName: text('fullName'),
       address: text('address'),
@@ -62,7 +70,7 @@ export function AdvocateActions({
       bankName: text('bankName') || null,
       bankAccount: text('bankAccount'),
       licenseNumber: text('licenseNumber') || null,
-      education: [head, ...education.slice(1)],
+      education: [...head, ...education.slice(1)],
     });
   }
 
@@ -84,8 +92,28 @@ export function AdvocateActions({
       ) : null}
 
       {canEdit && mode === 'edit' ? (
-        <FormDialog open onClose={() => setMode(null)} title="Ubah data advokat" onSubmit={save}>
-          <RequiredNote />
+        <FormDialog
+          open
+          onClose={() => setMode(null)}
+          title={`Ubah data ${(row.kind ?? 'Advokat').toLowerCase()}`}
+          description="Nama dan email berasal dari akun. Lengkapi sisanya agar status menjadi Lengkap."
+          onSubmit={save}
+        >
+          <div>
+            <Label htmlFor={`${id}-email`} optional>
+              Email akun
+            </Label>
+            <input
+              id={`${id}-email`}
+              value={row.email ?? ''}
+              readOnly
+              aria-describedby={`${id}-email-hint`}
+              className={inputClass}
+            />
+            <p id={`${id}-email-hint`} className="mt-1 text-xs text-navy-400">
+              Email hanya bisa diubah di Manajemen User.
+            </p>
+          </div>
           <div>
             <Label htmlFor={`${id}-name`} optional>
               Nama lengkap
@@ -105,7 +133,7 @@ export function AdvocateActions({
               id={`${id}-address`}
               name="address"
               rows={2}
-              defaultValue={row.address}
+              defaultValue={row.address ?? ''}
               className={inputClass}
             />
           </div>
@@ -117,7 +145,7 @@ export function AdvocateActions({
               id={`${id}-phone`}
               name="phone"
               type="tel"
-              defaultValue={row.phone}
+              defaultValue={row.phone ?? ''}
               className={inputClass}
             />
           </div>
@@ -139,7 +167,7 @@ export function AdvocateActions({
             <input
               id={`${id}-bankAccount`}
               name="bankAccount"
-              defaultValue={row.bankAccount}
+              defaultValue={row.bankAccount ?? ''}
               className={inputClass}
             />
           </div>
@@ -187,7 +215,7 @@ export function AdvocateActions({
         <FormDialog
           open
           onClose={() => setMode(null)}
-          title="Hapus data advokat?"
+          title={`Hapus data ${(row.kind ?? 'Advokat').toLowerCase()}?`}
           description={`${row.fullName} akan dihapus permanen dan tidak bisa dikembalikan.`}
           submitLabel="Hapus"
           destructive

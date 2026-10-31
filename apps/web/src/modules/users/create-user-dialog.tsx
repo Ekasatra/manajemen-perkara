@@ -69,6 +69,10 @@ export function CreateUserDialog() {
             <option value="Advokat">Advokat</option>
             <option value="Paralegal">Paralegal</option>
           </select>
+          <p className="mt-1 text-xs text-navy-400">
+            Role Advokat/Paralegal otomatis dibuatkan baris di Data Advokat/Paralegal; lengkapi
+            alamat, telepon, rekening, dan pendidikan di sana.
+          </p>
         </div>
         <div>
           <Label htmlFor="cu-pass" required>

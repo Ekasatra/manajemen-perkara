@@ -1,27 +1,16 @@
 /**
  * GET    /api/v1/advocates/[id] — detail advokat (Agent C · C5)
- * PATCH  /api/v1/advocates/[id] — update advokat (non-Admin hanya milik sendiri)
+ * PATCH  /api/v1/advocates/[id] — update advokat/paralegal (nama ikut mengubah nama akun lewat trigger)
  * DELETE /api/v1/advocates/[id] — hapus advokat (Admin only)
  */
 import { eq } from 'drizzle-orm';
 import { createDb, advocates } from '@ekasatra/db';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import {
-  ok,
-  runRoute,
-  parseBody,
-  requireUser,
-  ensureCan,
-  can,
-  logActivity,
-} from '@ekasatra/core';
+import { ok, runRoute, parseBody, requireUser, ensureCan, can, logActivity } from '@ekasatra/core';
 import { forbidden, notFound } from '@ekasatra/shared';
 import { updateAdvocateSchema } from '@ekasatra/shared';
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   return runRoute(async () => {
     const { id } = await params;
     const db = createDb();
@@ -29,11 +18,7 @@ export async function GET(
     const user = await requireUser(db, supabase);
     ensureCan(user, 'R', 'advocates');
 
-    const [advocate] = await db
-      .select()
-      .from(advocates)
-      .where(eq(advocates.id, id))
-      .limit(1);
+    const [advocate] = await db.select().from(advocates).where(eq(advocates.id, id)).limit(1);
     if (!advocate) throw notFound('Data advokat tidak ditemukan');
 
     // Non-Admin hanya boleh melihat milik sendiri.
@@ -45,10 +30,7 @@ export async function GET(
   });
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   return runRoute(async () => {
     const { id } = await params;
     const db = createDb();
@@ -58,11 +40,7 @@ export async function PATCH(
 
     const body = await parseBody(req, updateAdvocateSchema);
 
-    const [existing] = await db
-      .select()
-      .from(advocates)
-      .where(eq(advocates.id, id))
-      .limit(1);
+    const [existing] = await db.select().from(advocates).where(eq(advocates.id, id)).limit(1);
     if (!existing) throw notFound('Data advokat tidak ditemukan');
 
     // Non-Admin hanya boleh update milik sendiri.
@@ -70,11 +48,7 @@ export async function PATCH(
       throw forbidden('Tidak boleh mengubah data advokat lain');
     }
 
-    const [updated] = await db
-      .update(advocates)
-      .set(body)
-      .where(eq(advocates.id, id))
-      .returning();
+    const [updated] = await db.update(advocates).set(body).where(eq(advocates.id, id)).returning();
 
     await logActivity(db, {
       userId: user.userId,
@@ -90,10 +64,7 @@ export async function PATCH(
   });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   return runRoute(async () => {
     const { id } = await params;
     const db = createDb();

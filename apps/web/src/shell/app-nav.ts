@@ -5,12 +5,16 @@
  * Menyembunyikan menu BUKAN otorisasi: setiap rute memanggil `requireCan()` (halaman 403)
  * dan setiap API memanggil `ensureCan()` (JSON 403). Filter ini satu-satunya sumber urutan menu.
  */
-import { can } from '@ekasatra/core';
+import { can, normalizeRole } from '@ekasatra/core';
 import type { PolicyUser, Resource } from '@ekasatra/core';
 import type { NavItem } from './app-shell';
 
 /** Entri menu internal dengan resource kernel untuk penyaringan; `resource` tidak ikut dirender. */
-export type NavEntry = NavItem & { resource?: Resource };
+export type NavEntry = NavItem & {
+  resource?: Resource;
+  /** Non-Admin hanya melihat menu yang sesuai rolenya (Advokat → Data Advokat, dst.). */
+  staffRole?: 'advokat' | 'paralegal';
+};
 
 // Kelompok menu memakai istilah yang sama dengan modul di PRD. Urutan array = urutan tampil.
 export const APP_NAV: NavEntry[] = [
@@ -80,6 +84,15 @@ export const APP_NAV: NavEntry[] = [
     icon: 'advocates',
     group: 'Tim',
     resource: 'advocates',
+    staffRole: 'advokat',
+  },
+  {
+    label: 'Data Paralegal',
+    href: '/paralegals',
+    icon: 'advocates',
+    group: 'Tim',
+    resource: 'advocates',
+    staffRole: 'paralegal',
   },
   {
     label: 'Laporan & Export',
@@ -108,7 +121,11 @@ export const APP_NAV: NavEntry[] = [
 
 /** Menu yang boleh dilihat user; `resource` dibuang agar bentuknya `NavItem` untuk sidebar. */
 export function visibleNav(user: PolicyUser | null): NavItem[] {
+  const role = user ? normalizeRole(user.role) : null;
+  const staffOnly = role === 'advokat' || role === 'paralegal';
   return APP_NAV.filter(
-    (item) => !item.resource || (user !== null && can(user, 'R', item.resource)),
-  ).map(({ resource: _resource, ...item }) => item);
+    (item) =>
+      (!item.resource || (user !== null && can(user, 'R', item.resource))) &&
+      !(staffOnly && item.staffRole && item.staffRole !== role),
+  ).map(({ resource: _resource, staffRole: _staffRole, ...item }) => item);
 }

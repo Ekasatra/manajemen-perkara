@@ -1,7 +1,7 @@
 /**
  * Skema validasi modul advocates (Agent C · C5).
  * PRD §5.3: wajib nama, alamat, telepon, nomor rekening, pendidikan min 1.
- * Satu akun hanya boleh terhubung ke satu data advokat.
+ * Satu akun hanya boleh terhubung ke satu data advokat/paralegal.
  */
 import { z } from 'zod';
 
@@ -17,31 +17,29 @@ export const trainingSchema = z.object({
   year: z.string().optional(),
 });
 
-export const createAdvocateSchema = z.object({
-  userId: z.uuid().nullable().optional(),
-  fullName: z.string().min(1, 'Nama lengkap wajib diisi'),
-  address: z.string().min(1, 'Alamat wajib diisi'),
-  phone: z.string().min(1, 'Telepon wajib diisi'),
-  bankName: z.string().nullable().optional(),
-  bankAccount: z.string().min(1, 'Nomor rekening wajib diisi'),
-  licenseNumber: z.string().nullable().optional(),
-  education: z.array(educationSchema).min(1, 'Pendidikan minimal 1'),
-  trainings: z.array(trainingSchema).optional().default([]),
-});
+/**
+ * Baris advokat/paralegal dibuat otomatis (trigger DB) saat akun dibuat — tidak ada skema create.
+ * Kolom kosong diperbolehkan (null = belum diisi, "belum lengkap"); kelengkapan dihitung DB.
+ * Nama diubah di sini → ikut mengubah nama akun (trigger).
+ */
+const optionalText = z
+  .string()
+  .trim()
+  .nullable()
+  .optional()
+  .transform((v) => (v === undefined ? undefined : v || null));
 
 export const updateAdvocateSchema = z.object({
-  userId: z.uuid().nullable().optional(),
-  fullName: z.string().min(1).optional(),
-  address: z.string().min(1).optional(),
-  phone: z.string().min(1).optional(),
-  bankName: z.string().nullable().optional(),
-  bankAccount: z.string().min(1).optional(),
-  licenseNumber: z.string().nullable().optional(),
-  education: z.array(educationSchema).min(1).optional(),
+  fullName: z.string().trim().min(1, 'Nama lengkap wajib diisi').optional(),
+  address: optionalText,
+  phone: optionalText,
+  bankName: optionalText,
+  bankAccount: optionalText,
+  licenseNumber: optionalText,
+  education: z.array(educationSchema).optional(),
   trainings: z.array(trainingSchema).optional(),
 });
 
 export type Education = z.infer<typeof educationSchema>;
 export type Training = z.infer<typeof trainingSchema>;
-export type CreateAdvocateInput = z.infer<typeof createAdvocateSchema>;
 export type UpdateAdvocateInput = z.infer<typeof updateAdvocateSchema>;
