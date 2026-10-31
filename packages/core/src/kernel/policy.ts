@@ -75,12 +75,12 @@ export const POLICY: Record<Resource, Record<Role, string>> = {
   settings: { superadmin: 'CRUD', admin: 'CRU', advokat: '', paralegal: '', viewer: '' },
   // "R U + C (tim hanya dirinya)" — pembatasan baris di modul D.
   cases: { superadmin: 'CRUD', admin: 'CRU', advokat: 'RUC', paralegal: 'RU', viewer: 'R' },
-  timeline: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
-  schedules: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRUD', paralegal: 'CRU', viewer: 'R' },
+  timeline: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
+  schedules: { superadmin: 'CRUD', admin: 'CRU', advokat: 'CRU', paralegal: 'CRU', viewer: 'R' },
   case_documents: {
     superadmin: 'CRUD',
     admin: 'CRU',
-    advokat: 'CRUD',
+    advokat: 'CRU',
     paralegal: 'CRU',
     viewer: 'R',
   },
