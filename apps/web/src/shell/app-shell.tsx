@@ -184,12 +184,17 @@ export function AppShell({
 
         <nav
           aria-label="Menu utama"
-          className={`relative z-10 flex-1 overflow-y-auto px-3 py-4 ${collapsed ? 'lg:hidden' : ''}`}
+          className={`relative z-10 flex-1 overflow-y-auto px-3 py-4 ${collapsed ? 'lg:px-2' : ''}`}
         >
           {sections.map((section, i) => (
-            <div key={section.group ?? `top-${i}`} className={i > 0 ? 'mt-5' : ''}>
+            <div
+              key={section.group ?? `top-${i}`}
+              className={`${i > 0 ? 'mt-5' : ''} ${collapsed && i > 0 ? 'lg:mt-2 lg:border-t lg:border-white/10 lg:pt-2' : ''}`}
+            >
               {section.group ? (
-                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45">
+                <p
+                  className={`mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45 ${collapsed ? 'lg:hidden' : ''}`}
+                >
                   {section.group}
                 </p>
               ) : null}
@@ -204,16 +209,28 @@ export function AppShell({
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
                         onClick={() => setOpen(false)}
-                        className={`flex min-h-11 items-center gap-3 rounded-control px-3 py-2.5 text-sm transition focus-visible:outline-gold-300 ${
+                        aria-label={item.label}
+                        title={collapsed ? item.label : undefined}
+                        className={`relative flex min-h-11 items-center gap-3 rounded-control px-3 py-2.5 text-sm transition focus-visible:outline-gold-300 ${
+                          collapsed ? 'lg:justify-center lg:px-0' : ''
+                        } ${
                           active
                             ? 'bg-linear-to-r from-gold-500/90 to-gold-600/80 text-white shadow-lg'
                             : 'text-white/75 hover:bg-white/10 hover:text-white'
                         }`}
                       >
                         {Icon ? <Icon aria-hidden="true" size={18} className="shrink-0" /> : null}
-                        <span className="flex-1">{item.label}</span>
+                        <span className={`flex-1 ${collapsed ? 'lg:hidden' : ''}`}>
+                          {item.label}
+                        </span>
                         {badge ? (
-                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-[11px] font-bold text-white">
+                          <span
+                            className={`flex h-5 min-w-5 items-center justify-center rounded-full bg-gold-500 px-1.5 text-[11px] font-bold text-white ${
+                              collapsed
+                                ? 'lg:absolute lg:right-1.5 lg:top-1.5 lg:size-2.5 lg:min-w-0 lg:px-0 lg:text-[0px]'
+                                : ''
+                            }`}
+                          >
                             {badge}
                           </span>
                         ) : null}
